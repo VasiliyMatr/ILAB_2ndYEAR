@@ -38,15 +38,14 @@ T Cache<T, T_id>::getPage( T_id elem_id )
         {
             ++cachedElemsNum_;
             list_.push_front (elem);
-            auto lIter = list_.begin ();
-            hashTable_[elem_id] = lIter;
+            hashTable_[elem_id] = list_.begin ();
             return elem;
         }
 
+        hashTable_.erase (list_.back ().id_);
         list_.pop_back ();
         list_.push_front (elem);
-        auto lIter = list_.begin ();
-        hashTable_[elem_id] = lIter;
+        hashTable_[elem_id] = list_.begin ();
         return elem;
     }
 
@@ -57,7 +56,6 @@ T Cache<T, T_id>::getPage( T_id elem_id )
     T elem = *lIter;
     list_.erase (lIter);
     list_.push_front (elem);
-    lIter = list_.begin ();
-    hashTable_[elem_id] = lIter;
+    hashTable_[elem_id] = list_.begin ();
     return elem;
 }

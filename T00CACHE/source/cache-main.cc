@@ -1,13 +1,23 @@
 
-#include "cache.hh"
+#include "../headers/cache.hh"
 
 int main()
 {
-    const pageId_t pIds[] = { 1, 2, 3, 4, 1, 2, 5, 1, 2, 4, 3, 4 };
-    Cache<Page, pageId_t> cache {4};
+    size_t cacheSize = 0;
+    size_t inputSize = 0;
 
-    for (size_t i = 0; i < sizeof (pIds) / sizeof (pageId_t); ++i)
+    std::cin >> cacheSize;
+    std::cin >> inputSize;
+
+    pageId_t * pIds = new pageId_t[inputSize];
+    for (size_t i = 0; i < inputSize; ++i)
+        std::cin >> pIds[i];
+
+    Cache<Page, pageId_t> cache {cacheSize};
+
+    for (size_t i = 0; i < inputSize; ++i)
         cache.getPage (pIds [i]);
 
+    delete pIds;
     return 0;
 }

@@ -7,7 +7,7 @@ set( EXEC_NAME "cache-test" )
 
 add_executable( ${EXEC_NAME} )
 target_include_directories( ${EXEC_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/headers" )
-target_sources( ${EXEC_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache-main.cc" )
+target_sources( ${EXEC_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache-test.cc" )
 
 set( COMMON_COMPILER_OPTIONS
     -Wall -Wpedantic -Wunused -Wunreachable-code

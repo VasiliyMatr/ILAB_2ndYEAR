@@ -19,4 +19,4 @@ Page slowGetDataFunc (pageId_t pageId)
     return Page{};
 }
 
-#endif // PAGE_HH_INCL
+#endif // #ifndef PAGE_HH_INCL

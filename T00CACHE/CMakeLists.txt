@@ -1,7 +1,7 @@
 
 cmake_minimum_required( VERSION 3.11 )
 
-project( Cache VERSION 0.1 LANGUAGES C )
+project( Cache VERSION 0.1 LANGUAGES CXX )
 
 set( EXEC_NAME "cache-test" )
 

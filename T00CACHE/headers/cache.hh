@@ -5,29 +5,28 @@
 
 #include "page.hh"
 
+namespace caches {
+
 template <typename T, typename T_id>
 class Cache2Q
 {
+    // to store elements + ids
+    typedef typename std::pair<T, T_id> TnId;
+    // to store ptr to elements + ids
+    typedef typename std::pair<T*, T_id> TPnId;
+
     // type for iterator for list with elements
-    typedef typename std::list<T>::iterator tListIt;
+    typedef typename std::list<TnId>::iterator tListIt;
     // type for iterator for list with elements ptrs
-    typedef typename std::list<*T>::iterator tPListIt;
+    typedef typename std::list<TPnId>::iterator tPListIt;
 
-    // to know new pacement (choosen list) for reclaimed page.
-    enum class slotPlacement_t
-    {
-        UNDEF_  ,
-        AM_     ,
-        ALIN_
-    };
-
-    std::list<T> AM_List_;
+    std::list<TnId> AM_List_;
     std::unordered_map<T_id, tListIt> AM_HashTable_;
 
-    std::list<T> ALin_List_;
+    std::list<TnId> ALin_List_;
     std::unordered_map<T_id, tListIt> ALin_HashTable_;
 
-    std::list<*T> ALout_List_;
+    std::list<TPnId> ALout_List_;
     std::unordered_map<T_id, tPListIt> ALout_HashTable_;
 
     const size_t AM_Size_ = 0;
@@ -38,10 +37,11 @@ class Cache2Q
     size_t ALin_CachedElemNum_ = 0;
     size_t ALout_CachedElemNum_ = 0;
 
-    Cache2Q( size_t AM_Size, size_t ALin_Size, size_t ALout_Size );
-    tListIt reclaim( T_id, slotPlacement_t & sp );
+    T load2Cache( T_id );
 
 public:
+    Cache2Q( size_t AM_Size, size_t ALin_Size, size_t ALout_Size );
+
     T getPage( T_id );
 };
 
@@ -52,67 +52,85 @@ Cache2Q<T, T_id>::Cache2Q( size_t AM_Size, size_t ALin_Size, size_t ALout_Size )
 template <typename T, typename T_id>
 T Cache2Q<T, T_id>::getPage( T_id elem_id )
 {
-    auto am_It = AM_HashTable_.find (elem_id);
+    std::cout << "searching for " << elem_id << " element:";
 
-    if (am_It != AM_HashTable_.end ()) // move elem to the head of AM
+    auto amHIt = AM_HashTable_.find (elem_id);
+    if (amHIt != AM_HashTable_.end ()) // move elem to the head of AM
     {
-        AM_List_.splice (AM_List_.begin (), AM_List_, am_It);
+        std::cout << "AM hit" << std::endl;
 
-        return AM_List_.front ();
+        auto amIt = amHIt->second;
+
+        AM_List_.splice (AM_List_.begin (), AM_List_, amIt);
+
+        return AM_List_.front ().first;
     }
 
-    auto alout_It = ALout_HashTable_.find (elem_id);
-    if (alout_It != ALout_HashTable_.end ()) // reclaim + add to the head of AM
+    auto aloutHIt = ALout_HashTable_.find (elem_id);
+    if (aloutHIt != ALout_HashTable_.end ()) // reclaim + add to the head of AM
     {
-        slotPlacement_t sp = slotPlacement_t::UNDEF_;
-        auto recl_It = reclaim (elem_id, &sp);
-        // TODO: normal check
-        assert (sp != slotPlacement_t::UNDEF_);
+        std::cout << "AL out hit" << std::endl;
 
-        if (sp == slotPlacement_t::AM_)
-            AM_List_.splice (AM_List_.begin (), AM_List_, recl_It);
+        auto aloutIt = aloutHIt->second;
 
-        else
+        if (AM_Size_ <= AM_CachedElemNum_)
         {
-            if (AM_CachedElemNum_ < AM_Size_)
-            {
-                AM_List.splice (AM_List_.begin (), ALin_List_, recl_It);
-                ++AM_CachedElemNum_;
-            }
-
-            else
-            {
-                AM_HashTable_.erase (AM_List_.back.id_);
-                ALin_List_.splice (ALin_List_.begin (), AM_List_, AM_List_.end ()--);
-                ALin_HashTable_[AM_List_.back.id_] = ALin_List_.begin ();
-                ++ALin_CachedElemNum_;
-
-                AM_List.splice (AM_List_.begin (), ALin_List_, recl_It);
-            }
+            AM_HashTable_.erase (AM_List_.back ().second);
+            AM_List_.pop_back ();
+            --AM_CachedElemNum_;
         }
 
+        AM_List_.emplace_front (TnId (*(aloutIt->first), elem_id));
         AM_HashTable_[elem_id] = AM_List_.begin ();
+        ++AM_CachedElemNum_;
 
-        return *alout_It;
+        return AM_List_.front ().first;
     }
 
-    auto alin_It = ALin_HashTable_.find (elem_id);
-    if (alin_It != ALin_HashTable_.end ()) // do nothing
+    auto alinHIt = ALin_HashTable_.find (elem_id);
+    if (alinHIt != ALin_HashTable_.end ()) // do nothing
     {
-        return *alin_It;
+        std::cout << "AL in hit" << std::endl;
+        return alinHIt->second->first;
     }
+
+    std::cout << "miss" << std::endl;
 
     // elem isn't cached => add elem to the head of ALin
-    slotPlacement_t sp = slotPlacement_t::UNDEF_;
-    auto recl_It = reclaim (elem_id, &sp);
-    // TODO: normal check
-    assert (sp != slotPlacement_t::UNDEF_);
-
-    if (sp == slotPlacement_t::ALIN_)
-        ALin_List_.splice (ALin_List_.begin (), ALin_List_, recl_It);
-
-    else // ...
-
-
-    return slowGetDataFunc (elem_id);
+    return load2Cache (elem_id);
 }
+
+template <typename T, typename T_id>
+T Cache2Q<T, T_id>::load2Cache( T_id elem_id )
+{
+    T elem = slowGetDataFunc (elem_id);
+    if (ALin_Size_ <= ALin_CachedElemNum_)
+    {
+        if (ALout_Size_ <= ALout_CachedElemNum_)
+        {
+            ALout_HashTable_.erase (ALout_List_.back ().second);
+            delete ALout_List_.back ().first;
+            ALout_List_.pop_back ();
+            --ALout_CachedElemNum_;
+        }
+
+        auto alinBack = ALin_List_.back ();
+        ALin_HashTable_.erase (alinBack.second);
+        ALin_List_.pop_back ();
+        --ALin_CachedElemNum_;
+
+        T * aloutElemPtr = new T;
+        *aloutElemPtr = alinBack.first;
+        ALout_List_.emplace_front (TPnId (aloutElemPtr, alinBack.second));
+        ALout_HashTable_[alinBack.second] = ALout_List_.begin ();
+        ++ALout_CachedElemNum_;
+    }
+
+    ALin_List_.emplace_front (TnId (elem, elem_id));
+    ALin_HashTable_[elem_id] = ALin_List_.begin ();
+    ++ALin_CachedElemNum_;
+
+    return elem;
+}
+
+} // namespace caches

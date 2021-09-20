@@ -18,28 +18,22 @@ class Cache2Q
 {
     // To store elements + ids.
     typedef typename std::pair<T, T_id> TnId;
-    // To store ptr to elements + ids.
-    typedef typename std::pair<T*, T_id> TPnId;
 
     // Type for iterator for list with elements.
-    typedef typename std::list<TnId>::iterator tListIt;
-    // Type for iterator for list with elements ptrs.
-    typedef typename std::list<TPnId>::iterator tPListIt;
+    typedef typename std::list<TnId>::iterator TListIt;
 
-    // AM & ALin stores elements.
-    // ALout stores only ptrs to elements, stored in memory.
-
+    // Lists to store cached elements & their ids.
     // Stores elements that are probably hot.
     std::list<TnId> AM_List_;
-    std::unordered_map<T_id, tListIt> AM_HashTable_;
+    std::unordered_map<T_id, TListIt> AM_HashTable_;
 
     // Stores once accesed elements. Managed as FIFO.
     std::list<TnId> ALin_List_; 
-    std::unordered_map<T_id, tListIt> ALin_HashTable_;
+    std::unordered_map<T_id, TListIt> ALin_HashTable_;
 
-    // Stores ptrs to way back accessed elements. Managed as FIFO.
-    std::list<TPnId> ALout_List_;
-    std::unordered_map<T_id, tPListIt> ALout_HashTable_;
+    // Stores way back accessed elements. Managed as FIFO.
+    std::list<TnId> ALout_List_;
+    std::unordered_map<T_id, TListIt> ALout_HashTable_;
 
     // Max lists sizes.
     const size_t AM_Size_ = 0;
@@ -67,6 +61,7 @@ public:
 
     // Efficiency tests stuff
     static size_t test();
+    static void test( const char * filename );
     void resetHitsCount() { hitsCount_ = 0; }
     size_t getHitsCount() { return hitsCount_; }
 };
@@ -76,7 +71,7 @@ constexpr double AM_QUOTA = 0.25;
 constexpr double ALIN_QUOTA = 0.25;
 
 #if AM_QUOTA + ALIN_QUOTA > 1
-#error AM_QUOTA + ALIN_QUOTA cant be above > 1.0
+#error AM_QUOTA + ALIN_QUOTA cant be above 1.0
 #endif
 
 // Minimum sizes
@@ -125,7 +120,7 @@ T Cache2Q<T, T_id>::getPage( T_id elem_id )
             --AM_CachedElemNum_;
         }
 
-        AM_List_.emplace_front (TnId (*(aloutIt->first), elem_id));
+        AM_List_.emplace_front (*aloutIt);
         AM_HashTable_[elem_id] = AM_List_.begin ();
         ++AM_CachedElemNum_;
 
@@ -156,9 +151,7 @@ T Cache2Q<T, T_id>::load2Cache( T_id elem_id )
         // need to free space in ALout
         if (ALout_Size_ <= ALout_CachedElemNum_)
         {
-            auto aloutBack = ALout_List_.back ();
-            ALout_HashTable_.erase (aloutBack.second);
-            delete aloutBack.first;
+            ALout_HashTable_.erase (ALout_List_.back ().second);
             ALout_List_.pop_back ();
             --ALout_CachedElemNum_;
         }
@@ -168,15 +161,13 @@ T Cache2Q<T, T_id>::load2Cache( T_id elem_id )
         ALin_List_.pop_back ();
         --ALin_CachedElemNum_;
 
-        T * aloutElemPtr = new T;
-        *aloutElemPtr = alinBack.first;
-        ALout_List_.emplace_front (TPnId (aloutElemPtr, alinBack.second));
+        ALout_List_.emplace_front (alinBack);
         ALout_HashTable_[alinBack.second] = ALout_List_.begin ();
         ++ALout_CachedElemNum_;
     }
 
     // placing cached element in ALin
-    ALin_List_.emplace_front (TnId (elem, elem_id));
+    ALin_List_.emplace_front (TnId {elem, elem_id});
     ALin_HashTable_[elem_id] = ALin_List_.begin ();
     ++ALin_CachedElemNum_;
 
@@ -184,7 +175,7 @@ T Cache2Q<T, T_id>::load2Cache( T_id elem_id )
 }
 
 template <typename T, typename T_id>
-void Cache2Q<T, T_id>::test( char * filename )
+void Cache2Q<T, T_id>::test( const char * filename )
 {
     assert (filename != nullptr);
 

@@ -17,10 +17,10 @@ template <typename T, typename T_id>
 class Cache2Q
 {
     // To store element + its id.
-    typedef typename std::pair<T, T_id> TnId;
+    using TnId = typename std::pair<T, T_id>;
 
     // Iterator type for list of TnId pairs.
-    typedef typename std::list<TnId>::iterator TListIt;
+    using TListIt = typename std::list<TnId>::iterator;
 
     // Lists to store cached elements & their ids.
     // For elements that are probably hot. Managed as LRU.
@@ -240,7 +240,7 @@ size_t Cache2Q<T, T_id>::test()
     for (size_t i = 0; i < inputSize; ++i)
         cache.getPage (pIds [i]);
 
-    delete pIds;
+    delete [] pIds;
 
     return cache.getHitsCount ();
 }

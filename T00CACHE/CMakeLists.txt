@@ -1,4 +1,3 @@
-
 cmake_minimum_required( VERSION 3.11 )
 
 project( Cache VERSION 0.1 LANGUAGES CXX )
@@ -10,14 +9,17 @@ set( DEBUG_COMPILER_OPTIONS
     -g -O1 -DDBG
 )
 set( RELEASE_COMPILER_OPTIONS
-    -O3
+    -O2
 )
 
+set( TEST_NAME "cache-test" )
 set( EXEC_NAME "cache" )
-set( TARGETS ${EXEC_NAME} )
+set( TARGETS ${EXEC_NAME} ${TEST_NAME} )
 
 add_executable( ${EXEC_NAME} )
+add_executable( ${TEST_NAME} )
 target_sources( ${EXEC_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache.cc")
+target_sources( ${TEST_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache-test.cc" )
 
 foreach( TARGET IN LISTS TARGETS )
 

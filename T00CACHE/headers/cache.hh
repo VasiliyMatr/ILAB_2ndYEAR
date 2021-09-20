@@ -71,19 +71,27 @@ public:
     size_t getHitsCount() { return hitsCount_; }
 };
 
-// ?safe?
+// Good proportions
 constexpr double AM_QUOTA = 0.25;
 constexpr double ALIN_QUOTA = 0.25;
 
 #if AM_QUOTA + ALIN_QUOTA > 1
-#error AM_QUOTA + ALIN_QUOTA > 1.0
+#error AM_QUOTA + ALIN_QUOTA cant be above > 1.0
 #endif
+
+// Minimum sizes
+constexpr size_t MIN_AM_SIZE = 1;
+constexpr size_t MIN_ALIN_SIZE = 1;
+constexpr size_t MIN_ALOUT_SIZE = 2;
 
 template <typename T, typename T_id>
 Cache2Q<T, T_id>::Cache2Q( size_t cacheSize ) :
-    AM_Size_ (AM_QUOTA * cacheSize),
-    ALin_Size_ (ALIN_QUOTA * cacheSize),
-    ALout_Size_ (cacheSize - AM_Size_ - ALin_Size_) // ? order ?
+    AM_Size_ (std::max<size_t>
+        (AM_QUOTA * cacheSize, MIN_AM_SIZE)),
+    ALin_Size_ (std::max<size_t>
+        (ALIN_QUOTA * cacheSize, MIN_ALIN_SIZE)),
+    ALout_Size_ (std::max<size_t>
+        (cacheSize - AM_Size_ - ALin_Size_, MIN_ALOUT_SIZE))
 {}
 
 template <typename T, typename T_id>
@@ -173,6 +181,45 @@ T Cache2Q<T, T_id>::load2Cache( T_id elem_id )
     ++ALin_CachedElemNum_;
 
     return elem;
+}
+
+template <typename T, typename T_id>
+void Cache2Q<T, T_id>::test( char * filename )
+{
+    assert (filename != nullptr);
+
+    std::ifstream in(filename);
+    if (!in.is_open ())
+    {
+        std::cout << "Cannot open file " << filename <<std::endl;
+        return;
+    }
+    std::streambuf * cinbuf = std::cin.rdbuf ();
+    std::cin.rdbuf (in.rdbuf ());
+
+    size_t hitsNum = test ();
+    size_t expectedHitsNum = 0;
+    std::cin >> expectedHitsNum;
+
+    std::cin.rdbuf (cinbuf);
+
+    static const char FAIL_COLOR_ON[] = "\033[0;31m";
+    static const char PASS_COLOR_ON[] = "\033[0;32m";
+    static const char RESET_COLOR[] = "\033[0m";
+
+    std::cout << "Testing with input file " << '\"' << filename << '\"' << std::endl;
+    if (expectedHitsNum != hitsNum)
+    {
+        std::cout << FAIL_COLOR_ON;
+        std::cout << "Failed: ";
+        std::cout << "expeced " << expectedHitsNum << " hits, ";
+        std::cout << "but got " << hitsNum << " hits" << std::endl;
+        std::cout << RESET_COLOR;
+        return;
+    }
+    std::cout << PASS_COLOR_ON;
+    std::cout << "Passed: " <<"Hits number = " << hitsNum << std::endl;
+    std::cout << RESET_COLOR;
 }
 
 template <typename T, typename T_id>

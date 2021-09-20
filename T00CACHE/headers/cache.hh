@@ -2,6 +2,8 @@
 #include <list>
 #include <unordered_map>
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <cassert>
 
 #ifndef CACHE_HH_INCL
@@ -49,11 +51,13 @@ class Cache2Q
     size_t ALin_CachedElemNum_ = 0;
     size_t ALout_CachedElemNum_ = 0;
 
-    // To count number of hits for tests.
+    // Counter for number of hits in tests.
     size_t hitsCount_ = 0;
 
     // Loads uncached element to ALin.
     T load2Cache( T_id );
+    // Counts hits for given cache size & elems ids sequence.
+    static size_t countHits( size_t elemsNum, T_id elemsIds[] );
 
 public:
     // cacheSize = number of elements that can be cached in memory.
@@ -61,28 +65,27 @@ public:
     // Searches element by it's id. Caches frequiently accessed elements.
     T getPage( T_id );
 
-    // Testing stuff
+    // Efficiency tests stuff
+    static void test( char * filename );
+    static size_t test();
     void resetHitsCount() { hitsCount_ = 0; }
     size_t getHitsCount() { return hitsCount_; }
-    // Tests
-    static void test( char * filename );
-    // Counts hits for given cache size & elems ids sequence.
-    static size_t countHits( size_t elemsNum, T_id elemsIds[] );
-
 };
 
-template <typename T, typename T_id>
-Cache2Q<T, T_id>::Cache2Q( size_t cacheSize )
-{
-    // ?safe?
-    constexpr double AM_QUOTA = 0.25;
-    constexpr double ALIN_QUOTA = 0.25;
-    #error AM_QUOTA + ALIN_QUOTA > 1.0
+// ?safe?
+constexpr double AM_QUOTA = 0.25;
+constexpr double ALIN_QUOTA = 0.25;
 
-    AM_Size_ = AM_QUOTA * cacheSize;
-    ALin_Size_ = ALIN_QUOTA * cacheSize;
-    ALout_Size_ = cacheSize - AM_Size_ - ALin_Size_;
-}
+#if AM_QUOTA + ALIN_QUOTA > 1
+#error AM_QUOTA + ALIN_QUOTA > 1.0
+#endif
+
+template <typename T, typename T_id>
+Cache2Q<T, T_id>::Cache2Q( size_t cacheSize ) :
+    AM_Size_ (AM_QUOTA * cacheSize),
+    ALin_Size_ (ALIN_QUOTA * cacheSize),
+    ALout_Size_ (cacheSize - AM_Size_ - ALin_Size_) // ? order ?
+{}
 
 template <typename T, typename T_id>
 T Cache2Q<T, T_id>::getPage( T_id elem_id )
@@ -177,35 +180,37 @@ template <typename T, typename T_id>
 void Cache2Q<T, T_id>::test( char * filename )
 {
     assert (filename != nullptr);
-    FILE * file = fopen (filename, "r");
-    if (file == nullptr)
+
+    std::ifstream in(filename);
+    if (!in.is_open ())
     {
-        std::cout << "Can't open file " << filename << std::endl;
+        std::cout << "Cannot open file " << filename <<std::endl;
         return;
     }
+    std::streambuf * cinbuf = std::cin.rdbuf ();
+    std::cin.rdbuf (in.rdbuf ());
 
-    size_t AM_Size = 0;
-    size_t ALin_Size = 0;
-    size_t ALout_Size = 0;
-    size_t expectedHitsNum = 0;
+    size_t hitsNum = test ();
+
+    std::cin.rdbuf (cinbuf);
+
+    std::cout << "Testing with input file " << '\"' << filename << '\"' << std::endl;
+    std::cout << "Hits number: " << hitsNum << std::endl;
+}
+
+template <typename T, typename T_id>
+size_t Cache2Q<T, T_id>::test()
+{
+    size_t cacheSize = 0;
     size_t inputSize = 0;
 
-    // cache sizes
-    fscanf (file, " %lu", &AM_Size);
-    fscanf (file, " %lu", &ALin_Size);
-    fscanf (file, " %lu", &ALout_Size);
-
-    // input info
-    fscanf (file, " %lu", &expectedHitsNum);
-    fscanf (file, " %lu", &inputSize);
+    std::cin >> cacheSize >> inputSize;
 
     pageId_t * pIds = new pageId_t[inputSize];
     for (size_t i = 0; i < inputSize; ++i)
-        fscanf (file, " %u", pIds + i);
+        std::cin >> pIds[i];
 
-    fclose (file);
-
-    Cache2Q<Page, pageId_t> cache { AM_Size, ALin_Size, ALout_Size };
+    Cache2Q<Page, pageId_t> cache { cacheSize };
     cache.resetHitsCount ();
 
     for (size_t i = 0; i < inputSize; ++i)
@@ -213,19 +218,7 @@ void Cache2Q<T, T_id>::test( char * filename )
 
     delete pIds;
 
-    std::cout << "Testing with input file " << '\"' << filename << '\"' << ':';
-
-    size_t hitsNum = cache.getHitsCount ();
-    if (hitsNum != expectedHitsNum)
-    {
-        std::cout << "ERROR " << std::endl;
-        std::cout << "EXPECTED: " << expectedHitsNum << std::endl;
-        std::cout << "OUTPUT: " << hitsNum << std::endl;
-
-        return;
-    }
-
-    std::cout << "PASSED" << std::endl;
+    return cache.getHitsCount ();
 }
 
 } // namespace caches

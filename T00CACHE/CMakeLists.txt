@@ -3,12 +3,6 @@ cmake_minimum_required( VERSION 3.11 )
 
 project( Cache VERSION 0.1 LANGUAGES CXX )
 
-set( EXEC_NAME "cache-test" )
-
-add_executable( ${EXEC_NAME} )
-target_include_directories( ${EXEC_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/headers" )
-target_sources( ${EXEC_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache-test.cc" )
-
 set( COMMON_COMPILER_OPTIONS
     -Wall -Wpedantic -Wunused -Wunreachable-code
 )
@@ -19,13 +13,27 @@ set( RELEASE_COMPILER_OPTIONS
     -O3
 )
 
-target_compile_features( ${EXEC_NAME} PRIVATE cxx_std_17 )
-target_compile_options( ${EXEC_NAME} PRIVATE ${COMMON_COMPILER_OPTIONS} )
+set( TEST_NAME "cache-test" )
+set( EXEC_NAME "cache" )
+set( TARGETS ${EXEC_NAME} ${TEST_NAME} )
 
-option( DEBUG_BUILD "Build debug project version." ON )
+add_executable( ${EXEC_NAME} )
+add_executable( ${TEST_NAME} )
+target_sources( ${EXEC_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache.cc")
+target_sources( ${TEST_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache-test.cc" )
 
-if ( DEBUG_BUILD )
-    target_compile_options( ${EXEC_NAME} PRIVATE ${DEBUG_COMPILER_OPTIONS} )
-else()
-    target_compile_options( ${EXEC_NAME} PRIVATE ${RELEASE_COMPILER_OPTIONS} )
-endif( DEBUG_BUILD )
+foreach( TARGET IN LISTS TARGETS )
+
+    target_include_directories( ${TARGET} PRIVATE "${CMAKE_SOURCE_DIR}/headers" )
+    target_compile_features( ${TARGET} PRIVATE cxx_std_17 )
+    target_compile_options( ${TARGET} PRIVATE ${COMMON_COMPILER_OPTIONS} )
+
+    option( DEBUG_BUILD "Build debug project version." ON )
+
+    if ( DEBUG_BUILD )
+        target_compile_options( ${TARGET} PRIVATE ${DEBUG_COMPILER_OPTIONS} )
+    else()
+        target_compile_options( ${TARGET} PRIVATE ${RELEASE_COMPILER_OPTIONS} )
+    endif( DEBUG_BUILD )
+
+endforeach()

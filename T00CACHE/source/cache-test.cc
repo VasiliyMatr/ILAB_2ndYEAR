@@ -1,5 +1,5 @@
 
-#include "../headers/cache.hh"
+#include "cache.hh"
 
 int main( int argc, char ** argv )
 {

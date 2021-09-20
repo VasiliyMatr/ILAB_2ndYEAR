@@ -66,7 +66,6 @@ public:
     T getPage( T_id );
 
     // Efficiency tests stuff
-    static void test( char * filename );
     static size_t test();
     void resetHitsCount() { hitsCount_ = 0; }
     size_t getHitsCount() { return hitsCount_; }
@@ -174,28 +173,6 @@ T Cache2Q<T, T_id>::load2Cache( T_id elem_id )
     ++ALin_CachedElemNum_;
 
     return elem;
-}
-
-template <typename T, typename T_id>
-void Cache2Q<T, T_id>::test( char * filename )
-{
-    assert (filename != nullptr);
-
-    std::ifstream in(filename);
-    if (!in.is_open ())
-    {
-        std::cout << "Cannot open file " << filename <<std::endl;
-        return;
-    }
-    std::streambuf * cinbuf = std::cin.rdbuf ();
-    std::cin.rdbuf (in.rdbuf ());
-
-    size_t hitsNum = test ();
-
-    std::cin.rdbuf (cinbuf);
-
-    std::cout << "Testing with input file " << '\"' << filename << '\"' << std::endl;
-    std::cout << "Hits number: " << hitsNum << std::endl;
 }
 
 template <typename T, typename T_id>

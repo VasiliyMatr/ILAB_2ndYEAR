@@ -16,22 +16,22 @@ namespace caches {
 template <typename T, typename T_id>
 class Cache2Q
 {
-    // To store elements + ids.
+    // To store element + its id.
     typedef typename std::pair<T, T_id> TnId;
 
-    // Type for iterator for list with elements.
+    // Iterator type for list of TnId pairs.
     typedef typename std::list<TnId>::iterator TListIt;
 
     // Lists to store cached elements & their ids.
-    // Stores elements that are probably hot.
+    // For elements that are probably hot. Managed as LRU.
     std::list<TnId> AM_List_;
     std::unordered_map<T_id, TListIt> AM_HashTable_;
 
-    // Stores once accesed elements. Managed as FIFO.
+    // For once accesed elements. Managed as FIFO.
     std::list<TnId> ALin_List_; 
     std::unordered_map<T_id, TListIt> ALin_HashTable_;
 
-    // Stores way back accessed elements. Managed as FIFO.
+    // For way back accessed elements. Managed as FIFO.
     std::list<TnId> ALout_List_;
     std::unordered_map<T_id, TListIt> ALout_HashTable_;
 
@@ -59,14 +59,23 @@ public:
     // Searches element by it's id. Caches frequiently accessed elements.
     T getPage( T_id );
 
-    // Efficiency tests stuff
+    // Efficiency tests stuff.
+    // To test with data from stdin. Format for data:
+    //     <CACHE_SIZE> <SEQUENCE_SIZE> <SEQUENCE>
+    //
+    //     Returns number of hits for given inputs.
     static size_t test();
+
+    // To test with data from file. Format for test data:
+    //     <CACHE_SIZE> <SEQUENCE_SIZE> <SEQUENCE> <EXPECTED_HITS_NUM>
+    //
+    //     Prints test result in stdin.
     static void test( const char * filename );
     void resetHitsCount() { hitsCount_ = 0; }
     size_t getHitsCount() { return hitsCount_; }
 };
 
-// Good proportions
+// Good proportions for lists sizes.
 constexpr double AM_QUOTA = 0.25;
 constexpr double ALIN_QUOTA = 0.25;
 
@@ -74,7 +83,7 @@ constexpr double ALIN_QUOTA = 0.25;
 #error AM_QUOTA + ALIN_QUOTA cant be above 1.0
 #endif
 
-// Minimum sizes
+// Minimum sizes for lists.
 constexpr size_t MIN_AM_SIZE = 1;
 constexpr size_t MIN_ALIN_SIZE = 1;
 constexpr size_t MIN_ALOUT_SIZE = 2;
@@ -93,7 +102,7 @@ template <typename T, typename T_id>
 T Cache2Q<T, T_id>::getPage( T_id elem_id )
 {
     auto amHIt = AM_HashTable_.find (elem_id);
-    // move elem to the head of AM
+    // Move element to the head of AM.
     if (amHIt != AM_HashTable_.end ())
     {
         ++hitsCount_;
@@ -106,7 +115,7 @@ T Cache2Q<T, T_id>::getPage( T_id elem_id )
     }
 
     auto aloutHIt = ALout_HashTable_.find (elem_id);
-    // move element form memory to element slot
+    // Move element form ALout to AM.
     if (aloutHIt != ALout_HashTable_.end ())
     {
         ++hitsCount_;
@@ -128,7 +137,7 @@ T Cache2Q<T, T_id>::getPage( T_id elem_id )
     }
 
     auto alinHIt = ALin_HashTable_.find (elem_id);
-    // do nothing
+    // Do nothing.
     if (alinHIt != ALin_HashTable_.end ())
     {
         ++hitsCount_;
@@ -136,7 +145,7 @@ T Cache2Q<T, T_id>::getPage( T_id elem_id )
         return alinHIt->second->first;
     }
 
-    // elem isn't cached => load elem to the head of ALin
+    // Element isn't cached => load element to the head of ALin
     return load2Cache (elem_id);
 }
 
@@ -145,10 +154,10 @@ T Cache2Q<T, T_id>::load2Cache( T_id elem_id )
 {
     T elem = slowGetDataFunc (elem_id);
 
-    // need to free space in ALin
+    // Need to free space in ALin
     if (ALin_Size_ <= ALin_CachedElemNum_)
     {
-        // need to free space in ALout
+        // Need to free space in ALout
         if (ALout_Size_ <= ALout_CachedElemNum_)
         {
             ALout_HashTable_.erase (ALout_List_.back ().second);
@@ -166,7 +175,7 @@ T Cache2Q<T, T_id>::load2Cache( T_id elem_id )
         ++ALout_CachedElemNum_;
     }
 
-    // placing cached element in ALin
+    // Placing new element in ALin.
     ALin_List_.emplace_front (TnId {elem, elem_id});
     ALin_HashTable_[elem_id] = ALin_List_.begin ();
     ++ALin_CachedElemNum_;

@@ -62,7 +62,7 @@ void CacheLRU<T, T_id>::addElem( EnId<T, T_id> pair )
 }
 
 template <typename T, typename T_id>
-bool CacheLRU<T, T_id>::isCached( T_id id ) // const
+bool CacheLRU<T, T_id>::isCached( T_id id ) const
 {
     return hashTable_.find (id) != hashTable_.end ();
 }

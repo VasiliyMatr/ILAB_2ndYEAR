@@ -12,7 +12,9 @@
 
 /*  TODO:
 
-    1) Isolate pairs (list, unorderedMap) into separate class?
+    1) Isolate pairs (list, unorderedMap) into separate class with all needed functionality;
+    2) Implement ideal caching to cmp hit rates;
+    3) Add readme.
 
 */
 
@@ -25,23 +27,6 @@ using EnId = typename std::pair<T, T_id>;
 // Iterator type for list of EnId pairs.
 template <typename T, typename T_id>
 using EListIt = typename std::list<EnId<T, T_id>>::iterator;
-
-template <typename T, typename T_id>
-class MappedList
-{
-    std::list<EnId<T, T_id>> elemsList_;
-    std::unordered_map<T_id, EListIt<T, T_id>> hashTable_;
-
-    // Just basic functionallity.
-    void pushFront( EnId<T, T_id> );
-    void pushBack( EnId<T, T_id> );
-    void move2Front( T_id );
-    void move2Back( T_id );
-    void popFront();
-    void popBack();
-    T front();
-    T back();
-};
 
 template <typename T, typename T_id>
 class CacheLRU
@@ -71,7 +56,7 @@ public:
     // Forces element caching.
     void addElem( EnId<T, T_id> );
     // To check if element cached.
-    bool isCached( T_id );
+    bool isCached( T_id ) const;
 
 };
 

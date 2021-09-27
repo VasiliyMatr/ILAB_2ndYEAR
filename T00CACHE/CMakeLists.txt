@@ -18,8 +18,15 @@ set( TARGETS ${EXEC_NAME} ${TEST_NAME} )
 
 add_executable( ${EXEC_NAME} )
 add_executable( ${TEST_NAME} )
-target_sources( ${EXEC_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache.cc")
-target_sources( ${TEST_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/cache-test.cc" )
+target_sources( ${EXEC_NAME} PRIVATE
+    "${CMAKE_SOURCE_DIR}/source/cache-main.cc"
+    "${CMAKE_SOURCE_DIR}/source/cache-tests.cc"
+ )
+
+target_sources( ${TEST_NAME} PRIVATE
+    "${CMAKE_SOURCE_DIR}/source/cache-tests-main.cc"
+    "${CMAKE_SOURCE_DIR}/source/cache-tests.cc"
+ )
 
 foreach( TARGET IN LISTS TARGETS )
 

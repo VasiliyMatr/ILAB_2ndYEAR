@@ -1,10 +1,10 @@
 
-#include "cache.hh"
+#include "cache-tests.hh"
 
 int main( int argc, char ** argv )
 {
     for (int i = 1; i < argc; i++)
-        caches::Cache2Q<Page, pageId_t>::test (argv[i]);
+        caches::test2QEfficiency (argv[i]);
 
     return 0;
 }

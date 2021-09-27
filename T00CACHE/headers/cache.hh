@@ -14,13 +14,10 @@
 
 /*  TODO:
 
-    1) Add const modifier to methods where it can be done. - DONE
-    2) Separate tests & Cache2Q class.
-    3) Add LRU Cache class.
-
-    4) ?Ideal caching? - NO
-
-    5) getPage = bad name
+    1) Separate tests & Cache2Q class.
+    2) Remove names with word "page".
+    3) Add slowGetDataFunc as template param.
+    4) Isolate pairs (list, unorderedMap) into separate class.
 
 */
 
@@ -34,6 +31,13 @@ using EnId = typename std::pair<T, T_id>;
 template <typename T, typename T_id>
 using EListIt = typename std::list<EnId<T, T_id>>::iterator;
 
+// TODO:
+template <typename T, typename T_id>
+class MappedList
+{
+
+};
+
 template <typename T, typename T_id>
 class CacheLRU
 {
@@ -43,7 +47,7 @@ class CacheLRU
     // Max cached elems num.
     const size_t capacity_;
     // Min maxSize_ value.
-    static constexpr size_t MIN_CAPACITY_ = 1;
+    static const size_t MIN_CAPACITY_ = 1;
     // Currently cached elements number.
     size_t cachedElemsNum_ = 0;
 
@@ -57,7 +61,11 @@ public:
     CacheLRU operator=( const CacheLRU& ) = delete;
     CacheLRU operator=( const CacheLRU&& ) = delete;
 
+    // Searches element by it's id. Caches frequiently accessed elements.
     T getPage( T_id );
+    // Forces element caching.
+    void addPage( EnId<T, T_id> );
+    // To check if element cached.
     bool isCached( T_id );
 
 };
@@ -65,10 +73,8 @@ public:
 template <typename T, typename T_id>
 class Cache2Q
 {
-    // Lists to store cached elements & their ids.
-    // For elements that are probably hot. Managed as LRU.
-    std::list<EnId<T, T_id>> amList_;
-    std::unordered_map<T_id, EListIt<T, T_id>> amHashTable_;
+    // LRU cache to store hottest elements
+    CacheLRU<T, T_id> am_;
 
     // For once accesed elements. Managed as FIFO.
     std::list<EnId<T, T_id>> alinList_; 
@@ -79,28 +85,26 @@ class Cache2Q
     std::unordered_map<T_id, EListIt<T, T_id>> aloutHashTable_;
 
     // Good proportions for lists capacities.
-    static constexpr double AM_QUOTA_ = 0.25;
-    static constexpr double ALIN_QUOTA_ = 0.25;
+    static const double AM_QUOTA_ = 0.25;
+    static const double ALIN_QUOTA_ = 0.25;
     static_assert (AM_QUOTA_ + ALIN_QUOTA_ <= 1,
         "AM_QUOTA_ + ALIN_QUOTA_ cant be above 1.0");
 
     // Minimum capacities for lists.
-    static constexpr size_t MIN_AM_CAPACITY_ = 1;
-    static constexpr size_t MIN_ALIN_CAPACITY_ = 1;
-    static constexpr size_t MIN_ALOUT_CAPACITY_ = 2;
+    static const size_t MIN_AM_CAPACITY_ = 1;
+    static const size_t MIN_ALIN_CAPACITY_ = 1;
+    static const size_t MIN_ALOUT_CAPACITY_ = 2;
 
-    // Public constexpr for users to know.
-public: static constexpr size_t MIN_2Q_CAPACITY_ =
+    // Public const for users to know.
+public: static const size_t MIN_2Q_CAPACITY_ =
     MIN_AM_CAPACITY_ + MIN_ALIN_CAPACITY_ + MIN_ALOUT_CAPACITY_;
 private:
 
     // Lists capacities.
-    const size_t amCapacity_ = 0;
     const size_t alinCapacity_ = 0;
     const size_t aloutCapacity_ = 0;
 
     // Numbers of currently cached elements.
-    size_t amCachedElemsNum_ = 0;
     size_t alinCachedElemsNum_ = 0;
     size_t aloutCachedElemsNum_ = 0;
 

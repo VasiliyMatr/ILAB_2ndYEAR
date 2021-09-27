@@ -41,6 +41,27 @@ T CacheLRU<T, T_id>::getPage( T_id id )
 }
 
 template <typename T, typename T_id>
+void CacheLRU<T, T_id>::addPage( EnId<T, T_id> pair )
+{
+    if (isCached (id)) // Remove old value.
+    {
+        auto hashIt = hashTable_.find (pair.second);
+        EnId<T, T_id> oldId = hashIt.second->second;
+        hashTable_.erase (oldId);
+        elemsList_.erase (hashIt.second);
+    }
+
+    else if (cachedElemsNum_ >= capacity_) // Free space.
+    {
+        hashTable_.erase (elemsList_.back.second);
+        elemsList_.pop_back ();
+    }
+
+    elemsList_.emplace_front (pair.first);
+    hashTable_[pair.second] = elemsList_.begin ();
+}
+
+template <typename T, typename T_id>
 bool CacheLRU<T, T_id>::isCached( T_id id )
 {
     return hashTable_.find (id) != hashTable_.end ();
@@ -53,24 +74,15 @@ Cache2Q<T, T_id>::Cache2Q( size_t capacity ) :
     alinCapacity_ (std::max<size_t>
         (std::trunc (ALIN_QUOTA_ * capacity), MIN_ALIN_CAPACITY_)),
     aloutCapacity_ (std::max<size_t>
-        (capacity - amCapacity_ - alinCapacity_, MIN_ALOUT_CAPACITY_))
+        (capacity - amapacity_ - alinCapacity_, MIN_ALOUT_CAPACITY_)),
+    am_{ amCapacity_ }
 {}
 
 template <typename T, typename T_id>
 T Cache2Q<T, T_id>::getPage( T_id id )
 {
-    auto amHashIt = amHashTable_.find (id);
-    // Move element to the head of am.
-    if (amHashIt != amHashTable_.end ())
-    {
-        ++hitsCount_;
-
-        auto amIt = amHashIt->second;
-
-        amList_.splice (amList_.begin (), amList_, amIt);
-
-        return amList_.front ().first;
-    }
+    if (am_.isCached (id))
+        return am_.getPage (id);
 
     auto aloutHashIt = aloutHashTable_.find (id);
     // Move element form alout to the head of am.
@@ -80,18 +92,9 @@ T Cache2Q<T, T_id>::getPage( T_id id )
 
         auto aloutIt = aloutHashIt->second;
 
-        if (amCapacity_ <= amCachedElemsNum_)
-        {
-            amHashTable_.erase (amList_.back ().second);
-            amList_.pop_back ();
-            --amCachedElemsNum_;
-        }
+        am_.addPage (*aloutIt);
 
-        amList_.emplace_front (*aloutIt);
-        amHashTable_[id] = amList_.begin ();
-        ++amCachedElemsNum_;
-
-        return amList_.front ().first;
+        return aloutIt->first;
     }
 
     auto alinHashIt = alinHashTable_.find (id);
@@ -161,9 +164,9 @@ void Cache2Q<T, T_id>::test( const char * filename )
 
     std::cin.rdbuf (cinbuf);
 
-    constexpr char SET_FAIL_COLOR[] = "\033[0;31m";
-    constexpr char SET_PASS_COLOR[] = "\033[0;32m";
-    constexpr char RESET_COLOR[] = "\033[0m";
+    static const char SET_FAIL_COLOR[] = "\033[0;31m";
+    static const char SET_PASS_COLOR[] = "\033[0;32m";
+    static const char RESET_COLOR[] = "\033[0m";
 
     std::cout << "Testing with input file " << '\"' << filename << '\"' << std::endl;
     if (expectedHitsNum != hitsNum)

@@ -12,11 +12,7 @@
 
 /*  TODO:
 
-    1) Separate tests & Cache2Q class.
-    2) Replace names with word "page".
-    3) Add slowGetDataFunc as template param.
-    4) Isolate pairs (list, unorderedMap) into separate class?
-    5) What whould i do with members init warnings?
+    1) Isolate pairs (list, unorderedMap) into separate class?
 
 */
 
@@ -30,11 +26,21 @@ using EnId = typename std::pair<T, T_id>;
 template <typename T, typename T_id>
 using EListIt = typename std::list<EnId<T, T_id>>::iterator;
 
-// TODO?
 template <typename T, typename T_id>
 class MappedList
 {
+    std::list<EnId<T, T_id>> elemsList_;
+    std::unordered_map<T_id, EListIt<T, T_id>> hashTable_;
 
+    // Just basic functionallity.
+    void pushFront( EnId<T, T_id> );
+    void pushBack( EnId<T, T_id> );
+    void move2Front( T_id );
+    void move2Back( T_id );
+    void popFront();
+    void popBack();
+    T front();
+    T back();
 };
 
 template <typename T, typename T_id>
@@ -61,9 +67,9 @@ public:
     CacheLRU& operator=( CacheLRU&& ) = default;
 
     // Searches element by it's id. Caches frequiently accessed elements.
-    T getPage( T_id );
+    T getElem( T_id );
     // Forces element caching.
-    void addPage( EnId<T, T_id> );
+    void addElem( EnId<T, T_id> );
     // To check if element cached.
     bool isCached( T_id );
 
@@ -123,7 +129,7 @@ public:
     Cache2Q& operator=( Cache2Q&& ) = default;
 
     // Searches element by it's id. Caches frequiently accessed elements.
-    T getPage( T_id );
+    T getElem( T_id );
 };
 
 } // namespace caches

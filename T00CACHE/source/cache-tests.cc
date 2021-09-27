@@ -73,7 +73,7 @@ size_t test2QEfficiency()
     TestPage::resetMissNum ();
 
     for (size_t i = 0; i < inputSize; ++i)
-        cache.getPage (pIds [i]);
+        cache.getElem (pIds [i]);
 
     delete [] pIds;
 

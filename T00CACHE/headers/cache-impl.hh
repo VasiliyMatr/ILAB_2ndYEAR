@@ -2,8 +2,6 @@
 #ifndef CACHE_IMPL_HH_INCL
 #define CACHE_IMPL_HH_INCL
 
-// For calm code IDE parsing without 'errors' highlighting.
-
 namespace caches
 {
 
@@ -13,7 +11,7 @@ CacheLRU<T, T_id>::CacheLRU( size_t capacity ) :
 {}
 
 template <typename T, typename T_id>
-T CacheLRU<T, T_id>::getPage( T_id id )
+T CacheLRU<T, T_id>::getElem( T_id id )
 {
     auto hashIt = hashTable_.find (id);
 
@@ -43,7 +41,7 @@ T CacheLRU<T, T_id>::getPage( T_id id )
 }
 
 template <typename T, typename T_id>
-void CacheLRU<T, T_id>::addPage( EnId<T, T_id> pair )
+void CacheLRU<T, T_id>::addElem( EnId<T, T_id> pair )
 {
     if (isCached (pair.second)) // Remove old value.
     {
@@ -81,10 +79,10 @@ Cache2Q<T, T_id>::Cache2Q( size_t capacity ) :
 {}
 
 template <typename T, typename T_id>
-T Cache2Q<T, T_id>::getPage( T_id id )
+T Cache2Q<T, T_id>::getElem( T_id id )
 {
     if (am_.isCached (id))
-        return am_.getPage (id);
+        return am_.getElem (id);
 
     auto aloutHashIt = aloutHashTable_.find (id);
     // Move element form alout to the head of am.
@@ -92,7 +90,7 @@ T Cache2Q<T, T_id>::getPage( T_id id )
     {
         auto aloutIt = aloutHashIt->second;
 
-        am_.addPage (*aloutIt);
+        am_.addElem (*aloutIt);
 
         return aloutIt->first;
     }

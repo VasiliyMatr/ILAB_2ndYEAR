@@ -1,21 +1,28 @@
 
+#include <limits>
 #include <cmath>
+
+#ifndef GEOM3D_HH_INCL
+#define GEOM3D_HH_INCL
 
 namespace geom3D
 {
 
 // Choosen floating point type.
 using fp_t = _Float32;
+const fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
+const fp_t inf = std::numeric_limits<fp_t>::infinity ();
 
 // Common 3D point.
 struct Point
 {
 
-    fp_t x_ = std::nan("");
-    fp_t y_ = std::nan("");
-    fp_t z_ = std::nan("");
+    fp_t x_ = nan;
+    fp_t y_ = nan;
+    fp_t z_ = nan;
 
     Point( fp_t x, fp_t y, fp_t z );
+    Point() = default;
     bool isValid() const;
 
 };
@@ -24,17 +31,25 @@ struct Point
 struct Vector
 {
 
-    fp_t x_ = std::nan("");
-    fp_t y_ = std::nan("");
-    fp_t z_ = std::nan("");
+    fp_t x_ = nan;
+    fp_t y_ = nan;
+    fp_t z_ = nan;
 
     Vector( fp_t x, fp_t y, fp_t z );
+
     bool isValid() const;
 
     Vector operator+( const Vector& second ) const;
     Vector operator-( const Vector& second ) const;
     Vector operator+=( const Vector& second ) const;
     Vector operator-=( const Vector& second ) const;
+
+    Vector operator*( const fp_t num ) const;
+    Vector operator/( const fp_t num ) const;
+
+    fp_t squareLen() const;
+    fp_t len() const;
+    Vector normalized() const;
 
     static Vector scalarProduct( const Vector& first, const Vector& second );
     static Vector crossProduct( const Vector& first, const Vector& second );
@@ -75,3 +90,5 @@ struct OrientedTriangle : Triangle
 };
 
 } // namespace geom3D
+
+#endif // #ifndef GEOM3D_HH_INCL

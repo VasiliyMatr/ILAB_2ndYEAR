@@ -1,6 +1,7 @@
 
 #include <limits>
 #include <cmath>
+#include <type_traits>
 
 #ifndef GEOM3D_HH_INCL
 #define GEOM3D_HH_INCL
@@ -10,8 +11,11 @@ namespace geom3D
 
 // Choosen floating point type.
 using fp_t = _Float32;
+
 const fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
 const fp_t inf = std::numeric_limits<fp_t>::infinity ();
+
+bool isValid (fp_t value);
 
 // Common 3D point.
 struct Point
@@ -36,22 +40,26 @@ struct Vector
     fp_t z_ = nan;
 
     Vector( fp_t x, fp_t y, fp_t z );
+    Vector( const Vector& ) = default;
 
     bool isValid() const;
 
+    Vector operator-() const;
     Vector operator+( const Vector& second ) const;
     Vector operator-( const Vector& second ) const;
-    Vector operator+=( const Vector& second ) const;
-    Vector operator-=( const Vector& second ) const;
+    Vector operator+=( const Vector& second );
+    Vector operator-=( const Vector& second );
 
     Vector operator*( const fp_t num ) const;
     Vector operator/( const fp_t num ) const;
+    Vector operator*=( const fp_t num );
+    Vector operator/=( const fp_t num );
 
     fp_t squareLen() const;
     fp_t len() const;
     Vector normalized() const;
 
-    static Vector scalarProduct( const Vector& first, const Vector& second );
+    static fp_t scalarProduct( const Vector& first, const Vector& second );
     static Vector crossProduct( const Vector& first, const Vector& second );
 
 };

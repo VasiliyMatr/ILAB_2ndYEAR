@@ -15,9 +15,10 @@ using fp_t = _Float32;
 const fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
 const fp_t inf = std::numeric_limits<fp_t>::infinity ();
 
+// fp_t validation function
 bool isValid( fp_t value );
-
-int diff( fp_t a, fp_t b );
+// fp_t == operator equivalent - compares with accuracy.
+int isEqual( fp_t a, fp_t b );
 
 // Common 3D point.
 struct Point

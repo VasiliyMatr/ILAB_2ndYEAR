@@ -4,27 +4,48 @@
 
 using namespace geom3D;
 
+namespace
+{
+
 // Bounds for test values.
-static const fp_t MAX_TEST_FP_VAL = std::sqrt (std::numeric_limits<fp_t>::max ()) - 1;
-static const fp_t MIN_TEST_FP_VAL = -std::sqrt (-std::numeric_limits<fp_t>::lowest ()) + 1;
+const fp_t MAX_TEST_FP_VAL = std::numeric_limits<fp_t>::max () / 1e34;
+const fp_t MIN_TEST_FP_VAL = std::numeric_limits<fp_t>::lowest () / 1e34;
 
 // Generates fp_t value in range:
 // [MIN_TEST_FP_VAL; MAX_TEST_FP_VAL] \ {0}
 // Used to gen test values.
-static fp_t genFPVal()
+fp_t genFPVal()
 {
     fp_t positivePart = MAX_TEST_FP_VAL * (static_cast<fp_t> (std::rand ()) / RAND_MAX);
     fp_t negativePart = MIN_TEST_FP_VAL * (static_cast<fp_t> (std::rand ()) / RAND_MAX);
 
     fp_t sum = positivePart + negativePart;
 
-    return diff (sum, 0) ? sum : 1;
+    return isEqual (sum, 0) ? 1 : sum;
 }
 
 // Generates Vector value for tests.
-static Vector genVec()
+Vector genVec()
 {
     return Vector {genFPVal (), genFPVal (), genFPVal ()};
+}
+
+} // namespace
+
+TEST( UtilsTests, isValidTest )
+{
+    ASSERT_FALSE (isValid (geom3D::nan));
+    ASSERT_FALSE (isValid (geom3D::inf));
+    ASSERT_TRUE (isValid (genFPVal ()));
+}
+
+TEST( UtilsTests, isEqualTest )
+{
+    fp_t a = genFPVal ();
+    fp_t b = a;
+
+    ASSERT_TRUE (isEqual (a, b));
+    ASSERT_FALSE (isEqual (a, b + 0.01));
 }
 
 TEST( PointTests, NanCoordsTests )
@@ -163,6 +184,9 @@ TEST( VectorTests, OperatorUnMinusTest )
     ASSERT_FLOAT_EQ (-(a.z_), b.z_);
 }
 
+namespace
+{
+
 // Vector class binary operators test status.
 enum class vecOprTestStatus_t
 {
@@ -179,12 +203,12 @@ vecOprTestStatus_t vecOprTest (Vector a, Vector b, Vector c, scalOperator_t scal
     if (!c.isValid ())
         return vecOprTestStatus_t::NOT_VALID_RESULT;
 
-    if (diff (scalOperator (a.x_, b.x_), c.x_) ||
-        diff (scalOperator (a.y_, b.y_), c.y_) ||
-        diff (scalOperator (a.z_, b.z_), c.z_))
-        return vecOprTestStatus_t::WRONG_CALC;
+    if (isEqual (scalOperator (a.x_, b.x_), c.x_) &&
+        isEqual (scalOperator (a.y_, b.y_), c.y_) &&
+        isEqual (scalOperator (a.z_, b.z_), c.z_))
+        return vecOprTestStatus_t::OK;
 
-    return vecOprTestStatus_t::OK;
+    return vecOprTestStatus_t::WRONG_CALC;
 }
 
 vecOprTestStatus_t vecOprTest (Vector a, fp_t b, Vector c, scalOperator_t scalOperator)
@@ -192,12 +216,12 @@ vecOprTestStatus_t vecOprTest (Vector a, fp_t b, Vector c, scalOperator_t scalOp
     if (!c.isValid ())
         return vecOprTestStatus_t::NOT_VALID_RESULT;
 
-    if (diff (scalOperator (a.x_, b), c.x_) ||
-        diff (scalOperator (a.y_, b), c.y_) ||
-        diff (scalOperator (a.z_, b), c.z_))
-        return vecOprTestStatus_t::WRONG_CALC;
+    if (isEqual (scalOperator (a.x_, b), c.x_) &&
+        isEqual (scalOperator (a.y_, b), c.y_) &&
+        isEqual (scalOperator (a.z_, b), c.z_))
+        return vecOprTestStatus_t::OK;
 
-    return vecOprTestStatus_t::OK;
+    return vecOprTestStatus_t::WRONG_CALC;
 }
 
 vecOprTestStatus_t vecOprTest (fp_t a, Vector b, Vector c, scalOperator_t scalOperator)
@@ -205,13 +229,15 @@ vecOprTestStatus_t vecOprTest (fp_t a, Vector b, Vector c, scalOperator_t scalOp
     if (!c.isValid ())
         return vecOprTestStatus_t::NOT_VALID_RESULT;
 
-    if (diff (scalOperator (a, b.x_), c.x_) ||
-        diff (scalOperator (a, b.y_), c.y_) ||
-        diff (scalOperator (a, b.z_), c.z_))
-        return vecOprTestStatus_t::WRONG_CALC;
+    if (isEqual (scalOperator (a, b.x_), c.x_) &&
+        isEqual (scalOperator (a, b.y_), c.y_) &&
+        isEqual (scalOperator (a, b.z_), c.z_))
+        return vecOprTestStatus_t::OK;
 
-    return vecOprTestStatus_t::OK;
+    return vecOprTestStatus_t::WRONG_CALC;
 }
+
+} // namespace
 
 TEST( VectorTests, OperatorPlusTest )
 {

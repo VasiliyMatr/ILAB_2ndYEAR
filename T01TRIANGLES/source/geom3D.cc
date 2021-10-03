@@ -9,15 +9,11 @@ bool isValid( fp_t value )
     return !(std::isnan (value) || std::isinf (value));
 }
 
-int diff( fp_t a, fp_t b )
+int isEqual( fp_t a, fp_t b )
 {
-    if (std::abs (a - b) < std::numeric_limits<fp_t>::min ())
-        return 0;
+    static const fp_t EPSILON = 1e-5;
 
-    if (a < b)
-        return -1;
-    
-    return 1;
+    return std::abs (a - b) < EPSILON;
 }
 
 Point::Point( fp_t x, fp_t y, fp_t z ) : x_(x), y_(y), z_(z) {}
@@ -90,7 +86,7 @@ Vector Vector::operator/=( const fp_t num )
 
 bool Vector::operator==( const Vector& second ) const
 {
-    return !(diff (x_, second.x_) || diff (y_, second.y_) || diff (z_, second.z_));
+    return isEqual (x_, second.x_) && isEqual (y_, second.y_) && isEqual (z_, second.z_);
 }
 
 fp_t Vector::squareLen() const

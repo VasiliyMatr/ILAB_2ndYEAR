@@ -2,131 +2,334 @@
 #include "geom3D.hh"
 #include <gtest/gtest.h>
 
-TEST( PointTest, ValidationTests )
-{
-    // Points with nan fields.
-    geom3D::Point A {geom3D::nan, 1.0, 2.0};
-    geom3D::Point B {1.0, geom3D::nan, 2.0};
-    geom3D::Point C {1.0, 2.0, geom3D::nan};
-    // Points with inf fields.
-    geom3D::Point D {geom3D::inf, 1.0, 2.0};
-    geom3D::Point E {1.0, geom3D::inf, 2.0};
-    geom3D::Point F {1.0, 2.0, geom3D::inf};
+using namespace geom3D;
 
-    // Invalid default constr point.
-    geom3D::Point G {};
+// Bounds for test values.
+static const fp_t MAX_TEST_FP_VAL = std::sqrt (std::numeric_limits<fp_t>::max ()) - 1;
+static const fp_t MIN_TEST_FP_VAL = -std::sqrt (-std::numeric_limits<fp_t>::lowest ()) + 1;
+
+// Generates fp_t value in range:
+// [MIN_TEST_FP_VAL; MAX_TEST_FP_VAL] \ {0}
+// Used to gen test values.
+static fp_t genFPVal()
+{
+    fp_t positivePart = MAX_TEST_FP_VAL * (static_cast<fp_t> (std::rand ()) / RAND_MAX);
+    fp_t negativePart = MIN_TEST_FP_VAL * (static_cast<fp_t> (std::rand ()) / RAND_MAX);
+
+    fp_t sum = positivePart + negativePart;
+
+    return diff (sum, 0) ? sum : 1;
+}
+
+// Generates Vector value for tests.
+static Vector genVec()
+{
+    return Vector {genFPVal (), genFPVal (), genFPVal ()};
+}
+
+TEST( PointTests, NanCoordsTests )
+{
+    Point A {geom3D::nan, genFPVal (), genFPVal ()};
+    Point B {genFPVal (), geom3D::nan, genFPVal ()};
+    Point C {genFPVal (), genFPVal (), geom3D::nan};
 
     ASSERT_FALSE (A.isValid ());
     ASSERT_FALSE (B.isValid ());
     ASSERT_FALSE (C.isValid ());
-    ASSERT_FALSE (D.isValid ());
-    ASSERT_FALSE (E.isValid ());
-    ASSERT_FALSE (F.isValid ());
-    ASSERT_FALSE (G.isValid ());
 }
 
-TEST( PointTest, ValidDataTests )
+TEST( PointTests, InfCoordsTests )
 {
-    // Generating some data in choosen range.
-    for (geom3D::fp_t i = 0; i < 1024; ++i)
-    {
-        geom3D::fp_t x = i * std::rand () / RAND_MAX;
-        geom3D::fp_t y = i * std::rand () / RAND_MAX;
-        geom3D::fp_t z = i * std::rand () / RAND_MAX;
+    Point A {geom3D::inf, genFPVal (), genFPVal ()};
+    Point B {genFPVal (), geom3D::inf, genFPVal ()};
+    Point C {genFPVal (), genFPVal (), geom3D::inf};
 
-        geom3D::Point P { x, y, z };
-
-        ASSERT_TRUE (P.x_ == x);
-        ASSERT_TRUE (P.y_ == y);
-        ASSERT_TRUE (P.z_ == z);
-        ASSERT_TRUE (P.isValid ());
-    }
+    ASSERT_FALSE (A.isValid ());
+    ASSERT_FALSE (B.isValid ());
+    ASSERT_FALSE (C.isValid ());
 }
 
-TEST( VectorTest, ValidationTests )
+TEST( PointTests, DefaultCtorTest )
 {
-    std::vector<geom3D::Vector> invalidVectors;
-
-    geom3D::Vector validVector (1, 2, 3);
-    ASSERT_TRUE (validVector.isValid ());
-
-    // Generating invalid data.
-    for (int i = 0; i < 6; ++i)
-    {
-        geom3D::fp_t coords[3];
-        coords[i] = i < 3 ? geom3D::nan : geom3D::inf;
-        coords[(i + 1) % 3] = 1;
-        coords[(i + 2) % 3] = 2;
-
-        invalidVectors.emplace_back (geom3D::Vector (coords[0], coords[1], coords[2]));
-    }
-
-    for (auto iter = invalidVectors.begin (); iter != invalidVectors.end (); iter++)
-    {
-        //! Should have default 5-rule methods,
-        //! or new tests should be added for custom ones.
-
-        // TODO: Add default methods usage checks.
-
-        geom3D::fp_t fp_value = 3.1415926535;
-        geom3D::Vector invalidCopy = *iter;
-
-        ASSERT_FALSE (invalidCopy.isValid ());
-        ASSERT_FALSE ((invalidCopy + validVector).isValid ());
-        ASSERT_FALSE ((invalidCopy - validVector).isValid ());
-        ASSERT_FALSE ((invalidCopy * fp_value).isValid ());
-        ASSERT_FALSE ((invalidCopy / fp_value).isValid ());
-        ASSERT_FALSE ((validVector * geom3D::nan).isValid ());
-        ASSERT_FALSE ((validVector / geom3D::nan).isValid ());
-        ASSERT_FALSE ((validVector * geom3D::inf).isValid ());
-        ASSERT_FALSE ((validVector / geom3D::inf).isValid ());
-        ASSERT_FALSE ((invalidCopy += validVector).isValid ());
-        ASSERT_FALSE ((invalidCopy -= validVector).isValid ());
-        ASSERT_FALSE (geom3D::isValid (geom3D::Vector::scalarProduct
-            (invalidCopy, validVector)));
-        ASSERT_FALSE (geom3D::isValid (geom3D::Vector::scalarProduct
-            (validVector, invalidCopy)));
-        ASSERT_FALSE ((geom3D::Vector::crossProduct
-            (invalidCopy, validVector)).isValid ());
-        ASSERT_FALSE ((geom3D::Vector::crossProduct
-            (validVector, invalidCopy)).isValid ());
-    }
+    // Default ctor should give invalid value.
+    ASSERT_FALSE (Point {}.isValid ());
 }
 
-TEST( VectorTest, ValidDataTests )
+TEST( PointTests, ThreeCoordCtorTests )
 {
-    geom3D::Vector e1 {1, 0, 0};
-    geom3D::Vector e2 {0, 1, 0};
-    geom3D::Vector e3 {0, 0, 1};
+    fp_t x = genFPVal (), y = genFPVal (), z = genFPVal ();
+    Point P {x, y, z};
 
-    geom3D::Vector a = e1 + e2 * 2 + e3 * 3;
-    geom3D::Vector b = -e1 * 3 - e2 * 2 - e3;
+    ASSERT_FLOAT_EQ (x, P.x_);
+    ASSERT_FLOAT_EQ (y, P.y_);
+    ASSERT_FLOAT_EQ (z, P.z_);
+    ASSERT_TRUE (P.isValid ());
+}
 
-    ASSERT_TRUE (a.x_ == 1 && a.y_ == 2 && a.z_ == 3);
-    ASSERT_TRUE (b.x_ == -3 && b.y_ == -2 && b.z_ == -1);
+TEST( VectorTests, NanCoordsTests )
+{
+    Vector a {geom3D::nan, genFPVal (), genFPVal ()};
+    Vector b {genFPVal (), geom3D::nan, genFPVal ()};
+    Vector c {genFPVal (), genFPVal (), geom3D::nan};
 
-    a += b;
-    ASSERT_TRUE (a.x_ == -2 && a.y_ == 0 && a.z_ == 2);
-    b -= a;
-    ASSERT_TRUE (b.x_ == -1 && b.y_ == -2 && b.z_ == -3);
-    a *= 2;
-    ASSERT_TRUE (a.x_ == -4 && a.y_ == 0 && a.z_ == 4);
-    b /= 2;
-    ASSERT_TRUE (b.x_ == -0.5 && b.y_ == -1 && b.z_ == -1.5);
+    ASSERT_FALSE (a.isValid ());
+    ASSERT_FALSE (b.isValid ());
+    ASSERT_FALSE (c.isValid ());
+}
 
-    geom3D::Vector c = e1 + e2 + e3;
-    geom3D::Vector d = e1 + e3 * 2;
-    geom3D::Vector crossProduct = geom3D::Vector::crossProduct (c, d);
-    ASSERT_TRUE (c.squareLen () == 3);
-    ASSERT_TRUE (c.len () == std::sqrt (3));
-    ASSERT_TRUE (crossProduct.x_ == 2 && crossProduct.y_ == 3 && crossProduct.z_ == 1);
-    ASSERT_TRUE (geom3D::Vector::scalarProduct (c, d) == 3);
+TEST( VectorTests, InfCoordsTests )
+{
+    Vector a {geom3D::inf, genFPVal (), genFPVal ()};
+    Vector b {genFPVal (), geom3D::inf, genFPVal ()};
+    Vector c {genFPVal (), genFPVal (), geom3D::inf};
 
-    c = c.normalized ();
-    ASSERT_TRUE (c.x_ == 1/std::sqrt (3) &&
-                 c.y_ == 1/std::sqrt (3) &&
-                 c.z_ == 1/std::sqrt (3));
+    ASSERT_FALSE (a.isValid ());
+    ASSERT_FALSE (b.isValid ());
+    ASSERT_FALSE (c.isValid ());
+}
 
+TEST( VectorTests, DefaultCtorTest )
+{
+    Vector a{};
+    ASSERT_FALSE (a.isValid ());
+}
+
+TEST( VectorTests, ThreeCoordCtorTest )
+{
+    fp_t x = genFPVal (), y = genFPVal (), z = genFPVal ();
+    Vector vec {x, y, z};
+
+    ASSERT_TRUE (vec.isValid ());
+    ASSERT_FLOAT_EQ (x, vec.x_);
+    ASSERT_FLOAT_EQ (y, vec.y_);
+    ASSERT_FLOAT_EQ (z, vec.z_);
+}
+
+TEST( VectorTests, CopyCtorTest )
+{
+    fp_t x = genFPVal (), y = genFPVal (), z = genFPVal ();
+    Vector a {x, y, z};
+    Vector b = a;
+
+    ASSERT_TRUE (b.isValid ());
+    ASSERT_FLOAT_EQ (x, b.x_);
+    ASSERT_FLOAT_EQ (y, b.y_);
+    ASSERT_FLOAT_EQ (z, b.z_);
+}
+
+TEST( VectorTests, MoveCtorTest )
+{
+    fp_t x = genFPVal (), y = genFPVal (), z = genFPVal ();
+    Vector vec = Vector {x, y, z};
+
+    ASSERT_TRUE (vec.isValid ());
+    ASSERT_FLOAT_EQ (x, vec.x_);
+    ASSERT_FLOAT_EQ (y, vec.y_);
+    ASSERT_FLOAT_EQ (z, vec.z_);
+}
+
+TEST( VectorTests, CopyAssignTest )
+{
+    Vector a = genVec ();
+    Vector b {};
+    b = a;
+
+    ASSERT_TRUE (b.isValid ());
+    ASSERT_FLOAT_EQ (a.x_, b.x_);
+    ASSERT_FLOAT_EQ (a.y_, b.y_);
+    ASSERT_FLOAT_EQ (a.z_, b.z_);
+}
+
+TEST( VectorTests, MoveAssignTest )
+{
+    fp_t x = genFPVal (), y = genFPVal (), z = genFPVal ();
+    Vector vec{};
+    vec = Vector {x, y, z};
+
+    ASSERT_TRUE (vec.isValid ());
+    ASSERT_FLOAT_EQ (x, vec.x_);
+    ASSERT_FLOAT_EQ (y, vec.y_);
+    ASSERT_FLOAT_EQ (z, vec.z_);
+}
+
+TEST( VectorTests, OperatorUnMinusTest )
+{
+    Vector a = genVec ();
+    Vector b = -a;
+
+    ASSERT_TRUE (b.isValid ());
+    ASSERT_FLOAT_EQ (-(a.x_), b.x_);
+    ASSERT_FLOAT_EQ (-(a.y_), b.y_);
+    ASSERT_FLOAT_EQ (-(a.z_), b.z_);
+}
+
+// Vector class binary operators test status.
+enum class vecOprTestStatus_t
+{
+    OK                  , // Test passed.
+    NOT_VALID_RESULT    , // Got not valid result
+    WRONG_CALC      // Wrong calculated result.
+};
+
+using scalOperator_t = std::function<fp_t( fp_t, fp_t )>;
+
+// Function to test Vector class binary operators.
+vecOprTestStatus_t vecOprTest (Vector a, Vector b, Vector c, scalOperator_t scalOperator)
+{
+    if (!c.isValid ())
+        return vecOprTestStatus_t::NOT_VALID_RESULT;
+
+    if (diff (scalOperator (a.x_, b.x_), c.x_) ||
+        diff (scalOperator (a.y_, b.y_), c.y_) ||
+        diff (scalOperator (a.z_, b.z_), c.z_))
+        return vecOprTestStatus_t::WRONG_CALC;
+
+    return vecOprTestStatus_t::OK;
+}
+
+vecOprTestStatus_t vecOprTest (Vector a, fp_t b, Vector c, scalOperator_t scalOperator)
+{
+    if (!c.isValid ())
+        return vecOprTestStatus_t::NOT_VALID_RESULT;
+
+    if (diff (scalOperator (a.x_, b), c.x_) ||
+        diff (scalOperator (a.y_, b), c.y_) ||
+        diff (scalOperator (a.z_, b), c.z_))
+        return vecOprTestStatus_t::WRONG_CALC;
+
+    return vecOprTestStatus_t::OK;
+}
+
+vecOprTestStatus_t vecOprTest (fp_t a, Vector b, Vector c, scalOperator_t scalOperator)
+{
+    if (!c.isValid ())
+        return vecOprTestStatus_t::NOT_VALID_RESULT;
+
+    if (diff (scalOperator (a, b.x_), c.x_) ||
+        diff (scalOperator (a, b.y_), c.y_) ||
+        diff (scalOperator (a, b.z_), c.z_))
+        return vecOprTestStatus_t::WRONG_CALC;
+
+    return vecOprTestStatus_t::OK;
+}
+
+TEST( VectorTests, OperatorPlusTest )
+{
+    Vector a = genVec (), b = genVec ();
+    vecOprTestStatus_t status =
+        vecOprTest (a, b, a + b, [=](fp_t a, fp_t b) -> fp_t {return a + b;});
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+}
+
+TEST( VectorTests, OperatorMinusTest )
+{
+    Vector a = genVec (), b = genVec ();
+    vecOprTestStatus_t status =
+        vecOprTest (a, b, a - b, [=](fp_t a, fp_t b) -> fp_t {return a - b;});
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+}
+
+TEST( VectorTests, SumAssignTest )
+{
+    Vector a = genVec (), b = genVec (), old_a = a;
+    vecOprTestStatus_t status =
+        vecOprTest (old_a, b, a += b, [=](fp_t a, fp_t b) -> fp_t {return a += b;});
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+}
+
+TEST( VectorTests, DiffAssignTest )
+{
+    Vector a = genVec (), b = genVec (), old_a = a;
+    vecOprTestStatus_t status =
+        vecOprTest (old_a, b, a -= b, [=](fp_t a, fp_t b) -> fp_t {return a -= b;});
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+}
+
+TEST( VectorTests, OperatorMulTest )
+{
+    Vector a = genVec ();
+    fp_t b = genFPVal ();
+    auto mulOperator = [=](fp_t a, fp_t b) -> fp_t {return a * b;};
+
+    vecOprTestStatus_t status = vecOprTest (a, b, a * b, mulOperator);
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+
+    status = vecOprTest (b, a, b * a, mulOperator);
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+}
+
+TEST( VectorTests, OperatorDivTest )
+{
+    Vector a = genVec ();
+    fp_t b = genFPVal ();
+    vecOprTestStatus_t status =
+        vecOprTest (a, b, a / b, [=](fp_t a, fp_t b) -> fp_t {return a / b;});
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+    ASSERT_FALSE ((genVec () / 0).isValid ());
+}
+
+TEST( VectorTests, MulAssignTest )
+{
+    Vector a = genVec (), old_a = a;
+    fp_t b = genFPVal ();
+    vecOprTestStatus_t status =
+        vecOprTest (old_a, b, a *= b, [=](fp_t a, fp_t b) -> fp_t {return a *= b;});
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+}
+
+TEST( VectorTests, DivAssignTest )
+{
+    Vector a = genVec (), old_a = a;
+    fp_t b = genFPVal ();
+    vecOprTestStatus_t status =
+        vecOprTest (old_a, b, a /= b, [=](fp_t a, fp_t b) -> fp_t {return a /= b;});
+    ASSERT_TRUE (status == vecOprTestStatus_t::OK);
+    ASSERT_FALSE ((genVec () /= 0).isValid ());
+}
+
+TEST( VectorTests, equalCmpOperatorTest )
+{
+    Vector a = genVec ();
+    Vector b = genVec ();
+
+    ASSERT_TRUE (a == a);
+    ASSERT_TRUE (b == b);
+    ASSERT_FALSE (a + b == a);
+    ASSERT_FALSE (a + b == b);
+}
+
+TEST( VectorTests, SquareLenTest )
+{
+    Vector a = genVec ();
+    ASSERT_FLOAT_EQ (a.x_ * a.x_ + a.y_ * a.y_ + a.z_ * a.z_, a.squareLen ());
+}
+
+TEST( VectorTests, LenTest )
+{
+    Vector a = genVec ();
+    ASSERT_FLOAT_EQ (std::sqrt (a.x_ * a.x_ + a.y_ * a.y_ + a.z_ * a.z_), a.len ());
+}
+
+TEST( VectorTests, ScalarProdTest )
+{
+    Vector e1 {1,0,0}, e2 {0,1,0}, e3 {0,0,1};
+    fp_t scalProd1 = Vector::scalarProduct (e1 + e2 * 2 + e3 * 3, -e2 - e3 * 1.5);
+    fp_t scalProd2 = Vector::scalarProduct (e3 * 3 - e2 * 4, e1 * 100 + e2 * 3.75 + e3 * 6);
+
+    ASSERT_FLOAT_EQ (scalProd1, -6.5);
+    ASSERT_FLOAT_EQ (scalProd2, 3);
+}
+
+TEST( VectorTests, CrossProdTest )
+{
+    Vector e1 {1,0,0}, e2{0,1,0}, e3{0,0,1};
+    Vector crossProd1 = Vector::crossProduct (e1 + e2 + e3, e1);
+    Vector crossProd2 = Vector::crossProduct (e1 + e2 + e3, e2);
+    Vector crossProd3 = Vector::crossProduct (e1 + e2 + e3, e3);
+
+    ASSERT_TRUE (crossProd1 == -e3 + e2);
+    ASSERT_TRUE (crossProd2 == e3 - e1);
+    ASSERT_TRUE (crossProd3 == -e2 + e1); 
 }
 
 int main( int argc, char ** argv )

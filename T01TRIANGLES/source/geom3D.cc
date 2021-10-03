@@ -4,9 +4,20 @@
 namespace geom3D
 {
 
-bool isValid (fp_t value)
+bool isValid( fp_t value )
 {
-    return !(std::isnan (value) || std::isinf (value)); 
+    return !(std::isnan (value) || std::isinf (value));
+}
+
+int diff( fp_t a, fp_t b )
+{
+    if (std::abs (a - b) < std::numeric_limits<fp_t>::min ())
+        return 0;
+
+    if (a < b)
+        return -1;
+    
+    return 1;
 }
 
 Point::Point( fp_t x, fp_t y, fp_t z ) : x_(x), y_(y), z_(z) {}
@@ -55,9 +66,14 @@ Vector Vector::operator*( const fp_t num ) const
     return Vector {x_ * num, y_ * num, z_ * num};
 }
 
+Vector operator*( fp_t num, Vector vec )
+{
+    return vec * num;
+}
+
 Vector Vector::operator/( const fp_t num ) const
 {
-    return Vector {x_ / num, y_ * num, z_ * num};
+    return Vector {x_ / num, y_ / num, z_ / num};
 }
 
 Vector Vector::operator*=( const fp_t num )
@@ -70,6 +86,11 @@ Vector Vector::operator/=( const fp_t num )
 {
     x_ /= num; y_ /= num; z_ /= num;
     return *this;
+}
+
+bool Vector::operator==( const Vector& second ) const
+{
+    return !(diff (x_, second.x_) || diff (y_, second.y_) || diff (z_, second.z_));
 }
 
 fp_t Vector::squareLen() const
@@ -91,7 +112,7 @@ Vector Vector::normalized() const
 Vector Vector::crossProduct( const Vector& first, const Vector& second )
 {
     return Vector {first.y_ * second.z_ - first.z_ * second.y_,
-                   first.x_ * second.z_ - first.z_ * second.x_,
+                  -first.x_ * second.z_ + first.z_ * second.x_,
                    first.x_ * second.y_ - first.y_ * second.x_};
 }
 

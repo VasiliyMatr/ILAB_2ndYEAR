@@ -15,7 +15,10 @@ target_include_directories( ${GEOM3D_TEST_NAME} PRIVATE
 
 target_sources( ${GEOM3D_TEST_NAME} PRIVATE
     "${CMAKE_SOURCE_DIR}/source/geom3D.cc"
-    "${CMAKE_SOURCE_DIR}/source/${GEOM3D_TEST_NAME}.cc"
+    "${CMAKE_SOURCE_DIR}/source/geom3D-tests.cc"
+    "${CMAKE_SOURCE_DIR}/source/geom3D-util-tests.cc"
+    "${CMAKE_SOURCE_DIR}/source/geom3D-point-tests.cc"
+    "${CMAKE_SOURCE_DIR}/source/geom3D-vec-tests.cc"
 )
 
 target_link_libraries( ${GEOM3D_TEST_NAME} PRIVATE

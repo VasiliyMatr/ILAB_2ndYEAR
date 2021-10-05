@@ -72,36 +72,61 @@ struct Vector
 
 Vector operator*( fp_t, Vector );
 
-// Common 3-point 3D triangle.
-struct Triangle
+struct Segment;
+
+// Lines are stored as point + direction vector
+struct Line
 {
 
-    Point A_;
-    Point B_;
-    Point C_;
+    const Vector dirVec_;
+    const Point point_;
 
-    Triangle( Point A, Point B, Point C );
-    bool isValid() const;
-    bool isDegenerate() const;
+    Line( const Vector&, const Point& );
+    Point operator|( const Segment& ) const;
 
 };
 
-// Stores normal vector for plane containing this triangle
-// Points are indexed as shown: A - first; B - second; C - third.
-// Point indexes increase counterclockwise as viewed from the end of the normal vector.
-struct OrientedTriangle : Triangle
+// Segments are stored as 2 Points
+struct Segment
 {
 
-    Point A_;
-    Point B_;
-    Point C_;
+    const Point A_;
+    const Point B_;
 
-    Vector normVector_;
+    Segment( const Point&, const Point& );
+    Point operator|( const Line& ) const;
 
-    OrientedTriangle( Point A1, Point B1, Point C1 );
-    OrientedTriangle( Triangle input );
+};
+
+// Planes are stored as normal vector + D coeff:
+// normVec_.x_ * x + normVec_.y_ * y + normVec_.z_ * z + D = 0
+struct Plane
+{
+
+    const Vector normVec_;
+    const fp_t D_;
+
+    Plane( const Vector&, const fp_t& );
+
+    Line operator|( const Plane& ) const;
+
+};
+
+// Store some extra info in TriangleInfo structure - for more efficient calculations.
+struct TriangleInfo
+{
+
+    const Plane plane_;
+    const Segment AB_;
+    const Segment BC_;
+    const Segment CA_;
+
+    TriangleInfo( const Point&, const Point&, const Point& );
+
     bool isValid() const;
     bool isDegenerate() const;
+
+    bool isInter( const TriangleInfo& ) const;
 
 };
 

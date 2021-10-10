@@ -10,7 +10,7 @@ namespace geom3D
 {
 
 // Choosen floating point type.
-using fp_t = _Float32;
+using fp_t = double_t;
 
 const fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
 const fp_t inf = std::numeric_limits<fp_t>::infinity ();

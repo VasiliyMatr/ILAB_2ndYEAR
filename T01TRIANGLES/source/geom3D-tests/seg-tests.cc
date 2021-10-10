@@ -5,8 +5,8 @@ namespace geom3D
 
 TEST( SegTests, CtorTest )
 {
-    Point A {genFPVal (), genFPVal (), genFPVal ()};
-    Point B {genFPVal (), genFPVal (), genFPVal ()};
+    Point A {genFP (), genFP (), genFP ()};
+    Point B {genFP (), genFP (), genFP ()};
 
     Segment seg {A, B};
 
@@ -39,7 +39,7 @@ TEST( segTests, ValidatinTests )
 TEST( segTests, LineCrossOperatorTests )
 {
     Segment seg {{2, 3, 0}, {4, 1, 0}};
-    Line line {{1, 0, 0}, {2, 0, 0}};
+    Line line {{1, 0, 0}, {0, 2, 0}};
 
     Point cross = seg | line;
 

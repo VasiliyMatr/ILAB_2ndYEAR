@@ -6,7 +6,7 @@ namespace geom3D
 TEST( PlaneTests, CtorTest )
 {
     Vector norm = genVec ();
-    fp_t D = genFPVal ();
+    fp_t D = genFP ();
 
     Plane plane {norm, D};
 
@@ -42,17 +42,17 @@ TEST( PlaneTests, CrossTests )
     Line cross2 = T | G;
 
     // Known points, that should belong to crosses
-    Point A {9.3, 11.3, 0};
-    Point B {14.3, 16.3, -10};
+    Point A {11.3, -10.3, 0};
+    Point B {14.3, -7.3, -6};
 
     // Checking that known points belongs to crosses
     ASSERT_FLOAT_EQ ((A.x_ - cross1.point_.x_) / cross1.dirVec_.x_,
-        (A.y_ - cross1.point_.y_) / cross1.point_.y_);
+        (A.y_ - cross1.point_.y_) / cross1.dirVec_.y_);
     ASSERT_FLOAT_EQ ((A.y_ - cross1.point_.y_) / cross1.dirVec_.y_,
         (A.z_ - cross1.point_.z_) / cross1.dirVec_.z_);
 
     ASSERT_FLOAT_EQ ((B.x_ - cross2.point_.x_) / cross2.dirVec_.x_,
-        (B.y_ - cross2.point_.y_) / cross2.point_.y_);
+        (B.y_ - cross2.point_.y_) / cross2.dirVec_.y_);
     ASSERT_FLOAT_EQ ((B.y_ - cross2.point_.y_) / cross2.dirVec_.y_,
         (B.z_ - cross2.point_.z_) / cross2.dirVec_.z_);
 }

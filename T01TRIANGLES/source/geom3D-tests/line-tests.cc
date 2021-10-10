@@ -6,7 +6,7 @@ namespace geom3D
 TEST( LineTests, CtorTest )
 {
     Vector vec = genVec ();
-    Point point {genFPVal (), genFPVal (), genFPVal ()};
+    Point point {genFP (), genFP (), genFP ()};
 
     Line line {vec, point};
 

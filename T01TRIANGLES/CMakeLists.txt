@@ -5,6 +5,12 @@ project( Triangles VERSION 0.1 LANGUAGES CXX )
 
 find_package( GTest REQUIRED )
 
+set( DEBUG_DEFINE_NAME "DEBUG" )
+set( CXX_STD_OPTION "--std=c++17" )
+set( DEBUG_FLAGS ${CXX_STD_OPTION} -D${DEBUG_DEFINE_NAME}=1 -O0 -g -Wall -Wextra -Wpedantic  )
+set( RELEASE_FLAGS ${CXX_STD_OPTION} -D${DEBUG_DEFINE_NAME}=0 -O2 )
+option( DEBUG_BUILD "Should build debug exec version?" ON )
+
 set( GEOM3D_TEST_NAME "geom3D-tests" )
 add_executable( ${GEOM3D_TEST_NAME} )
 
@@ -49,5 +55,5 @@ target_link_libraries( ${GEOM3D_TEST_NAME} PRIVATE
 )
 
 target_compile_options( ${GEOM3D_TEST_NAME} PRIVATE
-    -O1 -g -Wall -Wextra -Wpedantic
+    ${DEBUG_FLAGS}
 )

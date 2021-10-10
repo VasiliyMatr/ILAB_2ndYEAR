@@ -5,7 +5,7 @@ namespace geom3D
 
 TEST( VectorTests, ThreeCoordCtorTest )
 {
-    fp_t x = genFPVal (), y = genFPVal (), z = genFPVal ();
+    fp_t x = genFP (), y = genFP (), z = genFP ();
     Vector vec {x, y, z};
 
     ASSERT_FLOAT_EQ (x, vec.x_);
@@ -15,8 +15,8 @@ TEST( VectorTests, ThreeCoordCtorTest )
 
 TEST( VectorTests, TwoPointCtorTest )
 {
-    Point A {genFPVal (), genFPVal (), genFPVal ()};
-    Point B {genFPVal (), genFPVal (), genFPVal ()};
+    Point A {genFP (), genFP (), genFP ()};
+    Point B {genFP (), genFP (), genFP ()};
     Vector vec {A, B};
 
     ASSERT_FLOAT_EQ (B.x_ - A.x_, vec.x_);
@@ -114,7 +114,7 @@ TEST( VectorTests, OperatorMinusTest )
 TEST( VectorTests, OperatorMulTest )
 {
     Vector a = genVec ();
-    fp_t b = genFPVal ();
+    fp_t b = genFP ();
     auto mulOperator = [=](fp_t a, fp_t b) -> fp_t {return a * b;};
 
     vecOprTestStatus_t status = vecOprTest (a, b, a * b, mulOperator);
@@ -127,7 +127,7 @@ TEST( VectorTests, OperatorMulTest )
 TEST( VectorTests, OperatorDivTest )
 {
     Vector a = genVec ();
-    fp_t b = genFPVal ();
+    fp_t b = genFP ();
     vecOprTestStatus_t status =
         vecOprTest (a, b, a / b, [=](fp_t a, fp_t b) -> fp_t {return a / b;});
     ASSERT_TRUE (status == vecOprTestStatus_t::OK);

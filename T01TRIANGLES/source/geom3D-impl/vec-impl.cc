@@ -4,26 +4,10 @@
 namespace geom3D
 {
 
-bool isValid( fp_t value )
-{
-    return !(std::isnan (value) || std::isinf (value));
-}
-
-int isEqual( fp_t a, fp_t b )
-{
-    static const fp_t EPSILON = 1e-5;
-
-    return std::abs (a - b) < EPSILON;
-}
-
-Point::Point( fp_t x, fp_t y, fp_t z ) : x_(x), y_(y), z_(z) {}
-
-bool Point::isValid() const
-{
-    return geom3D::isValid (x_) && geom3D::isValid (y_) && geom3D::isValid (z_);
-}
-
 Vector::Vector( fp_t x, fp_t y, fp_t z ) : x_(x), y_(y), z_(z) {}
+
+Vector::Vector( const Point& A, const Point& B ) :
+    x_(B.x_-A.x_), y_(B.y_-A.y_), z_(B.z_-A.z_) {}
 
 bool Vector::isValid() const
 {
@@ -45,18 +29,6 @@ Vector Vector::operator-( const Vector& second ) const
     return Vector {x_ - second.x_, y_ - second.y_, z_ - second.z_};
 }
 
-Vector Vector::operator+=( const Vector& second )
-{
-    x_ += second.x_; y_ += second.y_; z_ += second.z_;
-    return *this;
-}
-
-Vector Vector::operator-=( const Vector& second )
-{
-    x_ -= second.x_; y_ -= second.y_; z_ -= second.z_;
-    return *this;
-}
-
 Vector Vector::operator*( const fp_t num ) const
 {
     return Vector {x_ * num, y_ * num, z_ * num};
@@ -70,18 +42,6 @@ Vector operator*( fp_t num, Vector vec )
 Vector Vector::operator/( const fp_t num ) const
 {
     return Vector {x_ / num, y_ / num, z_ / num};
-}
-
-Vector Vector::operator*=( const fp_t num )
-{
-    x_ *= num; y_ *= num; z_ *= num;
-    return *this;
-}
-
-Vector Vector::operator/=( const fp_t num )
-{
-    x_ /= num; y_ /= num; z_ /= num;
-    return *this;
 }
 
 bool Vector::operator==( const Vector& second ) const

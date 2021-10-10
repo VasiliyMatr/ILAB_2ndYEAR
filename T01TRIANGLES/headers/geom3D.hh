@@ -17,6 +17,9 @@ const fp_t inf = std::numeric_limits<fp_t>::infinity ();
 
 // fp_t validation function
 bool isValid( fp_t value );
+
+// == accuracy
+constexpr fp_t FP_CMP_PRECISION = 1e-5;
 // fp_t == operator equivalent - compares with accuracy.
 int isEqual( fp_t a, fp_t b );
 
@@ -24,12 +27,10 @@ int isEqual( fp_t a, fp_t b );
 struct Point
 {
 
-    fp_t x_ = nan;
-    fp_t y_ = nan;
-    fp_t z_ = nan;
+    const fp_t x_ = nan;
+    const fp_t y_ = nan;
+    const fp_t z_ = nan;
 
-    Point( fp_t x, fp_t y, fp_t z );
-    Point() = default;
     bool isValid() const;
 
 };
@@ -38,26 +39,23 @@ struct Point
 struct Vector
 {
 
-    fp_t x_ = nan;
-    fp_t y_ = nan;
-    fp_t z_ = nan;
+    const fp_t x_ = nan;
+    const fp_t y_ = nan;
+    const fp_t z_ = nan;
 
-    Vector( fp_t x, fp_t y, fp_t z );
-    Vector() = default;
+    Vector( const fp_t, const fp_t, const fp_t );
+    Vector( const Point&, const Point& );
     Vector( const Vector& ) = default;
+    Vector() = default;
 
     bool isValid() const;
 
     Vector operator-() const;
     Vector operator+( const Vector& ) const;
     Vector operator-( const Vector& ) const;
-    Vector operator+=( const Vector& );
-    Vector operator-=( const Vector& );
 
     Vector operator*( const fp_t ) const;
     Vector operator/( const fp_t ) const;
-    Vector operator*=( const fp_t );
-    Vector operator/=( const fp_t );
 
     bool operator==( const Vector& ) const;
 
@@ -72,17 +70,23 @@ struct Vector
 
 Vector operator*( fp_t, Vector );
 
-struct Segment;
+// Calculates 3x3 det
+fp_t det( const Vector&, const Vector&, const Vector& );
 
 // Lines are stored as point + direction vector
 struct Line
 {
 
-    const Vector dirVec_;
-    const Point point_;
+    const Vector dirVec_ {};
+    const Point point_ {};
 
     Line( const Vector&, const Point& );
-    Point operator|( const Segment& ) const;
+    Line( const Line& ) = default;
+    Line() = default;
+
+    bool isValid() const;
+
+    Point operator|( const Line& ) const;
 
 };
 
@@ -90,23 +94,33 @@ struct Line
 struct Segment
 {
 
-    const Point A_;
-    const Point B_;
+    const Point A_ {};
+    const Point B_ {};
 
     Segment( const Point&, const Point& );
-    Point operator|( const Line& ) const;
+    Segment( const Segment& ) = default;
+    Segment() = default;
+
+    bool isValid() const;
 
 };
+
+Point operator|( const Segment&, const Line& );
+Point operator|( const Line&, const Segment& );
 
 // Planes are stored as normal vector + D coeff:
 // normVec_.x_ * x + normVec_.y_ * y + normVec_.z_ * z + D = 0
 struct Plane
 {
 
-    const Vector normVec_;
-    const fp_t D_;
+    const Vector normVec_ {};
+    const fp_t D_ = nan;
 
-    Plane( const Vector&, const fp_t& );
+    Plane( const Vector&, fp_t );
+    Plane( const Plane& ) = default;
+    Plane() = default;
+
+    bool isValid () const;
 
     Line operator|( const Plane& ) const;
 
@@ -116,15 +130,16 @@ struct Plane
 struct TriangleInfo
 {
 
-    const Plane plane_;
-    const Segment AB_;
-    const Segment BC_;
-    const Segment CA_;
+    const Plane plane_ {};
+    const Segment AB_ {};
+    const Segment BC_ {};
+    const Segment CA_ {};
 
     TriangleInfo( const Point&, const Point&, const Point& );
+    TriangleInfo( const TriangleInfo& ) = default;
+    TriangleInfo() = default;
 
     bool isValid() const;
-    bool isDegenerate() const;
 
     bool isInter( const TriangleInfo& ) const;
 

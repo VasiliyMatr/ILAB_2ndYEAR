@@ -1,7 +1,8 @@
 
 
 #include "geom3D-tests.hh"
-using namespace geom3D;
+namespace geom3D
+{
 
 TEST( UtilsTests, isValidTest )
 {
@@ -18,3 +19,5 @@ TEST( UtilsTests, isEqualTest )
     ASSERT_TRUE (isEqual (a, b));
     ASSERT_FALSE (isEqual (a, b + 0.01));
 }
+
+} // namespace geom3D

@@ -34,10 +34,11 @@ Point Line::operator|( const Line& second ) const
 Point operator|( const Line& line, const Segment& seg )
 {
     Point linesCross = line | Line {Vector {seg.B_, seg.A_}, seg.A_};
-    fp_t xDiff = std::abs (seg.A_.x_ - seg.B_.x_);
+    fp_t segSqrLen = Vector {seg.A_, seg.B_}.squareLen ();
+    fp_t crossSqrLen1 = Vector {seg.A_, linesCross}.squareLen ();
+    fp_t crossSqrLen2 = Vector {seg.B_, linesCross}.squareLen ();
 
-    if (std::abs (linesCross.x_ - seg.A_.x_) > xDiff ||
-        std::abs (linesCross.x_ - seg.B_.x_) > xDiff)
+    if (segSqrLen < crossSqrLen1 || segSqrLen < crossSqrLen2)
         return Point {};
 
     return linesCross;

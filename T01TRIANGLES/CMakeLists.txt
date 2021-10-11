@@ -29,6 +29,7 @@ set( GEOM3D_SRC_FILES
     "seg-impl.cc"
     "utils-impl.cc"
     "vec-impl.cc"
+    "triangle-impl.cc"
 )
 
 set( GEOM3D_TESTS_FILES
@@ -39,6 +40,7 @@ set( GEOM3D_TESTS_FILES
     "tests-main.cc"
     "utils-tests.cc"
     "vec-tests.cc"
+    "triangle-tests.cc"
 )
 
 foreach( FILE IN LISTS GEOM3D_SRC_FILES )

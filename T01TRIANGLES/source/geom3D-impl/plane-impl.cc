@@ -6,6 +6,11 @@ namespace geom3D
 
 Plane::Plane( const Vector& normVec, fp_t D ) : normVec_(normVec), D_(D) {}
 
+Plane::Plane( const Point& A, const Point& B, const Point& C ) :
+    normVec_(Vector::crossProduct ({A, B}, {B, C})),
+    D_(-normVec_.x_ * A.x_ - normVec_.y_ * A.y_ - normVec_.z_ * A.z_)
+{}
+
 bool Plane::isValid() const
 {
     bool isValid (fp_t);
@@ -22,7 +27,7 @@ Line Plane::operator|( const Plane& second ) const
     const Vector b {n1.y_, n2.y_, n3.y_};
     const Vector c {n1.z_, n2.z_, n3.z_};
 
-    const Vector d {D_, second.D_, 0};
+    const Vector d {-D_, -second.D_, 0};
 
     // solving system: a + b + c = d
     fp_t D = det (a, b, c);
@@ -30,7 +35,7 @@ Line Plane::operator|( const Plane& second ) const
     fp_t D2 = det (a, d, c);
     fp_t D3 = det (a, b, d);
 
-    return Line {n3, Point {D1/D, D2/D, D3/D}};
+    return Line {n3, Point {D1 / D, D2 / D, D3 / D}};
 }
 
 } // namespace geom3D

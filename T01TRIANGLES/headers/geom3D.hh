@@ -97,10 +97,6 @@ struct Segment
     const Point A_ {};
     const Point B_ {};
 
-    Segment( const Point&, const Point& );
-    Segment( const Segment& ) = default;
-    Segment() = default;
-
     bool isValid() const;
 
 };
@@ -117,6 +113,7 @@ struct Plane
     const fp_t D_ = nan;
 
     Plane( const Vector&, fp_t );
+    Plane( const Point&, const Point&, const Point& );
     Plane( const Plane& ) = default;
     Plane() = default;
 

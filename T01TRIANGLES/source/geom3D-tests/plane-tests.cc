@@ -3,7 +3,7 @@
 namespace geom3D
 {
 
-TEST( PlaneTests, CtorTest )
+TEST( PlaneTests, VecNDCtorTest )
 {
     Vector norm = genVec ();
     fp_t D = genFP ();
@@ -14,6 +14,17 @@ TEST( PlaneTests, CtorTest )
     ASSERT_FLOAT_EQ (plane.normVec_.y_, norm.y_);
     ASSERT_FLOAT_EQ (plane.normVec_.z_, norm.z_);
     ASSERT_FLOAT_EQ (plane.D_, D);
+}
+
+TEST( PlaneTests, ThreePtsCtorTest )
+{
+    Point A {1, 0, 0}, B {0, 1, 0}, C {0, 0, 1};
+    Plane plane {A, B, C};
+    Vector crossProd = Vector::crossProduct (plane.normVec_, {1, 1, 1});
+    fp_t CPLen = crossProd.len ();
+
+    ASSERT_FLOAT_EQ (0, CPLen);
+    ASSERT_FLOAT_EQ (-1, plane.D_);
 }
 
 TEST( PlaneTests, ValidationTests )
@@ -42,8 +53,8 @@ TEST( PlaneTests, CrossTests )
     Line cross2 = T | G;
 
     // Known points, that should belong to crosses
-    Point A {11.3, -10.3, 0};
-    Point B {14.3, -7.3, -6};
+    Point A {-11.3, 10.3, 0};
+    Point B {-14.3, 7.3, 6};
 
     // Checking that known points belongs to crosses
     ASSERT_FLOAT_EQ ((A.x_ - cross1.point_.x_) / cross1.dirVec_.x_,

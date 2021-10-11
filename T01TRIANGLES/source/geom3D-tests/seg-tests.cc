@@ -3,21 +3,6 @@
 namespace geom3D
 {
 
-TEST( SegTests, CtorTest )
-{
-    Point A {genFP (), genFP (), genFP ()};
-    Point B {genFP (), genFP (), genFP ()};
-
-    Segment seg {A, B};
-
-    ASSERT_FLOAT_EQ (seg.A_.x_, A.x_);
-    ASSERT_FLOAT_EQ (seg.A_.y_, A.y_);
-    ASSERT_FLOAT_EQ (seg.A_.z_, A.z_);
-    ASSERT_FLOAT_EQ (seg.B_.x_, B.x_);
-    ASSERT_FLOAT_EQ (seg.B_.y_, B.y_);
-    ASSERT_FLOAT_EQ (seg.B_.z_, B.z_);
-}
-
 TEST( segTests, ValidatinTests )
 {
     for (int i = 0; i < 6; ++i)

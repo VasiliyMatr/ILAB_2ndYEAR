@@ -148,7 +148,7 @@ TEST( VectorTests, equalCmpOperatorTest )
 TEST( VectorTests, SquareLenTest )
 {
     Vector a = genVec ();
-    ASSERT_FLOAT_EQ (a.x_ * a.x_ + a.y_ * a.y_ + a.z_ * a.z_, a.squareLen ());
+    ASSERT_FLOAT_EQ (a.x_ * a.x_ + a.y_ * a.y_ + a.z_ * a.z_, a.sqLen ());
 }
 
 TEST( VectorTests, LenTest )

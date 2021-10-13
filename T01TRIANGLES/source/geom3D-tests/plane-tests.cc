@@ -43,29 +43,4 @@ TEST( PlaneTests, ValidationTests )
     ASSERT_FALSE (Plane {}.isValid ());
 }
 
-TEST( PlaneTests, CrossTests )
-{
-    Plane G {Vector {1, 1, 1}, 1};
-    Plane T {Vector {10, 0, 5}, 113};
-
-    // Results to check
-    Line cross1 = G | T;
-    Line cross2 = T | G;
-
-    // Known points, that should belong to crosses
-    Point A {-11.3, 10.3, 0};
-    Point B {-14.3, 7.3, 6};
-
-    // Checking that known points belongs to crosses
-    ASSERT_FLOAT_EQ ((A.x_ - cross1.point_.x_) / cross1.dirVec_.x_,
-        (A.y_ - cross1.point_.y_) / cross1.dirVec_.y_);
-    ASSERT_FLOAT_EQ ((A.y_ - cross1.point_.y_) / cross1.dirVec_.y_,
-        (A.z_ - cross1.point_.z_) / cross1.dirVec_.z_);
-
-    ASSERT_FLOAT_EQ ((B.x_ - cross2.point_.x_) / cross2.dirVec_.x_,
-        (B.y_ - cross2.point_.y_) / cross2.dirVec_.y_);
-    ASSERT_FLOAT_EQ ((B.y_ - cross2.point_.y_) / cross2.dirVec_.y_,
-        (B.z_ - cross2.point_.z_) / cross2.dirVec_.z_);
-}
-
 } // namespace geom3D

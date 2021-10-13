@@ -6,9 +6,20 @@ namespace geom3D
 Line::Line( const Vector& dirVec, const Point& point ) :
     dirVec_ (dirVec), point_ (point) {}
 
+Line::Line( const Segment& seg ) :
+    dirVec_ (Vector {seg.A_, seg.B_}), point_ (seg.A_) {}
+
 bool Line::isValid() const
 {
     return dirVec_.isValid () && point_.isValid ();
+}
+
+bool Line::ifBelongs( const Point& point ) const
+{
+    return isEqual ((point_.x_ - point.x_) * dirVec_.y_,
+                    (point_.y_ - point.y_) * dirVec_.x_) &&
+           isEqual ((point_.y_ - point.y_) * dirVec_.z_,
+                    (point_.z_ - point.z_) * dirVec_.y_);
 }
 
 Point Line::operator|( const Line& second ) const
@@ -33,15 +44,22 @@ Point Line::operator|( const Line& second ) const
 
 Point operator|( const Line& line, const Segment& seg )
 {
-    Point linesCross = line | Line {Vector {seg.B_, seg.A_}, seg.A_};
-    fp_t segSqrLen = Vector {seg.A_, seg.B_}.squareLen ();
-    fp_t crossSqrLen1 = Vector {seg.A_, linesCross}.squareLen ();
-    fp_t crossSqrLen2 = Vector {seg.B_, linesCross}.squareLen ();
+    Point linesCross = line | Line {seg};
+    if (linesCross.isValid ())
+    {
+        if (seg.sqLen_ < sqDst (seg.A_, linesCross) ||
+            seg.sqLen_ < sqDst (seg.B_, linesCross))
+            return Point {};
 
-    if (segSqrLen < crossSqrLen1 || segSqrLen < crossSqrLen2)
-        return Point {};
+        return linesCross;
+    }
 
-    return linesCross;
+    return line.ifBelongs (seg.A_) ? seg.A_ : Point {};
+}
+
+Point operator|( const Line& line, const Plane& plane )
+{
+    return plane | line;
 }
 
 } // namespace geom3D

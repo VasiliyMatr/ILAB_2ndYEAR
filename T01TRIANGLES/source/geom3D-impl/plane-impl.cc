@@ -13,29 +13,23 @@ Plane::Plane( const Point& A, const Point& B, const Point& C ) :
 
 bool Plane::isValid() const
 {
-    bool isValid (fp_t);
+    bool isValid (fp_t); // redecl for this scope
     return normVec_.isValid () && isValid (D_);
 }
 
-Line Plane::operator|( const Plane& second ) const
+Point operator|( const Plane& plane, const Line& line )
 {
-    const Vector& n1 = normVec_;
-    const Vector& n2 = second.normVec_;
-    const Vector n3 = Vector::crossProduct (n1, n2);
+    const Vector& dir = line.dirVec_;
+    const Vector& norm = plane.normVec_;
+    const Point& pt = line.point_;
 
-    const Vector a {n1.x_, n2.x_, n3.x_};
-    const Vector b {n1.y_, n2.y_, n3.y_};
-    const Vector c {n1.z_, n2.z_, n3.z_};
+    fp_t dirNormScal = Vector::scalarProduct (dir, norm);
+    fp_t planeExprVal = pt.x_*norm.x_ + pt.y_*norm.y_ + pt.z_*norm.z_ + plane.D_;
 
-    const Vector d {-D_, -second.D_, 0};
+    fp_t coeff = -planeExprVal / dirNormScal;
 
-    // solving system: a + b + c = d
-    fp_t D = det (a, b, c);
-    fp_t D1 = det (d, b, c);
-    fp_t D2 = det (a, d, c);
-    fp_t D3 = det (a, b, d);
-
-    return Line {n3, Point {D1 / D, D2 / D, D3 / D}};
+    return Point
+        {pt.x_ + coeff*dir.x_, pt.y_ + coeff*dir.y_, pt.z_ + coeff*dir.z_};
 }
 
 } // namespace geom3D

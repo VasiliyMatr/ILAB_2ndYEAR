@@ -49,14 +49,14 @@ bool Vector::operator==( const Vector& second ) const
     return isEqual (x_, second.x_) && isEqual (y_, second.y_) && isEqual (z_, second.z_);
 }
 
-fp_t Vector::squareLen() const
+fp_t Vector::sqLen() const
 {
     return x_ * x_ + y_ * y_ + z_ * z_;
 }
 
 fp_t Vector::len() const
 {
-    return std::sqrt (squareLen ());
+    return std::sqrt (sqLen ());
 }
 
 Vector Vector::normalized() const

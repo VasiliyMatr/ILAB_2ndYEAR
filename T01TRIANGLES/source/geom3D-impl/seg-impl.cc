@@ -7,6 +7,10 @@
 namespace geom3D
 {
 
+Segment::Segment( const Point& A, const Point& B ) : A_ (A), B_ (B),
+    sqLen_ (sqDst (A, B))
+{}
+
 bool Segment::isValid() const
 {
     return A_.isValid () && B_.isValid ();

@@ -10,7 +10,7 @@ namespace geom3D
 {
 
 // Choosen floating point type.
-using fp_t = double_t;
+using fp_t = _Float32;
 
 const fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
 const fp_t inf = std::numeric_limits<fp_t>::infinity ();
@@ -19,7 +19,7 @@ const fp_t inf = std::numeric_limits<fp_t>::infinity ();
 bool isValid( fp_t value );
 
 // == accuracy
-constexpr fp_t FP_CMP_PRECISION = 1e-5;
+constexpr fp_t FP_CMP_PRECISION = 0.01;
 // fp_t == operator equivalent - compares with accuracy.
 int isEqual( fp_t a, fp_t b );
 
@@ -32,6 +32,8 @@ struct Point
     const fp_t z_ = nan;
 
     bool isValid() const;
+
+    bool operator==( const Point& ) const;
 
 };
 
@@ -81,7 +83,7 @@ struct Segment
 
     const Point A_ {};
     const Point B_ {};
-    const fp_t sqLen_ = -1;
+    const fp_t sqLen_ = nan;
 
     Segment( const Point&, const Point& );
     Segment( const Segment& ) = default;

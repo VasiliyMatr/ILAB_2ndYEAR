@@ -7,7 +7,7 @@ Line::Line( const Vector& dirVec, const Point& point ) :
     dirVec_ (dirVec), point_ (point) {}
 
 Line::Line( const Segment& seg ) :
-    dirVec_ (Vector {seg.A_, seg.B_}), point_ (seg.A_) {}
+    dirVec_ (seg.A_ == seg.B_ ? Vector {} : Vector {seg.A_, seg.B_}), point_ (seg.A_) {}
 
 bool Line::isValid() const
 {

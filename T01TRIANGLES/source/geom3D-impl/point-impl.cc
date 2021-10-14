@@ -11,6 +11,13 @@ bool Point::isValid() const
            geom3D::isValid (z_);
 }
 
+bool Point::operator==( const Point& second ) const
+{
+    return isEqual (x_, second.x_) &&
+           isEqual (y_, second.y_) &&
+           isEqual (z_, second.z_);
+}
+
 fp_t sqDst( const Point& A, const Point& B )
 {
     return Vector {A, B}.sqLen ();

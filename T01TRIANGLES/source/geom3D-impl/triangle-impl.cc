@@ -119,6 +119,9 @@ bool flatIfCross( const TriangleInfo& ft, const TriangleInfo& sd )
 
 bool flatIfCross( const TriangleInfo& tr, const Segment& seg )
 {
+    if (isEqual (seg.sqLen_, 0))
+        return flatIfCross (tr, seg.A_);
+
     Line segLine = Line {seg};
 
     Point abCross = segLine | tr.AB_;
@@ -175,7 +178,7 @@ bool isBelongs( const Plane& plane, const Point& P )
 {
     const Vector& n = plane.normVec_;
 
-    return isEqual (n.x_*P.x_ + n.y_+P.y_ + n.z_*P.z_ + plane.D_, 0);
+    return isEqual (n.x_*P.x_ + n.y_*P.y_ + n.z_*P.z_ + plane.D_, 0);
 }
 
 } // namespace

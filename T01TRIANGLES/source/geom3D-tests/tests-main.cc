@@ -3,8 +3,8 @@
 using namespace geom3D;
 
 // Bounds for test values.
-const fp_t MAX_TEST_FP_VAL = 10000;
-const fp_t MIN_TEST_FP_VAL = -10000;
+const fp_t MAX_TEST_FP_VAL = 1000;
+const fp_t MIN_TEST_FP_VAL = -1000;
 
 // Generates fp_t value in range:
 // [MIN_TEST_FP_VAL; MAX_TEST_FP_VAL] \ {0}

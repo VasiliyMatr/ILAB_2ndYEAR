@@ -6,32 +6,33 @@ namespace geom3D
 
 Vector::Vector( fp_t x, fp_t y, fp_t z ) : x_(x), y_(y), z_(z) {}
 
-Vector::Vector( const Point& A, const Point& B ) :
-    x_(B.x_-A.x_), y_(B.y_-A.y_), z_(B.z_-A.z_) {}
+Vector::Vector( const Point& P1, const Point& P2 ) :
+    x_(P2.x_-P1.x_), y_(P2.y_-P1.y_), z_(P2.z_-P1.z_) {}
 
 bool Vector::isValid() const
 {
-    return geom3D::isValid (x_) && geom3D::isValid (y_) && geom3D::isValid (z_);
+    bool isValid( fp_t );
+    return isValid (x_) && isValid (y_) && isValid (z_);
 }
 
 Vector Vector::operator-() const
 {
-    return Vector {-x_, -y_, -z_};
+    return {-x_, -y_, -z_};
 }
 
-Vector Vector::operator+( const Vector& second ) const
+Vector Vector::operator+( const Vector& sd ) const
 {
-    return Vector {x_ + second.x_, y_ + second.y_, z_ + second.z_};
+    return {x_ + sd.x_, y_ + sd.y_, z_ + sd.z_};
 }
 
-Vector Vector::operator-( const Vector& second ) const
+Vector Vector::operator-( const Vector& sd ) const
 {
-    return Vector {x_ - second.x_, y_ - second.y_, z_ - second.z_};
+    return {x_ - sd.x_, y_ - sd.y_, z_ - sd.z_};
 }
 
 Vector Vector::operator*( const fp_t num ) const
 {
-    return Vector {x_ * num, y_ * num, z_ * num};
+    return {x_ * num, y_ * num, z_ * num};
 }
 
 Vector operator*( fp_t num, Vector vec )
@@ -41,17 +42,17 @@ Vector operator*( fp_t num, Vector vec )
 
 Vector Vector::operator/( const fp_t num ) const
 {
-    return Vector {x_ / num, y_ / num, z_ / num};
+    return {x_ / num, y_ / num, z_ / num};
 }
 
-bool Vector::operator==( const Vector& second ) const
+bool Vector::operator==( const Vector& sd ) const
 {
-    return isEqual (x_, second.x_) && isEqual (y_, second.y_) && isEqual (z_, second.z_);
+    return isEqual (x_, sd.x_) && isEqual (y_, sd.y_) && isEqual (z_, sd.z_);
 }
 
 fp_t Vector::sqLen() const
 {
-    return x_ * x_ + y_ * y_ + z_ * z_;
+    return x_*x_ + y_*y_ + z_*z_;
 }
 
 fp_t Vector::len() const
@@ -59,22 +60,16 @@ fp_t Vector::len() const
     return std::sqrt (sqLen ());
 }
 
-Vector Vector::normalized() const
+Vector Vector::crossProduct( const Vector& ft, const Vector& sd )
 {
-    fp_t length = len();
-    return Vector {x_ / length, y_ / length, z_ / length};
+    return {ft.y_*sd.z_ - ft.z_*sd.y_,
+           -ft.x_*sd.z_ + ft.z_*sd.x_,
+            ft.x_*sd.y_ - ft.y_*sd.x_};
 }
 
-Vector Vector::crossProduct( const Vector& first, const Vector& second )
+fp_t Vector::scalarProduct( const Vector& ft, const Vector& sd )
 {
-    return Vector {first.y_ * second.z_ - first.z_ * second.y_,
-                  -first.x_ * second.z_ + first.z_ * second.x_,
-                   first.x_ * second.y_ - first.y_ * second.x_};
-}
-
-fp_t Vector::scalarProduct( const Vector& first, const Vector& second )
-{
-    return first.x_ * second.x_ + first.y_ * second.y_ + first.z_ * second.z_;
+    return ft.x_*sd.x_ + ft.y_*sd.y_ + ft.z_*sd.z_;
 }
 
 } // namespace geom3D

@@ -4,7 +4,7 @@
 namespace geom3D
 {
 
-TEST( trCrossTests, SegNSeg )
+TEST( trCrossTests, segNSeg )
 {
     TriangleInfo t1 {{1,1,1}, {2,2,2}, {3,3,3}}; // Main segment in test.
     TriangleInfo t2 {{1,1,0}, {2,2,1}, {3,3,2}}; // Parallel to main segment.
@@ -27,7 +27,34 @@ TEST( trCrossTests, SegNSeg )
     ASSERT_TRUE (t1.isInter (t8) && t8.isInter (t1));
 }
 
-TEST( trCrossTests, END2END )
+TEST( trCrossTests, trNSeg )
+{
+    TriangleInfo t01 {{1,1,1}, {1,5,1}, {5,1,1}}; // Triangle to cross with segments.
+    TriangleInfo t02 {{1,1,2}, {1,1,2}, {2,2,2}}; // Segment in parallel plane.
+    TriangleInfo t03 {{1,1,5}, {1,1,3}, {1,1,4}}; // Not crossed segment (doesn't belong to triangles plane).
+    TriangleInfo t04 {{1,1,1}, {1,1,5}, {1,1,4}}; // Crosses with triangle vertex (doesn't belong to triangle plane).
+    TriangleInfo t05 {{1,1,4}, {3,3,0}, {3,3,0}}; // Crosses with triangle inside area.
+    TriangleInfo t06 {{2,2,2}, {2,2,2}, {2,2,2}}; // Point outside triangle.
+    TriangleInfo t07 {{2,2,1}, {2,2,1}, {2,2,1}}; // Point inside triangle.
+    TriangleInfo t08 {{-1,-1,1}, {-2,-2,1}, {-3,-3,1}}; // Not crossed segment (belongs to triangle plane).
+    TriangleInfo t09 {{1,1,1}, {-1,-1,1}, {1,1,1}}; // Crossed with trangle vertex (belongs to triangle plane).
+    TriangleInfo t10 {{0,2,1}, {5,0,1}, {0,1,1}}; // Crossed with triangle (belongs to triangle plane).
+    TriangleInfo t11 {{0,1,1}, {6,1,1}, {0,1,1}}; // Crossed with triangle side (belongs to trianlge plane).
+
+    ASSERT_FALSE (t01.isInter (t02) || t02.isInter (t01));
+    ASSERT_FALSE (t01.isInter (t03) || t03.isInter (t01));
+    ASSERT_FALSE (t01.isInter (t06) || t06.isInter (t01));
+    ASSERT_FALSE (t01.isInter (t08) || t08.isInter (t01));
+    
+    ASSERT_TRUE (t01.isInter (t04) && t04.isInter (t01));
+    ASSERT_TRUE (t01.isInter (t05) && t05.isInter (t01));
+    ASSERT_TRUE (t01.isInter (t07) && t07.isInter (t01));
+    ASSERT_TRUE (t01.isInter (t09) && t09.isInter (t01));
+    ASSERT_TRUE (t01.isInter (t10) && t10.isInter (t01));
+    ASSERT_TRUE (t01.isInter (t11) && t11.isInter (t01));
+}
+
+TEST( trCrossTests, trNTr )
 {
     TriangleInfo t1 {{1,1,1}, {5,1,1}, {3,4,1}};
     TriangleInfo t2 {{3,1,-3}, {3,1,3}, {3,4,0}};

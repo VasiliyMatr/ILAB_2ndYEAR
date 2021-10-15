@@ -10,12 +10,12 @@ TEST( LineTests, CtorTest )
 
     Line line {vec, point};
 
-    ASSERT_FLOAT_EQ (line.dirVec_.x_, vec.x_);
-    ASSERT_FLOAT_EQ (line.dirVec_.y_, vec.y_);
-    ASSERT_FLOAT_EQ (line.dirVec_.z_, vec.z_);
-    ASSERT_FLOAT_EQ (line.point_.x_, point.x_);
-    ASSERT_FLOAT_EQ (line.point_.y_, point.y_);
-    ASSERT_FLOAT_EQ (line.point_.z_, point.z_);
+    ASSERT_FLOAT_EQ (line.dir_.x_, vec.x_);
+    ASSERT_FLOAT_EQ (line.dir_.y_, vec.y_);
+    ASSERT_FLOAT_EQ (line.dir_.z_, vec.z_);
+    ASSERT_FLOAT_EQ (line.p_.x_, point.x_);
+    ASSERT_FLOAT_EQ (line.p_.y_, point.y_);
+    ASSERT_FLOAT_EQ (line.p_.z_, point.z_);
 
 }
 

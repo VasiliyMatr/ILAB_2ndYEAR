@@ -16,9 +16,15 @@ bool Segment::isValid() const
     return A_.isValid () && B_.isValid ();
 }
 
-Point operator|( const Segment& seg, const Line& line )
+bool Segment::linearContains( const Point& P ) const
 {
-    return line | seg;
+    return sqLen_ + FP_CMP_PRECISION >= sqDst (P, A_) &&
+           sqLen_ + FP_CMP_PRECISION >= sqDst (P, B_);
+}
+
+Point Segment::operator|( const Line& line ) const
+{
+    return line | *this;
 }
 
 } // namespace geom3D

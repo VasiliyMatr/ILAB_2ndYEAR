@@ -6,26 +6,17 @@ namespace geom3D
 
 TriangleInfo::TriangleInfo( const Point& A, const Point& B, const Point& C ) :
     plane_ (A, B, C), isDegen_ (!plane_.isValid ()),
-    AB_ {A, B}, BC_ {B, C}, CA_ {C, A},
+    AB_ ({A, B}), BC_ ({B, C}), CA_ ({C, A}),
     maxLenSeg_ (AB_.sqLen_ > BC_.sqLen_ ?
                (AB_.sqLen_ > CA_.sqLen_ ? AB_ : CA_) :
                (BC_.sqLen_ > CA_.sqLen_ ? BC_ : CA_))
 {}
 
-bool TriangleInfo::isValid() const
-{
-    return plane_.isValid () && AB_.isValid () &&
-           BC_.isValid () && CA_.isValid ();
-}
-
 namespace
 {
 
-// Only for seg and point on one line.
-// A bit copypasted from Segment::operator|( const Segment& second ). Fix?
-bool flatIsBelongs( const Segment& seg, const Point& point );
-
-bool isBelongs( const Plane&, const Point& );
+// To check if two segments on one line are crossed.
+bool linearIfCross( const Segment&, const Segment& );
 
 // To check if objects crosses.
 // For not degenerate triangles.
@@ -35,7 +26,9 @@ bool ifCross( const TriangleInfo&, const Segment& );
 bool ifCross( const Segment&, const Segment& );
 
 // To check if objects crosses (for obj on one plane).
+// For not degenerate triangles.
 bool flatIfCross( const TriangleInfo&, const TriangleInfo& );
+// For not degenerate triangle.
 bool flatIfCross( const TriangleInfo&, const Segment& );
 bool flatIfCross( const TriangleInfo&, const Point& );
 
@@ -70,11 +63,11 @@ bool ifCross( const TriangleInfo& ft, const TriangleInfo& sd )
     Point bcLineCross = Line {ft.BC_} | sd.plane_;
     Point caLineCross = Line {ft.CA_} | sd.plane_;
 
-    Point abCross = flatIsBelongs (ft.AB_, abLineCross) ? abLineCross : Point{};
-    Point bcCross = flatIsBelongs (ft.BC_, bcLineCross) ? bcLineCross : Point{};
-    Point caCross = flatIsBelongs (ft.CA_, caLineCross) ? caLineCross : Point{};
+    Point abCross = ft.AB_.linearContains (abLineCross) ? abLineCross : Point{};
+    Point bcCross = ft.BC_.linearContains (bcLineCross) ? bcLineCross : Point{};
+    Point caCross = ft.CA_.linearContains (caLineCross) ? caLineCross : Point{};
 
-    // Crossing segment & triangle in the same plane?
+    // Crossing segment & triangle?
     if (abCross.isValid ())
     {
         if (bcCross.isValid ())
@@ -87,7 +80,7 @@ bool ifCross( const TriangleInfo& ft, const TriangleInfo& sd )
         return flatIfCross (sd, Segment {bcCross, caCross});
     // Not segment & triangle case.
 
-    if (isBelongs (sd.plane_, ft.AB_.A_))
+    if (sd.plane_.contains (ft.AB_.A_))
         // Crossing 2 triangles in the same plane.
         return flatIfCross (ft, sd);
 
@@ -97,18 +90,34 @@ bool ifCross( const TriangleInfo& ft, const TriangleInfo& sd )
 bool ifCross( const TriangleInfo& trInfo, const Segment& seg )
 {
     Point segPlaneCross = Line {seg} | trInfo.plane_;
-    if (segPlaneCross.isValid () && flatIsBelongs (seg, segPlaneCross))
+    if (segPlaneCross.isValid () && seg.linearContains (segPlaneCross))
         // Crossing point & triangle.
         return flatIfCross (trInfo, segPlaneCross);
 
-    return isBelongs (trInfo.plane_, seg.A_) ?
-           flatIfCross (trInfo, seg) : false;
+    // Crossing segment & triangle.
+    return trInfo.plane_.contains (seg.A_) &&
+           flatIfCross (trInfo, seg);
 }
 
 bool ifCross( const Segment& ft, const Segment& sd )
 {
-    Point lineSegCross = ft | Line{sd};
-    return flatIsBelongs (sd, lineSegCross);
+    Line ftLine = Line {ft};
+    Line sdLine = Line {sd};
+    if (ftLine == sdLine)
+        return linearIfCross (ft, sd);
+
+    if (ftLine.isValid ())
+    {
+        if (sdLine.isValid ())
+            return ft.linearContains (ftLine | sd);
+
+        return ftLine.contains (sd.A_);
+    }
+
+    if (sdLine.isValid ())
+        return sdLine.contains (ft.A_);
+
+    return ft.A_ == sd.A_;
 }
 
 bool flatIfCross( const TriangleInfo& ft, const TriangleInfo& sd )
@@ -119,10 +128,9 @@ bool flatIfCross( const TriangleInfo& ft, const TriangleInfo& sd )
 
 bool flatIfCross( const TriangleInfo& tr, const Segment& seg )
 {
-    if (isEqual (seg.sqLen_, 0))
-        return flatIfCross (tr, seg.A_);
-
     Line segLine = Line {seg};
+    if (!segLine.isValid ())
+        return flatIfCross (tr, seg.A_);
 
     Point abCross = segLine | tr.AB_;
     Point bcCross = segLine | tr.BC_;
@@ -136,49 +144,43 @@ bool flatIfCross( const TriangleInfo& tr, const Segment& seg )
     {
         if (bcCross.isValid ())
         {
-            if (caCross.isValid ()) // On one of triangle sides or don't cross.
+            if (caCross.isValid ())
             {
+                // segLine crossed triangle vertex & opposite segment.
                 return isEqual (abbcSeg.sqLen_, 0) ?
-                    (flatIsBelongs (abcaSeg, seg.A_) ||
-                    flatIsBelongs (abcaSeg, seg.B_)) :
-                    (flatIsBelongs (abbcSeg, seg.A_) ||
-                    flatIsBelongs (abbcSeg, seg.B_));
+                       linearIfCross (abcaSeg, seg) :
+                       linearIfCross (abbcSeg, seg);
             }
 
-            return flatIsBelongs (abbcSeg, seg.A_) ||
-                   flatIsBelongs (abbcSeg, seg.B_);
+            return linearIfCross (abbcSeg, seg);
         }
 
-        return flatIsBelongs (abcaSeg, seg.A_) ||
-               flatIsBelongs (abcaSeg, seg.B_);
+        return linearIfCross (abcaSeg, seg);
     }
 
-    return flatIsBelongs (bccaSeg, seg.A_) ||
-           flatIsBelongs (bccaSeg, seg.B_);
+    if (bcCross.isValid ())
+        return linearIfCross (bccaSeg, seg);
+
+    return false;
 }
 
 bool flatIfCross( const TriangleInfo& tr, const Point& P )
 {
-    Line pa = Line {Segment {P, tr.AB_.A_}};
-    if (!pa.isValid ())
+    const Point& A = tr.AB_.A_;
+    Line PA = Line {Segment {P, A}};
+    if (!PA.isValid ()) // P == A
         return true;
 
-    Point cross = pa | tr.BC_;
+    Point BCCross = PA | tr.BC_;
 
-    return Segment {cross, tr.AB_.A_}.sqLen_ > Segment {P, tr.AB_.A_}.sqLen_;
+    return Segment {BCCross, A}.linearContains (P);
 }
 
-bool flatIsBelongs( const Segment& seg, const Point& point )
+bool linearIfCross( const Segment& ft, const Segment& sd )
 {
-    return seg.sqLen_ >= sqDst (seg.A_, point) &&
-           seg.sqLen_ >= sqDst (seg.B_, point);
-}
-
-bool isBelongs( const Plane& plane, const Point& P )
-{
-    const Vector& n = plane.normVec_;
-
-    return isEqual (n.x_*P.x_ + n.y_*P.y_ + n.z_*P.z_ + plane.D_, 0);
+    return ft.linearContains (sd.A_) ||
+           ft.linearContains (sd.B_) ||
+           sd.linearContains (ft.A_);
 }
 
 } // namespace

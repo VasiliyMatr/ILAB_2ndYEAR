@@ -32,6 +32,11 @@ Point Plane::operator|( const Line& line ) const
     return p + k*dir;
 }
 
+Point Plane::operator|( const Segment& seg ) const
+{
+    return seg | *this;
+}
+
 bool Plane::contains( const Point& P ) const
 {
     return isEqual (n_.x_*P.x_ + n_.y_*P.y_ + n_.z_*P.z_ + D_, 0);

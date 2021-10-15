@@ -43,4 +43,15 @@ TEST( PlaneTests, ValidationTests )
     ASSERT_FALSE (Plane {}.isValid ());
 }
 
+TEST( PlaneTests, containsTest )
+{
+    Point p1 {1,1,1};
+    Point p2 {1,2,1};
+    Point p3 {1,1,2};
+
+    Plane pl {p1, p2, p3};
+
+    ASSERT_TRUE (pl.contains (p1) && pl.contains (p2) && pl.contains (p3));
+}
+
 } // namespace geom3D

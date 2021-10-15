@@ -40,7 +40,6 @@ struct Line;
 struct Segment;
 struct Plane;
 
-// Common 3D point.
 struct Point
 {
     const fp_t x_ = nan;
@@ -59,7 +58,6 @@ struct Point
 
 fp_t sqDst( const Point&, const Point& );
 
-// Common 3D vector.
 struct Vector
 {
     const fp_t x_ = nan;

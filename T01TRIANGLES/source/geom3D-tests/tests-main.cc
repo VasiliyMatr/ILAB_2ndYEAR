@@ -1,6 +1,8 @@
 
 #include "geom3D-tests.hh"
-using namespace geom3D;
+
+namespace geom3D
+{
 
 // Bounds for test values.
 const fp_t MAX_TEST_FP_VAL = 1000;
@@ -19,11 +21,18 @@ fp_t genFP()
     return isEqual (sum, 0) ? 1 : sum;
 }
 
+Point genP()
+{
+    return Point {genFP (), genFP (), genFP ()};
+}
+
 // Generates Vector value for tests.
 Vector genVec()
 {
     return Vector {genFP (), genFP (), genFP ()};
 }
+
+} // namespace geom3D
 
 int main( int argc, char ** argv )
 {

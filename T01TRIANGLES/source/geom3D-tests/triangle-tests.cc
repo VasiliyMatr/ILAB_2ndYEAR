@@ -56,27 +56,23 @@ TEST( trCrossTests, trNSeg )
 
 TEST( trCrossTests, trNTr )
 {
-    TriangleInfo t1 {{1,1,1}, {5,1,1}, {3,4,1}};
-    TriangleInfo t2 {{3,1,-3}, {3,1,3}, {3,4,0}};
-    TriangleInfo t3 {{-10,5,0}, {2,3,0}, {1,6,0}};
+    TriangleInfo t1 {{1,1,1}, {5,1,1}, {3,4,1}}; // Main triangle
+    TriangleInfo t2 {{3,1,-3}, {3,1,3}, {3,4,0}}; // Crosses main triangle by segment.
+    TriangleInfo t3 {{-10,5,0}, {2,3,0}, {1,6,0}}; // In parallel plane with main triangle.
+    TriangleInfo t4 {{1,1,1}, {2,1,1}, {1,2,1}}; // In same plane with main triangle - crosses by side.
+    TriangleInfo t5 {{1,1,1}, {1,0,0}, {0,1,0}}; // One common point with main triangle.
+    TriangleInfo t6 {{1.1,1.1,1}, {2,1.5,1}, {1.5,2,1}}; // Lies inside main triangle.
+    TriangleInfo t7 {{-1,-1,1}, {2,-2,1}, {-2,2,1}}; // In same plane with main triangle. Not crossed with main triangle.
+    TriangleInfo t8 {{2,2,4}, {5,5,4}, {4,4,1.5}}; // Not crossed with main triangle.
 
-    ASSERT_TRUE (t1.isInter (t2));
-    ASSERT_TRUE (t2.isInter (t1));
+    ASSERT_FALSE (t1.isInter (t3) || t3.isInter (t1));
+    ASSERT_FALSE (t1.isInter (t7) || t7.isInter (t1));
+    ASSERT_FALSE (t1.isInter (t8) || t8.isInter (t1));
 
-    ASSERT_FALSE (t3.isInter (t1));
-    ASSERT_FALSE (t3.isInter (t2));
-    ASSERT_FALSE (t1.isInter (t3));
-    ASSERT_FALSE (t2.isInter (t3));
-
-    TriangleInfo t4 {{1,1,1}, {2,1,1}, {1,2,1}};
-    TriangleInfo t5 {{1,1,1}, {1,0,0}, {0,1,0}};
-    ASSERT_TRUE (t4.isInter (t5));
-    ASSERT_TRUE (t5.isInter (t4));
-
-    TriangleInfo t6 {{1,1,1}, {2,1.5,1}, {1.5,2,1}};
-    ASSERT_TRUE (t6.isInter (t4));
-    ASSERT_TRUE (t4.isInter (t6));
-
+    ASSERT_TRUE (t1.isInter (t2) && t2.isInter (t1));
+    ASSERT_TRUE (t1.isInter (t4) && t4.isInter (t1));
+    ASSERT_TRUE (t1.isInter (t5) && t5.isInter (t1));
+    ASSERT_TRUE (t1.isInter (t6) && t6.isInter (t1));
 }
 
 } // namespace geom3D

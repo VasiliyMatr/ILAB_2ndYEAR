@@ -128,6 +128,12 @@ struct Segment
     // or Segment length is zero - returns invalid point.
     // WARNED.
     Point operator|( const Line& ) const;
+
+    // Returns segment and plane cross.
+    // If there is infinite number of solutions, or no solutions,
+    // or Segment length is zero - returns invalid point.
+    // WARNED.
+    Point operator|( const Plane& ) const;
 };
 
 // Lines are stored as point + direction vector
@@ -199,6 +205,12 @@ struct Plane
     // If there is infinite number of solutions or no solutions - returns invalid point.
     // WARNED.
     Point operator|( const Line& ) const;
+
+    // Returns segment and plane cross.
+    // If there is infinite number of solutions, or no solutions,
+    // or Segment length is zero - returns invalid point.
+    // WARNED.
+    Point operator|( const Segment& ) const;
 };
 
 // Stored triangle info - not a geometrical primitive.

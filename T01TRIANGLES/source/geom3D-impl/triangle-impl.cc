@@ -59,13 +59,9 @@ namespace
 
 bool ifCross( const TriangleInfo& ft, const TriangleInfo& sd )
 {
-    Point abLineCross = Line {ft.AB_} | sd.plane_;
-    Point bcLineCross = Line {ft.BC_} | sd.plane_;
-    Point caLineCross = Line {ft.CA_} | sd.plane_;
-
-    Point abCross = ft.AB_.linearContains (abLineCross) ? abLineCross : Point{};
-    Point bcCross = ft.BC_.linearContains (bcLineCross) ? bcLineCross : Point{};
-    Point caCross = ft.CA_.linearContains (caLineCross) ? caLineCross : Point{};
+    Point abCross = ft.AB_ | sd.plane_;
+    Point bcCross = ft.BC_ | sd.plane_;
+    Point caCross = ft.CA_ | sd.plane_;
 
     // Crossing segment & triangle?
     if (abCross.isValid ())
@@ -145,12 +141,10 @@ bool flatIfCross( const TriangleInfo& tr, const Segment& seg )
         if (bcCross.isValid ())
         {
             if (caCross.isValid ())
-            {
                 // segLine crossed triangle vertex & opposite segment.
                 return isEqual (abbcSeg.sqLen_, 0) ?
                        linearIfCross (abcaSeg, seg) :
                        linearIfCross (abbcSeg, seg);
-            }
 
             return linearIfCross (abbcSeg, seg);
         }
@@ -158,22 +152,17 @@ bool flatIfCross( const TriangleInfo& tr, const Segment& seg )
         return linearIfCross (abcaSeg, seg);
     }
 
-    if (bcCross.isValid ())
-        return linearIfCross (bccaSeg, seg);
-
-    return false;
+    return bcCross.isValid () && linearIfCross (bccaSeg, seg);
 }
 
 bool flatIfCross( const TriangleInfo& tr, const Point& P )
 {
     const Point& A = tr.AB_.A_;
     Line PA = Line {Segment {P, A}};
-    if (!PA.isValid ()) // P == A
+    if (!PA.isValid ())// P == A
         return true;
 
-    Point BCCross = PA | tr.BC_;
-
-    return Segment {BCCross, A}.linearContains (P);
+    return Segment {PA | tr.BC_, A}.linearContains (P);
 }
 
 bool linearIfCross( const Segment& ft, const Segment& sd )

@@ -27,4 +27,10 @@ Point Segment::operator|( const Line& line ) const
     return line | *this;
 }
 
+Point Segment::operator|( const Plane& plane ) const
+{
+    Point lineCross = Line {*this} | plane;
+    return linearContains (lineCross) ? lineCross : Point {};
+}
+
 } // namespace geom3D

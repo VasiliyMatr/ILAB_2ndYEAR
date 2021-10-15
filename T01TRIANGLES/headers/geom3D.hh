@@ -42,9 +42,9 @@ struct Plane;
 
 struct Point
 {
-    const fp_t x_ = nan;
-    const fp_t y_ = nan;
-    const fp_t z_ = nan;
+    fp_t x_ = nan;
+    fp_t y_ = nan;
+    fp_t z_ = nan;
 
     // SAFE.
     bool isValid() const;
@@ -60,9 +60,9 @@ fp_t sqDst( const Point&, const Point& );
 
 struct Vector
 {
-    const fp_t x_ = nan;
-    const fp_t y_ = nan;
-    const fp_t z_ = nan;
+    fp_t x_ = nan;
+    fp_t y_ = nan;
+    fp_t z_ = nan;
 
     // SAFE.
     Vector( const fp_t, const fp_t, const fp_t );
@@ -103,9 +103,9 @@ fp_t det( const Vector&, const Vector&, const Vector& );
 // Segments are stored as 2 Points + stores self square length (length is used frequently).
 struct Segment
 {
-    const Point A_ {};
-    const Point B_ {};
-    const fp_t sqLen_ = nan;
+    Point A_ {};
+    Point B_ {};
+    fp_t sqLen_ = nan;
 
     // SAFE.
     Segment( const Point&, const Point& );
@@ -137,8 +137,8 @@ struct Segment
 // Lines are stored as point + direction vector
 struct Line
 {
-    const Vector dir_ {};
-    const Point p_ {};
+    Vector dir_ {};
+    Point p_ {};
 
     // SAFE.
     // Line is invalid if Vector == {0,0,0}
@@ -181,8 +181,8 @@ struct Line
 // n_.x_*x + n_.y_*y + n_.z_*z + D = 0
 struct Plane
 {
-    const Vector n_ {};
-    const fp_t D_ = nan;
+    Vector n_ {};
+    fp_t D_ = nan;
 
     // SAFE.
     // Plane is invalid if Vector == {0,0,0}.
@@ -214,15 +214,15 @@ struct Plane
 // Stored triangle info - not a geometrical primitive.
 struct TriangleInfo
 {
-    const Plane plane_ {};
-    const bool isDegen_ = true;
-    const Segment AB_ {}; // ft + sd point (in this order).
-    const Segment BC_ {}; // sd + tr point (in this order).
-    const Segment CA_ {}; // tr + ft point (in this order).
+    Plane plane_ {};
+    bool isDegen_ = true;
+    Segment AB_ {}; // ft + sd point (in this order).
+    Segment BC_ {}; // sd + tr point (in this order).
+    Segment CA_ {}; // tr + ft point (in this order).
 
     // For degenerate triangle case calcs.
     // Refers to longest triangle segment.
-    const Segment& maxLenSeg_;
+    Segment maxLenSeg_ {};
 
     TriangleInfo( const Point&, const Point&, const Point& );
     TriangleInfo( const TriangleInfo& ) = default;

@@ -10,12 +10,12 @@ TEST( LineTests, VecPointCtorTest )
 
     Line line {vec, point};
 
-    ASSERT_FLOAT_EQ (line.dir_.x_, vec.x_);
-    ASSERT_FLOAT_EQ (line.dir_.y_, vec.y_);
-    ASSERT_FLOAT_EQ (line.dir_.z_, vec.z_);
-    ASSERT_FLOAT_EQ (line.p_.x_, point.x_);
-    ASSERT_FLOAT_EQ (line.p_.y_, point.y_);
-    ASSERT_FLOAT_EQ (line.p_.z_, point.z_);
+    ASSERT_FLOAT_EQ (line.dir ().x_, vec.x_);
+    ASSERT_FLOAT_EQ (line.dir ().y_, vec.y_);
+    ASSERT_FLOAT_EQ (line.dir ().z_, vec.z_);
+    ASSERT_FLOAT_EQ (line.P ().x_, point.x_);
+    ASSERT_FLOAT_EQ (line.P ().y_, point.y_);
+    ASSERT_FLOAT_EQ (line.P ().z_, point.z_);
 }
 
 TEST( LineTests, TwoPointsCtorTest )
@@ -23,7 +23,7 @@ TEST( LineTests, TwoPointsCtorTest )
     Segment seg {{1,1,1}, {2,2,2}};
     Line l {seg};
 
-    ASSERT_TRUE (l.contains (seg.A_) && l.contains (seg.B_));
+    ASSERT_TRUE (l.contains (seg.A ()) && l.contains (seg.B ()));
 }
 
 TEST( LineTests, ValidationTests )
@@ -72,12 +72,12 @@ TEST( LineTests, parallelToTest )
 TEST( LineTests, CrossLineOperatorTest )
 {
     Line l1 {{1,1,1}, genP ()};
-    Line l2 {{1,2,1}, l1.p_};
-    Line l3 {l1.dir_, l1.p_ + Vector {1,0,0}};
+    Line l2 {{1,2,1}, l1.P ()};
+    Line l3 {l1.dir (), l1.P () + Vector {1,0,0}};
     Point p1 = l1 | l2;
     Point p2 = l1 | l3;
 
-    ASSERT_TRUE (p1 == l1.p_);
+    ASSERT_TRUE (p1 == l1.P ());
     ASSERT_FALSE (p2.isValid ());
 }
 

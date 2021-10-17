@@ -13,16 +13,26 @@ Plane::Plane( const Point& A, const Point& B, const Point& C ) :
       -n_.x_*A.x_ - n_.y_*A.y_ - n_.z_*A.z_)
 {}
 
+Vector Plane::n() const
+{
+    return n_;
+}
+
+fp_t Plane::D() const
+{
+    return D_;
+}
+
 bool Plane::isValid() const
 {
     bool isValid (fp_t);
-    return n_.isValid () && isValid (D_);
+    return n_.isValid () && isValid (D_) && !(n_ == Vector {0,0,0});
 }
 
 Point Plane::operator|( const Line& line ) const
 {
-    const Vector& dir = line.dir_;
-    const Point& p = line.p_;
+    const Vector& dir = line.dir ();
+    const Point& p = line.P ();
 
     fp_t dirNormScal = Vector::scalarProduct (dir, n_);
     fp_t palneEVal = p.x_*n_.x_ + p.y_*n_.y_ + p.z_*n_.z_ + D_;

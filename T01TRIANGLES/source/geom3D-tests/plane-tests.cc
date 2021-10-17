@@ -10,21 +10,21 @@ TEST( PlaneTests, VecNDCtorTest )
 
     Plane plane {norm, D};
 
-    ASSERT_FLOAT_EQ (plane.n_.x_, norm.x_);
-    ASSERT_FLOAT_EQ (plane.n_.y_, norm.y_);
-    ASSERT_FLOAT_EQ (plane.n_.z_, norm.z_);
-    ASSERT_FLOAT_EQ (plane.D_, D);
+    ASSERT_FLOAT_EQ (plane.n ().x_, norm.x_);
+    ASSERT_FLOAT_EQ (plane.n ().y_, norm.y_);
+    ASSERT_FLOAT_EQ (plane.n ().z_, norm.z_);
+    ASSERT_FLOAT_EQ (plane.D (), D);
 }
 
 TEST( PlaneTests, ThreePtsCtorTest )
 {
     Point A {1, 0, 0}, B {0, 1, 0}, C {0, 0, 1};
     Plane plane {A, B, C};
-    Vector crossProd = Vector::crossProduct (plane.n_, {1, 1, 1});
+    Vector crossProd = Vector::crossProduct (plane.n (), {1, 1, 1});
     fp_t CPLen = crossProd.len ();
 
     ASSERT_FLOAT_EQ (0, CPLen);
-    ASSERT_FLOAT_EQ (-1, plane.D_);
+    ASSERT_FLOAT_EQ (-1, plane.D ());
 }
 
 TEST( PlaneTests, ValidationTests )

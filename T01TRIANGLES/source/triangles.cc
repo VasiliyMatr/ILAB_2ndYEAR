@@ -29,7 +29,7 @@ int main( int argc, char ** argv)
     for (int i = 0; i < trNum; ++i)
     {
         for (int j = i; j < trNum; ++j)
-            if (tr[i].first.isInter (tr[j].first))
+            if (tr[i].first.crosses (tr[j].first))
             {
                 tr[i].second = true;
                 tr[j].second = true;

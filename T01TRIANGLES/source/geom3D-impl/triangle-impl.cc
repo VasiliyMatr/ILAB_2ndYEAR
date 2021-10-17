@@ -6,131 +6,166 @@ namespace geom3D
 
 TriangleInfo::TriangleInfo( const Point& A, const Point& B, const Point& C ) :
     plane_ (A, B, C), isDegen_ (!plane_.isValid ()),
-    AB_ ({A, B}), BC_ ({B, C}), CA_ ({C, A}),
-    maxLenSeg_ (AB_.sqLen_ > BC_.sqLen_ ?
-               (AB_.sqLen_ > CA_.sqLen_ ? AB_ : CA_) :
-               (BC_.sqLen_ > CA_.sqLen_ ? BC_ : CA_))
-{}
+    AB_ ({A, B}), BC_ ({B, C}), CA_ ({C, A})
+{
+    if (isDegen_)
+    {
+        if (BC_.sqLen () > AB_.sqLen ())
+        {
+            if (BC_.sqLen () > CA_.sqLen ())
+                AB_ = BC_;
+            else
+                AB_ = CA_;
+        }
+        else if (CA_.sqLen () > AB_.sqLen ())
+            AB_ = CA_;
+    }
+}
+
+Plane TriangleInfo::plane() const
+{
+    return plane_;
+}
+
+bool TriangleInfo::isDegen() const
+{
+    return isDegen_;
+}
+
+Segment TriangleInfo::AB() const
+{
+    return AB_;
+}
+
+Segment TriangleInfo::BC() const
+{
+    return BC_;
+}
+
+Segment TriangleInfo::CA() const
+{
+    return CA_;
+}
 
 namespace
 {
 
 // To check if two segments on one line are crossed.
-bool linearIfCross( const Segment&, const Segment& );
+bool linearAreCrossed( const Segment&, const Segment& );
 
 // To check if objects crosses.
 // For not degenerate triangles.
-bool ifCross( const TriangleInfo&, const TriangleInfo& );
+bool areCrossed( const TriangleInfo&, const TriangleInfo& );
 // For not degenerate triangle.
-bool ifCross( const TriangleInfo&, const Segment& );
-bool ifCross( const Segment&, const Segment& );
+bool areCrossed( const TriangleInfo&, const Segment& );
+bool areCrossed( const Segment&, const Segment& );
 
 // To check if objects crosses (for obj on one plane).
 // For not degenerate triangles.
-bool flatIfCross( const TriangleInfo&, const TriangleInfo& );
+bool flatAreCrossed( const TriangleInfo&, const TriangleInfo& );
 // For not degenerate triangle.
-bool flatIfCross( const TriangleInfo&, const Segment& );
-bool flatIfCross( const TriangleInfo&, const Point& );
+bool flatAreCrossed( const TriangleInfo&, const Segment& );
+bool flatAreCrossed( const TriangleInfo&, const Point& );
 
 } // namespace
 
-bool TriangleInfo::isInter( const TriangleInfo& second ) const
+bool TriangleInfo::crosses( const TriangleInfo& second ) const
 {
     if (isDegen_)
     {
         if (second.isDegen_) 
             // Crossing 2 segments.
-            return ifCross (maxLenSeg_, second.maxLenSeg_);
+            return areCrossed (AB_, second.AB_);
 
         // Crossing segment & triangle.
-        return ifCross (second, maxLenSeg_);
+        return areCrossed (second, AB_);
     }
 
     if (second.isDegen_)
         // Crossing segment & triangle.
-        return ifCross (*this, second.maxLenSeg_);
+        return areCrossed (*this, second.AB_);
 
     // Crossing 2 triangles.
-    return ifCross (*this, second);
+    return areCrossed (*this, second);
 }
 
 namespace
 {
 
-bool ifCross( const TriangleInfo& ft, const TriangleInfo& sd )
+bool areCrossed( const TriangleInfo& ft, const TriangleInfo& sd )
 {
-    Point abCross = ft.AB_ | sd.plane_;
-    Point bcCross = ft.BC_ | sd.plane_;
-    Point caCross = ft.CA_ | sd.plane_;
+    Point abCross = ft.AB () | sd.plane ();
+    Point bcCross = ft.BC () | sd.plane ();
+    Point caCross = ft.CA () | sd.plane ();
 
     // Crossing segment & triangle?
     if (abCross.isValid ())
     {
         if (bcCross.isValid ())
-            return flatIfCross (sd, Segment {abCross, bcCross});
+            return flatAreCrossed (sd, Segment {abCross, bcCross});
 
-        return flatIfCross (sd, Segment {abCross, caCross});
+        return flatAreCrossed (sd, Segment {abCross, caCross});
     }
 
     if (bcCross.isValid ())
-        return flatIfCross (sd, Segment {bcCross, caCross});
+        return flatAreCrossed (sd, Segment {bcCross, caCross});
     // Not segment & triangle case.
 
-    if (sd.plane_.contains (ft.AB_.A_))
+    if (sd.plane ().contains (ft.AB ().A ()))
         // Crossing 2 triangles in the same plane.
-        return flatIfCross (ft, sd);
+        return flatAreCrossed (ft, sd);
 
     return false;
 }
 
-bool ifCross( const TriangleInfo& trInfo, const Segment& seg )
+bool areCrossed( const TriangleInfo& trInfo, const Segment& seg )
 {
-    Point segPlaneCross = Line {seg} | trInfo.plane_;
+    Point segPlaneCross = Line {seg} | trInfo.plane ();
     if (segPlaneCross.isValid () && seg.linearContains (segPlaneCross))
         // Crossing point & triangle.
-        return flatIfCross (trInfo, segPlaneCross);
+        return flatAreCrossed (trInfo, segPlaneCross);
 
     // Crossing segment & triangle.
-    return trInfo.plane_.contains (seg.A_) &&
-           flatIfCross (trInfo, seg);
+    return trInfo.plane ().contains (seg.A ()) &&
+           flatAreCrossed (trInfo, seg);
 }
 
-bool ifCross( const Segment& ft, const Segment& sd )
+bool areCrossed( const Segment& ft, const Segment& sd )
 {
     Line ftLine = Line {ft};
     Line sdLine = Line {sd};
     if (ftLine == sdLine)
-        return linearIfCross (ft, sd);
+        return linearAreCrossed (ft, sd);
 
     if (ftLine.isValid ())
     {
         if (sdLine.isValid ())
             return ft.linearContains (ftLine | sd);
 
-        return ftLine.contains (sd.A_);
+        return ftLine.contains (sd.A ());
     }
 
     if (sdLine.isValid ())
-        return sdLine.contains (ft.A_);
+        return sdLine.contains (ft.A ());
 
-    return ft.A_ == sd.A_;
+    return ft.A () == sd.A ();
 }
 
-bool flatIfCross( const TriangleInfo& ft, const TriangleInfo& sd )
+bool flatAreCrossed( const TriangleInfo& ft, const TriangleInfo& sd )
 {
-    return flatIfCross (ft, sd.AB_) || flatIfCross (ft, sd.BC_) ||
-           flatIfCross (ft, sd.CA_) || flatIfCross (sd, ft.AB_);
+    return flatAreCrossed (ft, sd.AB ()) || flatAreCrossed (ft, sd.BC ()) ||
+           flatAreCrossed (ft, sd.CA ()) || flatAreCrossed (sd, ft.AB ());
 }
 
-bool flatIfCross( const TriangleInfo& tr, const Segment& seg )
+bool flatAreCrossed( const TriangleInfo& tr, const Segment& seg )
 {
     Line segLine = Line {seg};
     if (!segLine.isValid ())
-        return flatIfCross (tr, seg.A_);
+        return flatAreCrossed (tr, seg.A ());
 
-    Point abCross = segLine | tr.AB_;
-    Point bcCross = segLine | tr.BC_;
-    Point caCross = segLine | tr.CA_;
+    Point abCross = segLine | tr.AB ();
+    Point bcCross = segLine | tr.BC ();
+    Point caCross = segLine | tr.CA ();
 
     Segment abbcSeg = Segment {abCross, bcCross};
     Segment abcaSeg = Segment {abCross, caCross};
@@ -142,34 +177,34 @@ bool flatIfCross( const TriangleInfo& tr, const Segment& seg )
         {
             if (caCross.isValid ())
                 // segLine crossed triangle vertex & opposite segment.
-                return isEqual (abbcSeg.sqLen_, 0) ?
-                       linearIfCross (abcaSeg, seg) :
-                       linearIfCross (abbcSeg, seg);
+                return isEqual (abbcSeg.sqLen (), 0) ?
+                       linearAreCrossed (abcaSeg, seg) :
+                       linearAreCrossed (abbcSeg, seg);
 
-            return linearIfCross (abbcSeg, seg);
+            return linearAreCrossed (abbcSeg, seg);
         }
 
-        return linearIfCross (abcaSeg, seg);
+        return linearAreCrossed (abcaSeg, seg);
     }
 
-    return bcCross.isValid () && linearIfCross (bccaSeg, seg);
+    return bcCross.isValid () && linearAreCrossed (bccaSeg, seg);
 }
 
-bool flatIfCross( const TriangleInfo& tr, const Point& P )
+bool flatAreCrossed( const TriangleInfo& tr, const Point& P )
 {
-    const Point& A = tr.AB_.A_;
+    const Point& A = tr.AB ().A ();
     Line PA = Line {Segment {P, A}};
     if (!PA.isValid ())// P == A
         return true;
 
-    return Segment {PA | tr.BC_, A}.linearContains (P);
+    return Segment {PA | tr.BC (), A}.linearContains (P);
 }
 
-bool linearIfCross( const Segment& ft, const Segment& sd )
+bool linearAreCrossed( const Segment& ft, const Segment& sd )
 {
-    return ft.linearContains (sd.A_) ||
-           ft.linearContains (sd.B_) ||
-           sd.linearContains (ft.A_);
+    return ft.linearContains (sd.A ()) ||
+           ft.linearContains (sd.B ()) ||
+           sd.linearContains (ft.A ());
 }
 
 } // namespace

@@ -96,6 +96,12 @@ struct Vector
     static Vector crossProduct( const Vector& , const Vector& );
 };
 
+// Few useful Vector constants.
+static const Vector e1 {1,0,0};
+static const Vector e2 {0,1,0};
+static const Vector e3 {0,0,1};
+static const Vector O {0,0,0};
+
 // SAFE.
 Vector operator*( fp_t, Vector );
 

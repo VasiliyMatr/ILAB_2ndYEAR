@@ -11,7 +11,7 @@ bool isValid( fp_t value )
 
 int isEqual( fp_t a, fp_t b )
 {
-    return std::abs (a - b) < FP_CMP_PRECISION;
+    return std::abs (a - b) <= FP_CMP_PRECISION;
 }
 
 fp_t det( const Vector& a, const Vector& b, const Vector& c )

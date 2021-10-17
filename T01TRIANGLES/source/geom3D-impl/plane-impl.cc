@@ -5,12 +5,11 @@ namespace geom3D
 {
 
 Plane::Plane( const Vector& n, fp_t D ) :
-    n_(n == Vector {0,0,0} ? Vector {} : n), D_(D) {}
+    n_(n == O ? Vector {} : n), D_(D) {}
 
 Plane::Plane( const Point& A, const Point& B, const Point& C ) :
     n_(Vector::crossProduct ({A, B}, {B, C})),
-    D_(n_ == Vector {0,0,0} ? nan :
-      -n_.x_*A.x_ - n_.y_*A.y_ - n_.z_*A.z_)
+    D_(n_ == O ? nan : -n_.x_*A.x_ - n_.y_*A.y_ - n_.z_*A.z_)
 {}
 
 Vector Plane::n() const
@@ -26,7 +25,7 @@ fp_t Plane::D() const
 bool Plane::isValid() const
 {
     bool isValid (fp_t);
-    return n_.isValid () && isValid (D_) && !(n_ == Vector {0,0,0});
+    return n_.isValid () && isValid (D_);
 }
 
 Point Plane::operator|( const Line& line ) const

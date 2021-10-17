@@ -4,7 +4,7 @@ namespace geom3D
 {
 
 Line::Line( const Vector& dir, const Point& P ) :
-    dir_ (dir == Vector {0,0,0} ? Vector {} : dir),
+    dir_ (dir == O ? Vector {} : dir),
     P_ (P)
 {}
 
@@ -38,7 +38,7 @@ bool Line::contains( const Point& toCheck ) const
 
 bool Line::parallelTo( const Line& sd ) const
 {
-    return Vector::crossProduct (dir_, sd.dir_) == Vector {0,0,0};
+    return Vector::crossProduct (dir_, sd.dir_) == O;
 }
 
 Point Line::operator|( const Line& sd ) const

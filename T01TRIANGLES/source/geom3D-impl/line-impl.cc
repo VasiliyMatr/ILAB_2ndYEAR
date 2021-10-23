@@ -3,43 +3,9 @@
 namespace geom3D
 {
 
-Line::Line( const Vector& dir, const Point& P ) :
-    dir_ (dir == O ? Vector {} : dir),
-    P_ (P)
-{}
-
 Line::Line( const Segment& seg ) :
     dir_ (seg.A () == seg.B () ? Vector {} : Vector {seg.A (), seg.B ()}),
-    P_ (seg.A ())
-{}
-
-Vector Line::dir() const
-{
-    return dir_;
-}
-
-Point Line::P() const
-{
-    return P_;
-}
-
-bool Line::isValid() const
-{
-    return dir_.isValid () && P_.isValid ();
-}
-
-bool Line::contains( const Point& toCheck ) const
-{
-    return isEqual ((P_.x_ - toCheck.x_) * dir_.y_,
-                    (P_.y_ - toCheck.y_) * dir_.x_) &&
-           isEqual ((P_.y_ - toCheck.y_) * dir_.z_,
-                    (P_.z_ - toCheck.z_) * dir_.y_);
-}
-
-bool Line::parallelTo( const Line& sd ) const
-{
-    return Vector::crossProduct (dir_, sd.dir_) == O;
-}
+    P_ (seg.A ()) {}
 
 Point Line::operator|( const Line& sd ) const
 {
@@ -59,20 +25,22 @@ Point Line::operator|( const Line& sd ) const
     return P_ + a*k;
 }
 
-bool Line::operator==( const Line& sd ) const
+Point Line::operator|( const Plane& plane ) const
 {
-    return sd.contains (P_) && sd.contains (P_ + dir_);
+    const Vector n = plane.n ();
+
+    fp_t dirNormScal = Vector::scalarProduct (dir_, n);
+    fp_t palneEVal = P_.x_*n.x_ + P_.y_*n.y_ + P_.z_*n.z_ + plane.D ();
+
+    fp_t k = -palneEVal / dirNormScal;
+
+    return P_ + k*dir_;
 }
 
 Point Line::operator|( const Segment& seg ) const
 {
     Point linesCross = *this | Line {seg};
     return seg.linearContains (linesCross) ? linesCross : Point {};
-}
-
-Point Line::operator|( const Plane& plane ) const
-{
-    return plane | *this;
 }
 
 } // namespace geom3D

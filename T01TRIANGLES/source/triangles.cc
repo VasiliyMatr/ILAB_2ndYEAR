@@ -27,7 +27,7 @@ int main( int argc, char ** argv)
 
     for (size_t i = 0; i < trNum; ++i)
     {
-        for (size_t j = i; j < trNum; ++j)
+        for (size_t j = i + 1; j < trNum; ++j)
             if (tr[i].first.crosses (tr[j].first))
             {
                 tr[i].second = true;
@@ -37,7 +37,7 @@ int main( int argc, char ** argv)
 
     for (size_t i = 0; i < trNum; ++i)
         if (tr[i].second)
-            std::cout << i + 1 << " ";
+            std::cout << i << std::endl;
 
     std::cout << std::endl;
 

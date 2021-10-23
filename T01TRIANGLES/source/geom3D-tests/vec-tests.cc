@@ -123,9 +123,9 @@ TEST( VectorTests, equalCmpOperatorTest )
     Vector a = genVec ();
 
     ASSERT_TRUE (a == a);
-    ASSERT_FALSE (a + e1 * FP_CMP_PRECISION * 2 == a);
-    ASSERT_FALSE (a + e2 * FP_CMP_PRECISION * 2 == a);
-    ASSERT_FALSE (a + e3 * FP_CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e1() * FP_CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e2() * FP_CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e3() * FP_CMP_PRECISION * 2 == a);
 }
 
 TEST( VectorTests, LenTest )
@@ -138,8 +138,13 @@ TEST( VectorTests, LenTest )
 
 TEST( VectorTests, ScalarProdTest )
 {
-    fp_t scalProd1 = Vector::scalarProduct (e1 + e2 * 2 + e3 * 3, -e2 - e3 * 1.5);
-    fp_t scalProd2 = Vector::scalarProduct (e3 * 3 - e2 * 4, e1 * 100 + e2 * 3.75 + e3 * 6);
+    fp_t scalProd1 = Vector::scalarProduct (
+        Vector::e1() + Vector::e2() * 2 + Vector::e3() * 3,
+       -Vector::e2() - Vector::e3() * 1.5);
+
+    fp_t scalProd2 = Vector::scalarProduct (
+        Vector::e3() * 3 - Vector::e2() * 4,
+        Vector::e1() * 100 + Vector::e2() * 3.75 + Vector::e3() * 6);
 
     ASSERT_FLOAT_EQ (scalProd1, -6.5);
     ASSERT_FLOAT_EQ (scalProd2, 3);
@@ -147,13 +152,18 @@ TEST( VectorTests, ScalarProdTest )
 
 TEST( VectorTests, CrossProdTest )
 {
-    Vector crossProd1 = Vector::crossProduct (e1 + e2 + e3, e1);
-    Vector crossProd2 = Vector::crossProduct (e1 + e2 + e3, e2);
-    Vector crossProd3 = Vector::crossProduct (e1 + e2 + e3, e3);
+    Vector crossProd1 = Vector::crossProduct (
+        Vector::e1() + Vector::e2() + Vector::e3(), Vector::e1());
 
-    ASSERT_TRUE (crossProd1 == -e3 + e2);
-    ASSERT_TRUE (crossProd2 == e3 - e1);
-    ASSERT_TRUE (crossProd3 == -e2 + e1); 
+    Vector crossProd2 = Vector::crossProduct (
+        Vector::e1() + Vector::e2() + Vector::e3(), Vector::e2());
+
+    Vector crossProd3 = Vector::crossProduct (
+        Vector::e1() + Vector::e2() + Vector::e3(), Vector::e3());
+
+    ASSERT_TRUE (crossProd1 == Vector::e2() - Vector::e3());
+    ASSERT_TRUE (crossProd2 == Vector::e3() - Vector::e1());
+    ASSERT_TRUE (crossProd3 == Vector::e1() - Vector::e2()); 
 }
 
 } // namespace geom3D

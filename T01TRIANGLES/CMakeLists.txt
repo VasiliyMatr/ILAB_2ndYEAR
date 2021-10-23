@@ -29,10 +29,7 @@ set( GEOM3D_TESTS_DIR "${CMAKE_SOURCE_DIR}/source/geom3D-tests" )
 
 set( GEOM3D_SRC_FILES
     "line-impl.cc"
-    "plane-impl.cc"
     "point-impl.cc"
-    "seg-impl.cc"
-    "utils-impl.cc"
     "vec-impl.cc"
     "triangle-impl.cc"
 )

@@ -22,31 +22,6 @@ TriangleInfo::TriangleInfo( const Point& A, const Point& B, const Point& C ) :
     }
 }
 
-Plane TriangleInfo::plane() const
-{
-    return plane_;
-}
-
-bool TriangleInfo::isDegen() const
-{
-    return isDegen_;
-}
-
-Segment TriangleInfo::AB() const
-{
-    return AB_;
-}
-
-Segment TriangleInfo::BC() const
-{
-    return BC_;
-}
-
-Segment TriangleInfo::CA() const
-{
-    return CA_;
-}
-
 namespace
 {
 

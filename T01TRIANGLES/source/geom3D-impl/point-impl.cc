@@ -3,10 +3,13 @@
 
 namespace geom3D
 {
-   
-Point Point::operator+( const Vector& vec ) const
+
+Point operator+( const Point& P, const Vector& vec )
 {
-    return Point {x_ + vec.x_, y_ + vec.y_, z_ + vec.z_};
+    Point toRet {P};
+    for (size_t i = 0; i < DNUM; ++i)
+        toRet[i] += vec[i];
+    return toRet;
 }
 
 fp_t sqDst( const Point& ft, const Point& sd )

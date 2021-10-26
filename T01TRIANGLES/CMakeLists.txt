@@ -31,6 +31,7 @@ set( GEOM3D_SRC_FILES
     "line-impl.cc"
     "point-impl.cc"
     "triangle-impl.cc"
+    "tr-union-impl.cc"
 )
 
 set( GEOM3D_TESTS_FILES
@@ -59,7 +60,7 @@ set( DEBUG_DEFINE_NAME "DEBUG" )
 set( DEBUG_FLAGS -D${DEBUG_DEFINE_NAME}=1 -O0 -g -Wall -Wextra -Wpedantic  )
 set( RELEASE_FLAGS -D${DEBUG_DEFINE_NAME}=0 -O2 )
 
-target_compile_features( ${GEOM3D_TEST_NAME} PRIVATE cxx_std_17 )
-target_compile_features( ${TRIANGLES_NAME} PRIVATE cxx_std_17 )
+target_compile_features( ${GEOM3D_TEST_NAME} PRIVATE cxx_std_20 )
+target_compile_features( ${TRIANGLES_NAME} PRIVATE cxx_std_20 )
 target_compile_options( ${GEOM3D_TEST_NAME} PRIVATE ${DEBUG_FLAGS} )
 target_compile_options( ${TRIANGLES_NAME} PRIVATE ${RELEASE_FALGS} )

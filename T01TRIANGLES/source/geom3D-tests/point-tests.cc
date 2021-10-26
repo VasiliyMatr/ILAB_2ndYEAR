@@ -34,18 +34,18 @@ TEST( PointTests, PlusVecOperatorTest )
     Vector v = genVec ();
     Point B = A + v;
 
-    ASSERT_FLOAT_EQ (B.x_, A.x_ + v.x_);
-    ASSERT_FLOAT_EQ (B.y_, A.y_ + v.y_);
-    ASSERT_FLOAT_EQ (B.z_, A.z_ + v.z_);
+    ASSERT_FLOAT_EQ (B[X], A[X] + v[X]);
+    ASSERT_FLOAT_EQ (B[Y], A[Y] + v[Y]);
+    ASSERT_FLOAT_EQ (B[Z], A[Z] + v[Z]);
 }
 
 TEST( PointTests, sqDstTest )
 {
     Point p1 = genP ();
     Point p2 = genP ();
-    fp_t sqDst1 = (p1.x_-p2.x_)*(p1.x_-p2.x_) +
-                  (p1.y_-p2.y_)*(p1.y_-p2.y_) +
-                  (p1.z_-p2.z_)*(p1.z_-p2.z_);
+    fp_t sqDst1 = (p1[X]-p2[X]) * (p1[X]-p2[X]) +
+                  (p1[Y]-p2[Y]) * (p1[Y]-p2[Y]) +
+                  (p1[Z]-p2[Z]) * (p1[Z]-p2[Z]);
 
     fp_t sqDst2 = sqDst (p1, p2);
 

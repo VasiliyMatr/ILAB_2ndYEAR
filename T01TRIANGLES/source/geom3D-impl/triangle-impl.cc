@@ -4,7 +4,7 @@
 namespace geom3D
 {
 
-TriangleInfo::TriangleInfo( const Point& A, const Point& B, const Point& C ) :
+Triangle::Triangle( const Point& A, const Point& B, const Point& C ) :
     plane_ (A, B, C), isDegen_ (!plane_.isValid ()),
     AB_ ({A, B}), BC_ ({B, C}), CA_ ({C, A})
 {
@@ -30,21 +30,21 @@ bool linearAreCrossed( const Segment&, const Segment& );
 
 // To check if objects crosses.
 // For not degenerate triangles.
-bool areCrossed( const TriangleInfo&, const TriangleInfo& );
+bool areCrossed( const Triangle&, const Triangle& );
 // For not degenerate triangle.
-bool areCrossed( const TriangleInfo&, const Segment& );
+bool areCrossed( const Triangle&, const Segment& );
 bool areCrossed( const Segment&, const Segment& );
 
 // To check if objects crosses (for obj on one plane).
 // For not degenerate triangles.
-bool flatAreCrossed( const TriangleInfo&, const TriangleInfo& );
+bool flatAreCrossed( const Triangle&, const Triangle& );
 // For not degenerate triangle.
-bool flatAreCrossed( const TriangleInfo&, const Segment& );
-bool flatAreCrossed( const TriangleInfo&, const Point& );
+bool flatAreCrossed( const Triangle&, const Segment& );
+bool flatAreCrossed( const Triangle&, const Point& );
 
 } // namespace
 
-bool TriangleInfo::crosses( const TriangleInfo& second ) const
+bool Triangle::crosses( const Triangle& second ) const
 {
     if (isDegen_)
     {
@@ -67,7 +67,7 @@ bool TriangleInfo::crosses( const TriangleInfo& second ) const
 namespace
 {
 
-bool areCrossed( const TriangleInfo& ft, const TriangleInfo& sd )
+bool areCrossed( const Triangle& ft, const Triangle& sd )
 {
     Point abCross = ft.AB () | sd.plane ();
     Point bcCross = ft.BC () | sd.plane ();
@@ -86,14 +86,14 @@ bool areCrossed( const TriangleInfo& ft, const TriangleInfo& sd )
         return flatAreCrossed (sd, Segment {bcCross, caCross});
     // Not segment & triangle case.
 
-    if (sd.plane ().contains (ft.AB ().A ()))
+    if (sd.plane ().contains (ft.AB ().P1 ()))
         // Crossing 2 triangles in the same plane.
         return flatAreCrossed (ft, sd);
 
     return false;
 }
 
-bool areCrossed( const TriangleInfo& trInfo, const Segment& seg )
+bool areCrossed( const Triangle& trInfo, const Segment& seg )
 {
     Point segPlaneCross = Line {seg} | trInfo.plane ();
     if (segPlaneCross.isValid () && seg.linearContains (segPlaneCross))
@@ -101,7 +101,7 @@ bool areCrossed( const TriangleInfo& trInfo, const Segment& seg )
         return flatAreCrossed (trInfo, segPlaneCross);
 
     // Crossing segment & triangle.
-    return trInfo.plane ().contains (seg.A ()) &&
+    return trInfo.plane ().contains (seg.P1 ()) &&
            flatAreCrossed (trInfo, seg);
 }
 
@@ -117,26 +117,26 @@ bool areCrossed( const Segment& ft, const Segment& sd )
         if (sdLine.isValid ())
             return ft.linearContains (ftLine | sd);
 
-        return ftLine.contains (sd.A ());
+        return ftLine.contains (sd.P1 ());
     }
 
     if (sdLine.isValid ())
-        return sdLine.contains (ft.A ());
+        return sdLine.contains (ft.P1 ());
 
-    return ft.A () == sd.A ();
+    return ft.P1 () == sd.P1 ();
 }
 
-bool flatAreCrossed( const TriangleInfo& ft, const TriangleInfo& sd )
+bool flatAreCrossed( const Triangle& ft, const Triangle& sd )
 {
     return flatAreCrossed (ft, sd.AB ()) || flatAreCrossed (ft, sd.BC ()) ||
            flatAreCrossed (ft, sd.CA ()) || flatAreCrossed (sd, ft.AB ());
 }
 
-bool flatAreCrossed( const TriangleInfo& tr, const Segment& seg )
+bool flatAreCrossed( const Triangle& tr, const Segment& seg )
 {
     Line segLine = Line {seg};
     if (!segLine.isValid ())
-        return flatAreCrossed (tr, seg.A ());
+        return flatAreCrossed (tr, seg.P1 ());
 
     Point abCross = segLine | tr.AB ();
     Point bcCross = segLine | tr.BC ();
@@ -165,9 +165,9 @@ bool flatAreCrossed( const TriangleInfo& tr, const Segment& seg )
     return bcCross.isValid () && linearAreCrossed (bccaSeg, seg);
 }
 
-bool flatAreCrossed( const TriangleInfo& tr, const Point& P )
+bool flatAreCrossed( const Triangle& tr, const Point& P )
 {
-    const Point& A = tr.AB ().A ();
+    const Point& A = tr.AB ().P1 ();
     Line PA = Line {Segment {P, A}};
     if (!PA.isValid ())// P == A
         return true;
@@ -177,9 +177,9 @@ bool flatAreCrossed( const TriangleInfo& tr, const Point& P )
 
 bool linearAreCrossed( const Segment& ft, const Segment& sd )
 {
-    return ft.linearContains (sd.A ()) ||
-           ft.linearContains (sd.B ()) ||
-           sd.linearContains (ft.A ());
+    return ft.linearContains (sd.P1 ()) ||
+           ft.linearContains (sd.P2 ()) ||
+           sd.linearContains (ft.P1 ());
 }
 
 } // namespace

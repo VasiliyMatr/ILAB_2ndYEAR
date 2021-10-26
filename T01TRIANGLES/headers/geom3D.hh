@@ -1,7 +1,9 @@
 
 #include <limits>
 #include <cmath>
-#include <type_traits>
+#include <vector>
+#include <array>
+#include <compare>
 
 #ifndef GEOM3D_HH_INCL
 #define GEOM3D_HH_INCL
@@ -24,10 +26,17 @@ inline bool isValid( fp_t value )
 // isEqual cmp func accuracy.
 constexpr fp_t FP_CMP_PRECISION = 0.01;
 // fp_t == operator equivalent - compares with accuracy.
-inline int isEqual( fp_t a, fp_t b )
+inline std::partial_ordering cmpFP( fp_t a, fp_t b )
 {
-    return std::abs (a - b) <= FP_CMP_PRECISION;
+    if (std::abs (a - b) <= FP_CMP_PRECISION)
+        return std::partial_ordering::equivalent;
+    if (a < b) return std::partial_ordering::less;
+    if (a > b) return std::partial_ordering::greater;
+    return std::partial_ordering::unordered;
 }
+
+inline bool isEqual( fp_t a, fp_t b )
+    { return cmpFP (a, b) == std::partial_ordering::equivalent; }
 
 // Geometrical primitives validation rules:
 // 1) Primitives with nan fields are called invalid.
@@ -47,131 +56,184 @@ struct Line;
 struct Segment;
 struct Plane;
 
+// Number of dimensions.
+constexpr size_t DNUM = 3;
+
+using Coordinates = std::array<fp_t, DNUM>;
+
+// Space coordinates ids for Coordinates.
+enum coordId_t : size_t
+{
+    X = 0,
+    Y = 1,
+    Z = 2
+};
+
 struct Point
 {
-    fp_t x_ = nan;
-    fp_t y_ = nan;
-    fp_t z_ = nan;
+    Coordinates coord_ {nan, nan, nan};
+
+    Point( fp_t x, fp_t y, fp_t z ) :
+        coord_ {x, y, z} {}
+
+    // Default constructed point is invalid.
+    Point () = default;
+
+    fp_t& operator[]( size_t coordId )
+        { return coord_[coordId % DNUM]; }
+
+    const fp_t& operator[]( size_t coordId ) const
+        { return coord_[coordId % DNUM]; }
+
+    operator Coordinates() const
+        { return coord_; }
 
     bool isValid() const
     {
-        return geom3D::isValid (x_) &&
-               geom3D::isValid (y_) &&
-               geom3D::isValid (z_);
+        return geom3D::isValid (coord_[X]) &&
+               geom3D::isValid (coord_[Y]) &&
+               geom3D::isValid (coord_[Z]);
     }
-
-    // WARNED.
-    bool operator==( const Point& sd ) const
-    {
-        return isEqual (x_, sd.x_) &&
-               isEqual (y_, sd.y_) &&
-               isEqual (z_, sd.z_);
-    }
-
-    Point operator+( const Vector& vec ) const;
 };
+
+// WARNED.
+inline bool operator==( const Point& ft, const Point& sd )
+{
+    return isEqual (ft[X], sd[X]) &&
+           isEqual (ft[Y], sd[Y]) &&
+           isEqual (ft[Z], sd[Z]);
+}
+
+Point operator+( const Point&, const Vector& );
 
 fp_t sqDst( const Point&, const Point& );
 
 struct Vector
 {
-    fp_t x_ = nan;
-    fp_t y_ = nan;
-    fp_t z_ = nan;
+    Coordinates coord_ {nan, nan, nan};
 
     Vector( fp_t x, fp_t y, fp_t z ) :
-        x_(x), y_(y), z_(z) {}
+        coord_ {x, y, z} {}
 
     Vector( const Point& P1, const Point& P2 ) :
-        x_(P2.x_-P1.x_), y_(P2.y_-P1.y_), z_(P2.z_-P1.z_) {}
+        coord_ {P2[X]-P1[X], P2[Y]-P1[Y], P2[Z]-P1[Z]} {}
 
     // Default constructed vector is invalid.
     Vector() = default;
 
     bool isValid() const
     {
-        return geom3D::isValid (x_) &&
-               geom3D::isValid (y_) &&
-               geom3D::isValid (z_);
+        return geom3D::isValid (coord_[X]) &&
+               geom3D::isValid (coord_[Y]) &&
+               geom3D::isValid (coord_[Z]);
     }
 
-    Vector operator-() const { return {-x_, -y_, -z_}; }
+    fp_t& operator[]( size_t coordId )
+        { return coord_[coordId % DNUM]; }
 
-    Vector operator+( const Vector& sd ) const
+    const fp_t& operator[]( size_t coordId ) const
+        { return coord_[coordId % DNUM]; }
+
+    Vector operator-() const
+        { return {-coord_[X], -coord_[Y], -coord_[Z]}; }
+
+    Vector operator+=( const Vector& sd )
     {
-        return {x_ + sd.x_, y_ + sd.y_, z_ + sd.z_};
+        for (size_t i = 0; i < DNUM; ++i)
+            coord_[i] += sd[i];
+
+        return *this;
     }
 
-    Vector operator-( const Vector& sd ) const
+    Vector operator-=( const Vector& sd )
+        { return *this += (-sd); }
+
+    Vector operator*=( fp_t num )
     {
-        return {x_ - sd.x_, y_ - sd.y_, z_ - sd.z_};
+        for (size_t i = 0; i < DNUM; ++i)
+            coord_[i] *= num;
+
+        return *this;
     }
 
-    Vector operator*( const fp_t num ) const
-    {
-        return {x_ * num, y_ * num, z_ * num};
-    }
-
-    // WARNED.
-    Vector operator/( const fp_t num ) const
-    {
-        return {x_ / num, y_ / num, z_ / num};
-    }
-
-    // WARNED.
-    bool operator==( const Vector& sd ) const
-    {
-        return isEqual (x_, sd.x_) && isEqual (y_, sd.y_) && isEqual (z_, sd.z_);
-    }
+    // WARNED
+    inline Vector operator/=( fp_t num )
+        { return *this *= 1 / num; }
 
     fp_t sqLen() const
     {
-        return x_*x_ + y_*y_ + z_*z_;
+        return coord_[X] * coord_[X] +
+               coord_[Y] * coord_[Y] +
+               coord_[Z] * coord_[Z];
     }
 
     fp_t len() const
-    {
-        return std::sqrt (sqLen ());
-    }
+        { return std::sqrt (sqLen ()); }
 
     static fp_t scalarProduct( const Vector& ft, const Vector& sd )
     {
-        return ft.x_*sd.x_ + ft.y_*sd.y_ + ft.z_*sd.z_;
+        return ft[X]*sd[X] + ft[Y]*sd[Y] + ft[Z]*sd[Z];
     }
 
     static Vector crossProduct( const Vector& ft, const Vector& sd )
     {
-        return {ft.y_*sd.z_ - ft.z_*sd.y_,
-               -ft.x_*sd.z_ + ft.z_*sd.x_,
-                ft.x_*sd.y_ - ft.y_*sd.x_};
+        return {ft[Y]*sd[Z] - ft[Z]*sd[Y],
+               -ft[X]*sd[Z] + ft[Z]*sd[X],
+                ft[X]*sd[Y] - ft[Y]*sd[X]};
     }
 
     // Few useful Vector constants.
     static Vector e1 () { return {1,0,0}; }
     static Vector e2 () { return {0,1,0}; }
     static Vector e3 () { return {0,0,1}; }
-
     static Vector zero () { return {0,0,0}; }
 };
 
-inline Vector operator*( fp_t num, Vector vec )
+inline Vector operator+( const Vector& ft, const Vector& sd )
 {
-    return vec * num;
+    Vector copy {ft};
+    return copy += sd;
+}
+
+inline Vector operator-( const Vector& ft, const Vector& sd )
+    { return ft + (-sd); }
+
+inline Vector operator*( const Vector& vec, fp_t num )
+{
+    Vector copy {vec};
+    return copy *= num;
+}
+
+inline Vector operator*( fp_t num, const Vector& vec )
+    { return vec * num; }
+
+// WARNED.
+inline Vector operator/( const Vector& vec, fp_t num )
+{
+    Vector copy {vec};
+    return copy /= num;
+}
+
+// WARNED.
+inline bool operator==( const Vector& ft, const Vector& sd )
+{
+    return isEqual (ft[X], sd[X]) &&
+           isEqual (ft[Y], sd[Y]) &&
+           isEqual (ft[Z], sd[Z]);
 }
 
 // Calculates 3x3 determinant.
 inline fp_t det( const Vector& a, const Vector& b, const Vector& c )
 {
-    return a.x_ * (b.y_*c.z_ - b.z_*c.y_) -
-           a.y_ * (b.x_*c.z_ - b.z_*c.x_) +
-           a.z_ * (b.x_*c.y_ - b.y_*c.x_);
+    return a[X] * (b[Y]*c[Z] - b[Z]*c[Y]) -
+           a[Y] * (b[X]*c[Z] - b[Z]*c[X]) +
+           a[Z] * (b[X]*c[Y] - b[Y]*c[X]);
 }
 
 // Lines are stored as point + direction vector
-struct Line
+class Line
 {
     // dir_ != geom3D::Vector::zero () is a protected invariant.
-private:
     Vector dir_ {};
     Point P_ {};
 
@@ -183,7 +245,7 @@ public:
     Line( const Vector& dir, const Point& P ) :
         dir_ (dir == Vector::zero () ? Vector {} : dir), P_ (P) {}
 
-    // Line is invalid if Segment.A_ == Segment.B_.
+    // Line is invalid if Segment.P1_ == Segment.P2_.
     Line( const Segment& );
 
     // Default constructed Line is invalid.
@@ -195,10 +257,10 @@ public:
     // WARNED.
     bool contains( const Point& toCheck ) const
     {
-        return isEqual ((P_.x_ - toCheck.x_) * dir_.y_,
-                        (P_.y_ - toCheck.y_) * dir_.x_) &&
-               isEqual ((P_.y_ - toCheck.y_) * dir_.z_,
-                        (P_.z_ - toCheck.z_) * dir_.y_);
+        return isEqual ((P_[X] - toCheck[X]) * dir_[Y],
+                        (P_[Y] - toCheck[Y]) * dir_[X]) &&
+               isEqual ((P_[Y] - toCheck[Y]) * dir_[Z],
+                        (P_[Z] - toCheck[Z]) * dir_[Y]);
     }
 
     // Is this line parallel to the second line?
@@ -231,28 +293,27 @@ public:
 
 // Segments are stored as 2 Points + stores
 // self square length (square length is used frequently).
-struct Segment
+class Segment
 {
-    // sqLen_ == sqDst(A_, B_) is a protected invariant.
-private:
-    Point A_ {};
-    Point B_ {};
+    // sqLen_ == sqDst(P1_, P2_) is a protected invariant.
+    Point P1_ {};
+    Point P2_ {};
     fp_t sqLen_ = nan;
 
 public:
-    Point A() const { return A_; }
-    Point B() const { return B_; }
+    Point P1() const { return P1_; }
+    Point P2() const { return P2_; }
     fp_t sqLen() const { return sqLen_; }
     
-    Segment( const Point& A, const Point& B ) :
-        A_ (A), B_ (B), sqLen_ (sqDst (A, B)) {}
+    Segment( const Point& P1, const Point& P2 ) :
+        P1_ (P1), P2_ (P2), sqLen_ (sqDst (P1, P2)) {}
 
     // Default constructed Segment is invalid.
     Segment() = default;
 
     bool isValid() const
     {
-        return A_.isValid () && B_.isValid () && geom3D::isValid (sqLen_);
+        return P1_.isValid () && P2_.isValid () && geom3D::isValid (sqLen_);
     }
 
     // Does this segment contains the point?
@@ -260,8 +321,8 @@ public:
     // WARNED.
     bool linearContains( const Point& P ) const
     {
-        return sqLen_ + FP_CMP_PRECISION >= sqDst (P, A_) &&
-               sqLen_ + FP_CMP_PRECISION >= sqDst (P, B_);
+        return cmpFP(sqLen_, sqDst (P, P1_)) == std::partial_ordering::greater &&
+               cmpFP(sqLen_, sqDst (P, P2_)) == std::partial_ordering::greater;
     }
 
     // WARNED.
@@ -278,11 +339,10 @@ public:
     }
 };
 
-// n_.x_*x + n_.y_*y + n_.z_*z + D = 0
-struct Plane
+// n_[X]*x + n_[Y]*y + n_[Z]*z + D = 0
+class Plane
 {
     // n_ != {0,0,0} is a protected invariant.
-private:
     Vector n_ {};
     fp_t D_ = nan;
 
@@ -298,7 +358,7 @@ public:
     // Plane is invalid if points lies on one line (or equal).
     Plane( const Point& A, const Point& B, const Point& C ) :
         n_(Vector::crossProduct ({A, B}, {B, C})),
-        D_(n_ == Vector::zero () ? nan : -n_.x_*A.x_ - n_.y_*A.y_ - n_.z_*A.z_) {}
+        D_(n_ == Vector::zero () ? nan : -n_[X]*A[X] - n_[Y]*A[Y] - n_[Z]*A[Z]) {}
 
     // Default constructed Plane is invalid.
     Plane() = default;
@@ -310,7 +370,7 @@ public:
 
     bool contains( const Point& P ) const
     {
-        return isEqual (n_.x_*P.x_ + n_.y_*P.y_ + n_.z_*P.z_ + D_, 0);
+        return isEqual (n_[X]*P[X] + n_[Y]*P[Y] + n_[Z]*P[Z] + D_, 0);
     }
 
     // WARNED.
@@ -321,14 +381,13 @@ public:
 };
 
 // Stored triangle info - not a geometrical primitive.
-struct TriangleInfo
+class Triangle
 {
     // Many invariants to protect.
-private:
     Plane plane_ {};
     bool isDegen_ = true;
     // Max segment is stored in AB_ for degenerate triangles.
-    // Other segments should not be used in degenerate case. 
+    // Other segments can contain any Point equal to ctor args.
     Segment AB_ {}; // ft + sd point (in this order) - for not degen.
     Segment BC_ {}; // sd + tr point (in this order) - for not degen.
     Segment CA_ {}; // tr + ft point (in this order) - for not degen.
@@ -339,12 +398,41 @@ public:
     Segment AB() const { return AB_; }
     Segment BC() const { return BC_; }
     Segment CA() const { return CA_; }
+    Point getPoint( size_t pointId ) const
+    {
+        pointId %= 3;
 
-    TriangleInfo( const Point&, const Point&, const Point& );
-    TriangleInfo() = default;
+        if (pointId == 0) return AB_.P1 ();
+        if (pointId == 1) return AB_.P2 ();
+        return BC_.P2 ();
+    }
+
+    Triangle( const Point&, const Point&, const Point& );
+    Triangle() = default;
 
     // Any return value for invalid or half-invalid points.
-    bool crosses( const TriangleInfo& ) const;
+    bool crosses( const Triangle& ) const;
+};
+
+// Stores grouped and indexed triangles.
+struct TrianglesUnion
+{
+    using trNId = std::pair<Triangle, size_t>;
+
+    std::vector<trNId> data_ {};
+
+    // Crosses this union triangles.
+    // Returns crossed triangles indexes.
+    std::vector<size_t> cross() const;
+
+    // Crosses this union triangles with second union triangles.
+    // Returns crossed triangles indexes.
+    std::vector<size_t> cross(const TrianglesUnion& ) const;
+
+    // Splits this union to subunions.
+    // It is guaranteed that each triangle will belong to only one subunion.
+    // It is guaranted that triangles from different subunions, except last subunion, doesn't cross.
+    std::vector<TrianglesUnion> split() const;
 };
 
 } // namespace geom3D

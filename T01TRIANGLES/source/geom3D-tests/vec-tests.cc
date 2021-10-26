@@ -8,9 +8,9 @@ TEST( VectorTests, ThreeCoordCtorTest )
     fp_t x = genFP (), y = genFP (), z = genFP ();
     Vector vec {x, y, z};
 
-    ASSERT_FLOAT_EQ (x, vec.x_);
-    ASSERT_FLOAT_EQ (y, vec.y_);
-    ASSERT_FLOAT_EQ (z, vec.z_);
+    ASSERT_FLOAT_EQ (x, vec[X]);
+    ASSERT_FLOAT_EQ (y, vec[Y]);
+    ASSERT_FLOAT_EQ (z, vec[Z]);
 }
 
 TEST( VectorTests, TwoPointCtorTest )
@@ -19,9 +19,9 @@ TEST( VectorTests, TwoPointCtorTest )
     Point B = genP ();
     Vector vec {A, B};
 
-    ASSERT_FLOAT_EQ (B.x_ - A.x_, vec.x_);
-    ASSERT_FLOAT_EQ (B.y_ - A.y_, vec.y_);
-    ASSERT_FLOAT_EQ (B.z_ - A.z_, vec.z_);
+    ASSERT_FLOAT_EQ (B[X] - A[X], vec[X]);
+    ASSERT_FLOAT_EQ (B[Y] - A[Y], vec[Y]);
+    ASSERT_FLOAT_EQ (B[Z] - A[Z], vec[Z]);
 }
 
 TEST( VectorTests, ValidationTests )
@@ -48,23 +48,23 @@ using scalOperator_t = std::function<fp_t( fp_t, fp_t )>;
 // Function to test Vector class binary operators. Returns true if values are equal.
 bool vecOprTest (Vector a, Vector b, Vector c, scalOperator_t scalOperator)
 {
-    return isEqual (scalOperator (a.x_, b.x_), c.x_) &&
-           isEqual (scalOperator (a.y_, b.y_), c.y_) &&
-           isEqual (scalOperator (a.z_, b.z_), c.z_);
+    return isEqual (scalOperator (a[X], b[X]), c[X]) &&
+           isEqual (scalOperator (a[Y], b[Y]), c[Y]) &&
+           isEqual (scalOperator (a[Z], b[Z]), c[Z]);
 }
 
 bool vecOprTest (Vector a, fp_t b, Vector c, scalOperator_t scalOperator)
 {
-    return isEqual (scalOperator (a.x_, b), c.x_) &&
-           isEqual (scalOperator (a.y_, b), c.y_) &&
-           isEqual (scalOperator (a.z_, b), c.z_);
+    return isEqual (scalOperator (a[X], b), c[X]) &&
+           isEqual (scalOperator (a[Y], b), c[Y]) &&
+           isEqual (scalOperator (a[Z], b), c[Z]);
 }
 
 bool vecOprTest (fp_t a, Vector b, Vector c, scalOperator_t scalOperator)
 {
-    return isEqual (scalOperator (a, b.x_), c.x_) &&
-           isEqual (scalOperator (a, b.y_), c.y_) &&
-           isEqual (scalOperator (a, b.z_), c.z_);
+    return isEqual (scalOperator (a, b[X]), c[X]) &&
+           isEqual (scalOperator (a, b[Y]), c[Y]) &&
+           isEqual (scalOperator (a, b[Z]), c[Z]);
 }
 
 } // namespace
@@ -74,9 +74,9 @@ TEST( VectorTests, OperatorUnMinusTest )
     Vector a = genVec ();
     Vector b = -a;
 
-    ASSERT_FLOAT_EQ (-(a.x_), b.x_);
-    ASSERT_FLOAT_EQ (-(a.y_), b.y_);
-    ASSERT_FLOAT_EQ (-(a.z_), b.z_);
+    ASSERT_FLOAT_EQ (-(a[X]), b[X]);
+    ASSERT_FLOAT_EQ (-(a[Y]), b[Y]);
+    ASSERT_FLOAT_EQ (-(a[Z]), b[Z]);
 }
 
 fp_t plusOperator( fp_t a, fp_t b ) {return a + b;}
@@ -131,7 +131,7 @@ TEST( VectorTests, equalCmpOperatorTest )
 TEST( VectorTests, LenTest )
 {
     Vector a = genVec ();
-    fp_t sqLen = a.x_*a.x_ + a.y_*a.y_ + a.z_*a.z_;
+    fp_t sqLen = a[X]*a[X] + a[Y]*a[Y] + a[Z]*a[Z];
     ASSERT_FLOAT_EQ (sqLen, a.sqLen ());
     ASSERT_FLOAT_EQ (std::sqrt (sqLen), a.len ());
 }

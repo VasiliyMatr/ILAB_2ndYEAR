@@ -1,15 +1,16 @@
 
 #include <iostream>
+#include <vector>
 #include "geom3D.hh"
 
-using trPair = std::pair<geom3D::TriangleInfo, bool>;
+using trPair = std::pair<geom3D::Triangle, bool>;
 
 int main( int argc, char ** argv)
 {
     size_t trNum = 0;
     std::cin >> trNum;
 
-    trPair * tr = new trPair [trNum];
+    std::vector<trPair> trVec {0};
 
     for (size_t i = 0; i < trNum; ++i)
     {
@@ -21,25 +22,22 @@ int main( int argc, char ** argv)
             pts[j] = geom3D::Point {coords[0], coords[1], coords[2]};
         }
 
-        tr[i].first = geom3D::TriangleInfo {pts[0], pts[1], pts[2]};
-        tr[i].second = false;
+        trVec[i] = {geom3D::Triangle {pts[0], pts[1], pts[2]}, false};
     }
 
     for (size_t i = 0; i < trNum; ++i)
     {
         for (size_t j = i + 1; j < trNum; ++j)
-            if (tr[i].first.crosses (tr[j].first))
+            if (trVec[i].first.crosses (trVec[j].first))
             {
-                tr[i].second = true;
-                tr[j].second = true;
+                trVec[i].second = true;
+                trVec[j].second = true;
             }
     }
 
     for (size_t i = 0; i < trNum; ++i)
-        if (tr[i].second)
+        if (trVec[i].second)
             std::cout << i << std::endl;
 
     std::cout << std::endl;
-
-    delete [] tr;
 }

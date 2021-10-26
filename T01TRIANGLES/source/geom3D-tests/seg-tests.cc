@@ -29,9 +29,9 @@ TEST( SegTests, LineCrossOperatorTest )
     Point p1 = seg | line;
     Point p2 = line | seg;
 
-    ASSERT_FLOAT_EQ (p1.x_, 3);
-    ASSERT_FLOAT_EQ (p1.y_, 2);
-    ASSERT_FLOAT_EQ (p1.z_, 0);
+    ASSERT_FLOAT_EQ (p1[X], 3);
+    ASSERT_FLOAT_EQ (p1[Y], 2);
+    ASSERT_FLOAT_EQ (p1[Z], 0);
     ASSERT_TRUE (p1 == p2);
 }
 
@@ -39,7 +39,7 @@ TEST( SegTests, LinearContainsTest )
 {
     Segment seg {{1,1,1}, {3,3,3}};
     Point P1 {2,2,2};
-    Point P2 {genFP (), genFP (), genFP ()};
+    Point P2 {5,5,5};
 
     ASSERT_TRUE (seg.linearContains (P1));
     ASSERT_FALSE (seg.linearContains (P2));
@@ -56,9 +56,9 @@ TEST( SegTests, PlaneCrossOperatorTest )
     Point p21 = seg2 | plane;
     Point p22 = plane | seg2;
 
-    ASSERT_FLOAT_EQ (p11.x_, 1.0 / 3);
-    ASSERT_FLOAT_EQ (p11.y_, 1.0 / 3);
-    ASSERT_FLOAT_EQ (p11.z_, 1.0 / 3);
+    ASSERT_FLOAT_EQ (p11[X], 1.0 / 3);
+    ASSERT_FLOAT_EQ (p11[Y], 1.0 / 3);
+    ASSERT_FLOAT_EQ (p11[Z], 1.0 / 3);
     ASSERT_TRUE (p11 == p12);
     ASSERT_FALSE (p21.isValid () || p22.isValid ());
 }

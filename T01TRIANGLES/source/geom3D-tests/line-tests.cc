@@ -10,12 +10,12 @@ TEST( LineTests, VecPointCtorTest )
 
     Line line {vec, point};
 
-    ASSERT_FLOAT_EQ (line.dir ().x_, vec.x_);
-    ASSERT_FLOAT_EQ (line.dir ().y_, vec.y_);
-    ASSERT_FLOAT_EQ (line.dir ().z_, vec.z_);
-    ASSERT_FLOAT_EQ (line.P ().x_, point.x_);
-    ASSERT_FLOAT_EQ (line.P ().y_, point.y_);
-    ASSERT_FLOAT_EQ (line.P ().z_, point.z_);
+    ASSERT_FLOAT_EQ (line.dir ()[X], vec[X]);
+    ASSERT_FLOAT_EQ (line.dir ()[Y], vec[Y]);
+    ASSERT_FLOAT_EQ (line.dir ()[Z], vec[Z]);
+    ASSERT_FLOAT_EQ (line.P ()[X], point[X]);
+    ASSERT_FLOAT_EQ (line.P ()[Y], point[Y]);
+    ASSERT_FLOAT_EQ (line.P ()[Z], point[Z]);
 }
 
 TEST( LineTests, TwoPointsCtorTest )
@@ -23,7 +23,7 @@ TEST( LineTests, TwoPointsCtorTest )
     Segment seg {{1,1,1}, {2,2,2}};
     Line l {seg};
 
-    ASSERT_TRUE (l.contains (seg.A ()) && l.contains (seg.B ()));
+    ASSERT_TRUE (l.contains (seg.P1 ()) && l.contains (seg.P2 ()));
 }
 
 TEST( LineTests, ValidationTests )

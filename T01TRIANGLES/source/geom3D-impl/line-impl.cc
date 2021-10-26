@@ -4,8 +4,7 @@ namespace geom3D
 {
 
 Line::Line( const Segment& seg ) :
-    dir_ (seg.A () == seg.B () ? Vector {} : Vector {seg.A (), seg.B ()}),
-    P_ (seg.A ()) {}
+    dir_ {seg.P1 (), seg.P2 ()}, P_ (isEqual (dir_.len (), 0) ? Point {} : seg.P1 ()) {}
 
 Point Line::operator|( const Line& sd ) const
 {
@@ -30,7 +29,7 @@ Point Line::operator|( const Plane& plane ) const
     const Vector n = plane.n ();
 
     fp_t dirNormScal = Vector::scalarProduct (dir_, n);
-    fp_t palneEVal = P_.x_*n.x_ + P_.y_*n.y_ + P_.z_*n.z_ + plane.D ();
+    fp_t palneEVal = P_[X]*n[X] + P_[Y]*n[Y] + P_[Z]*n[Z] + plane.D ();
 
     fp_t k = -palneEVal / dirNormScal;
 

@@ -118,19 +118,14 @@ struct PointSplitter : Point
 
     SpaceEighth getPointEighth( const Point& P )
     {
-        std::array<std::partial_ordering, DNUM> cmp =
-            {cmpFP (P[X], coord_[X]),
-             cmpFP (P[Y], coord_[Y]),
-             cmpFP (P[Z], coord_[Z])};
-
         for (size_t i = 0; i < DNUM; ++i)
-            if (cmp[i] == std::partial_ordering::equivalent)
+            if (fpCmpW {P[i]} == coord_[i])
                 return Several;
 
         std::array<bool, DNUM> isLess {};
 
         for (size_t i = 0; i < DNUM; ++i)
-            isLess[i] = cmp[i] == std::partial_ordering::less;
+            isLess[i] = fpCmpW {P[i]} < coord_[i];
 
         char mask = isLess[X] + (isLess[Y] << 1) + (isLess[Z] << 2);
 
@@ -176,8 +171,9 @@ std::vector<TrianglesUnion> TrianglesUnion::split() const
 
     for (size_t i = 0; i < trNum; ++i)
     {
-        const Triangle& currTr = data_[i].first;
-        unions[splitter.getTringleEighth (currTr)].data_.emplace_back (currTr);
+        auto currTrInfo = data_[i];
+        auto eighth = splitter.getTringleEighth (currTrInfo.first);
+        unions[eighth].data_.emplace_back (currTrInfo);
     }
 
     return unions;

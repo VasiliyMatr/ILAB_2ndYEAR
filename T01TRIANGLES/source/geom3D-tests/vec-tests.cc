@@ -48,23 +48,23 @@ using scalOperator_t = std::function<fp_t( fp_t, fp_t )>;
 // Function to test Vector class binary operators. Returns true if values are equal.
 bool vecOprTest (Vector a, Vector b, Vector c, scalOperator_t scalOperator)
 {
-    return isEqual (scalOperator (a[X], b[X]), c[X]) &&
-           isEqual (scalOperator (a[Y], b[Y]), c[Y]) &&
-           isEqual (scalOperator (a[Z], b[Z]), c[Z]);
+    return fpCmpW {c[X]} == scalOperator (a[X], b[X]) &&
+           fpCmpW {c[Y]} == scalOperator (a[Y], b[Y]) &&
+           fpCmpW {c[Z]} == scalOperator (a[Z], b[Z]);
 }
 
 bool vecOprTest (Vector a, fp_t b, Vector c, scalOperator_t scalOperator)
 {
-    return isEqual (scalOperator (a[X], b), c[X]) &&
-           isEqual (scalOperator (a[Y], b), c[Y]) &&
-           isEqual (scalOperator (a[Z], b), c[Z]);
+    return fpCmpW {c[X]} == scalOperator (a[X], b), c[X] &&
+           fpCmpW {c[Y]} == scalOperator (a[Y], b), c[Y] &&
+           fpCmpW {c[Z]} == scalOperator (a[Z], b), c[Z];
 }
 
 bool vecOprTest (fp_t a, Vector b, Vector c, scalOperator_t scalOperator)
 {
-    return isEqual (scalOperator (a, b[X]), c[X]) &&
-           isEqual (scalOperator (a, b[Y]), c[Y]) &&
-           isEqual (scalOperator (a, b[Z]), c[Z]);
+    return fpCmpW {c[X]} == scalOperator (a, b[X]), c[X] &&
+           fpCmpW {c[Y]} == scalOperator (a, b[Y]), c[Y] &&
+           fpCmpW {c[Z]} == scalOperator (a, b[Z]), c[Z];
 }
 
 } // namespace
@@ -123,9 +123,9 @@ TEST( VectorTests, equalCmpOperatorTest )
     Vector a = genVec ();
 
     ASSERT_TRUE (a == a);
-    ASSERT_FALSE (a + Vector::e1() * FP_CMP_PRECISION * 2 == a);
-    ASSERT_FALSE (a + Vector::e2() * FP_CMP_PRECISION * 2 == a);
-    ASSERT_FALSE (a + Vector::e3() * FP_CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e1() * fpCmpW::FP_CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e2() * fpCmpW::FP_CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e3() * fpCmpW::FP_CMP_PRECISION * 2 == a);
 }
 
 TEST( VectorTests, LenTest )

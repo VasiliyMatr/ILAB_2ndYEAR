@@ -16,8 +16,8 @@ TEST( UtilsTests, isEqualTest )
     fp_t a = genFP ();
     fp_t b = a;
 
-    ASSERT_TRUE (isEqual (a, b));
-    ASSERT_FALSE (isEqual (a, b + 0.01));
+    ASSERT_TRUE (fpCmpW {a} == b);
+    ASSERT_FALSE (fpCmpW {a} == b + fpCmpW::FP_CMP_PRECISION * 2);
 }
 
 TEST( UtilsTests, detTests )

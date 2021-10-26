@@ -4,7 +4,7 @@ namespace geom3D
 {
 
 Line::Line( const Segment& seg ) :
-    dir_ {seg.P1 (), seg.P2 ()}, P_ (isEqual (dir_.len (), 0) ? Point {} : seg.P1 ()) {}
+    dir_ {seg.P1 (), seg.P2 ()}, P_ (fpCmpW {} == dir_.len () ? Point {} : seg.P1 ()) {}
 
 Point Line::operator|( const Line& sd ) const
 {
@@ -16,7 +16,7 @@ Point Line::operator|( const Line& sd ) const
     // Solving system: a*k1 + b*k2 + c*k3 = d
     const fp_t D = det (a, b, c); // Not zero if there are solutions.
     const fp_t D3 = det (a, b, d); // Should be zero.
-    if (isEqual (D, 0) || !isEqual (D3, 0))
+    if (fpCmpW {} == D || fpCmpW{} != D3)
         return Point {};
 
     const fp_t k = det (d, b, c) / D; // k1

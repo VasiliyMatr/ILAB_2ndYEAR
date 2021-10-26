@@ -23,20 +23,31 @@ inline bool isValid( fp_t value )
     return !(std::isnan (value) || std::isinf (value));
 }
 
-// isEqual cmp func accuracy.
-constexpr fp_t FP_CMP_PRECISION = 0.01;
-// fp_t == operator equivalent - compares with accuracy.
-inline std::partial_ordering cmpFP( fp_t a, fp_t b )
+// Wrapper for fp_t comparsions with precision.
+struct fpCmpW
 {
-    if (std::abs (a - b) <= FP_CMP_PRECISION)
-        return std::partial_ordering::equivalent;
-    if (a < b) return std::partial_ordering::less;
-    if (a > b) return std::partial_ordering::greater;
-    return std::partial_ordering::unordered;
-}
+    fp_t value = 0;
 
-inline bool isEqual( fp_t a, fp_t b )
-    { return cmpFP (a, b) == std::partial_ordering::equivalent; }
+    // cmp precision.
+    static constexpr fp_t FP_CMP_PRECISION = 0.01;
+
+    fpCmpW( const fp_t& val ) : value (val) {}
+    fpCmpW() = default;
+
+    bool operator==( fpCmpW sd ) const
+        { return std::abs (value - sd.value) <= FP_CMP_PRECISION; }
+
+    std::partial_ordering operator <=>( fpCmpW sd ) const
+    {
+        if (*this == sd)
+            return std::partial_ordering::equivalent;
+        if (value > sd.value)
+            return std::partial_ordering::greater;
+        if (value < sd.value)
+            return std::partial_ordering::less;
+        return std::partial_ordering::unordered;
+    }
+};
 
 // Geometrical primitives validation rules:
 // 1) Primitives with nan fields are called invalid.
@@ -99,9 +110,9 @@ struct Point
 // WARNED.
 inline bool operator==( const Point& ft, const Point& sd )
 {
-    return isEqual (ft[X], sd[X]) &&
-           isEqual (ft[Y], sd[Y]) &&
-           isEqual (ft[Z], sd[Z]);
+    return fpCmpW {ft[X]} ==  sd[X] &&
+           fpCmpW {ft[Y]} ==  sd[Y] &&
+           fpCmpW {ft[Z]} ==  sd[Z];
 }
 
 Point operator+( const Point&, const Vector& );
@@ -217,9 +228,9 @@ inline Vector operator/( const Vector& vec, fp_t num )
 // WARNED.
 inline bool operator==( const Vector& ft, const Vector& sd )
 {
-    return isEqual (ft[X], sd[X]) &&
-           isEqual (ft[Y], sd[Y]) &&
-           isEqual (ft[Z], sd[Z]);
+    return fpCmpW {ft[X]} == sd[X] &&
+           fpCmpW {ft[Y]} == sd[Y] &&
+           fpCmpW {ft[Z]} == sd[Z];
 }
 
 // Calculates 3x3 determinant.
@@ -257,10 +268,10 @@ public:
     // WARNED.
     bool contains( const Point& toCheck ) const
     {
-        return isEqual ((P_[X] - toCheck[X]) * dir_[Y],
-                        (P_[Y] - toCheck[Y]) * dir_[X]) &&
-               isEqual ((P_[Y] - toCheck[Y]) * dir_[Z],
-                        (P_[Z] - toCheck[Z]) * dir_[Y]);
+        return fpCmpW {(P_[X] - toCheck[X]) * dir_[Y]} ==
+                       (P_[Y] - toCheck[Y]) * dir_[X] &&
+               fpCmpW {(P_[Y] - toCheck[Y]) * dir_[Z]} ==
+                       (P_[Z] - toCheck[Z]) * dir_[Y];
     }
 
     // Is this line parallel to the second line?
@@ -321,8 +332,8 @@ public:
     // WARNED.
     bool linearContains( const Point& P ) const
     {
-        return cmpFP(sqLen_, sqDst (P, P1_)) == std::partial_ordering::greater &&
-               cmpFP(sqLen_, sqDst (P, P2_)) == std::partial_ordering::greater;
+        return fpCmpW {sqLen_} >= sqDst (P, P1_) &&
+               fpCmpW {sqLen_} >= sqDst (P, P2_);
     }
 
     // WARNED.
@@ -370,7 +381,7 @@ public:
 
     bool contains( const Point& P ) const
     {
-        return isEqual (n_[X]*P[X] + n_[Y]*P[Y] + n_[Z]*P[Z] + D_, 0);
+        return fpCmpW {} == n_[X]*P[X] + n_[Y]*P[Y] + n_[Z]*P[Z] + D_;
     }
 
     // WARNED.

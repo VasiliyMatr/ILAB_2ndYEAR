@@ -18,7 +18,7 @@ fp_t genFP()
 
     fp_t sum = positivePart + negativePart;
 
-    return isEqual (sum, 0) ? 1 : sum;
+    return fpCmpW {} == sum ? 1 : sum;
 }
 
 Point genP()

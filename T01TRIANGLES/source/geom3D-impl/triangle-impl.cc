@@ -152,7 +152,7 @@ bool flatAreCrossed( const Triangle& tr, const Segment& seg )
         {
             if (caCross.isValid ())
                 // segLine crossed triangle vertex & opposite segment.
-                return isEqual (abbcSeg.sqLen (), 0) ?
+                return fpCmpW {} == abbcSeg.sqLen () ?
                        linearAreCrossed (abcaSeg, seg) :
                        linearAreCrossed (abbcSeg, seg);
 

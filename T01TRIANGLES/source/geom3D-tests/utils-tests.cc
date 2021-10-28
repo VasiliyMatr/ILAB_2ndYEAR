@@ -11,13 +11,13 @@ TEST( UtilsTests, isValidTest )
     ASSERT_TRUE (isValid (genFP ()));
 }
 
-TEST( UtilsTests, isEqualTest )
+TEST( UtilsTests, cmpTest )
 {
     fp_t a = genFP ();
     fp_t b = a;
 
     ASSERT_TRUE (fpCmpW {a} == b);
-    ASSERT_FALSE (fpCmpW {a} == b + fpCmpW::FP_CMP_PRECISION * 2);
+    ASSERT_FALSE (fpCmpW {a} == b + fpCmpW::CMP_PRECISION * 2);
 }
 
 TEST( UtilsTests, detTests )

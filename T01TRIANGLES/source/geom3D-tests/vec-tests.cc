@@ -46,25 +46,25 @@ namespace
 using scalOperator_t = std::function<fp_t( fp_t, fp_t )>;
 
 // Function to test Vector class binary operators. Returns true if values are equal.
-bool vecOprTest (Vector a, Vector b, Vector c, scalOperator_t scalOperator)
+bool vecOprTest (Vector a, Vector b, Vector res, scalOperator_t scalOperator)
 {
-    return fpCmpW {c[X]} == scalOperator (a[X], b[X]) &&
-           fpCmpW {c[Y]} == scalOperator (a[Y], b[Y]) &&
-           fpCmpW {c[Z]} == scalOperator (a[Z], b[Z]);
+    return fpCmpW {res[X]} == scalOperator (a[X], b[X]) &&
+           fpCmpW {res[Y]} == scalOperator (a[Y], b[Y]) &&
+           fpCmpW {res[Z]} == scalOperator (a[Z], b[Z]);
 }
 
-bool vecOprTest (Vector a, fp_t b, Vector c, scalOperator_t scalOperator)
+bool vecOprTest (Vector a, fp_t b, Vector res, scalOperator_t scalOperator)
 {
-    return fpCmpW {c[X]} == scalOperator (a[X], b), c[X] &&
-           fpCmpW {c[Y]} == scalOperator (a[Y], b), c[Y] &&
-           fpCmpW {c[Z]} == scalOperator (a[Z], b), c[Z];
+    return fpCmpW {res[X]} == scalOperator (a[X], b) &&
+           fpCmpW {res[Y]} == scalOperator (a[Y], b) &&
+           fpCmpW {res[Z]} == scalOperator (a[Z], b);
 }
 
-bool vecOprTest (fp_t a, Vector b, Vector c, scalOperator_t scalOperator)
+bool vecOprTest (fp_t a, Vector b, Vector res, scalOperator_t scalOperator)
 {
-    return fpCmpW {c[X]} == scalOperator (a, b[X]), c[X] &&
-           fpCmpW {c[Y]} == scalOperator (a, b[Y]), c[Y] &&
-           fpCmpW {c[Z]} == scalOperator (a, b[Z]), c[Z];
+    return fpCmpW {res[X]} == scalOperator (a, b[X]) &&
+           fpCmpW {res[Y]} == scalOperator (a, b[Y]) &&
+           fpCmpW {res[Z]} == scalOperator (a, b[Z]);
 }
 
 } // namespace
@@ -79,7 +79,8 @@ TEST( VectorTests, OperatorUnMinusTest )
     ASSERT_FLOAT_EQ (-(a[Z]), b[Z]);
 }
 
-fp_t plusOperator( fp_t a, fp_t b ) {return a + b;}
+fp_t plusOperator( fp_t a, fp_t b )
+    { return a + b; }
 TEST( VectorTests, OperatorPlusTest )
 {
     Vector a = genVec (), b = genVec ();
@@ -87,7 +88,8 @@ TEST( VectorTests, OperatorPlusTest )
     ASSERT_TRUE (status);
 }
 
-fp_t minusOperator( fp_t a, fp_t b ) {return a - b;}
+fp_t minusOperator( fp_t a, fp_t b )
+    { return a - b; }
 TEST( VectorTests, OperatorMinusTest )
 {
     Vector a = genVec (), b = genVec ();
@@ -95,7 +97,8 @@ TEST( VectorTests, OperatorMinusTest )
     ASSERT_TRUE (status);
 }
 
-fp_t mulOperator( fp_t a, fp_t b ) {return a * b;}
+fp_t mulOperator( fp_t a, fp_t b )
+    { return a * b; }
 TEST( VectorTests, OperatorMulTest )
 {
     Vector a = genVec ();
@@ -108,7 +111,8 @@ TEST( VectorTests, OperatorMulTest )
     ASSERT_TRUE (status);
 }
 
-fp_t divOperator( fp_t a, fp_t b ) {return a / b;}
+fp_t divOperator( fp_t a, fp_t b )
+    { return a / b; }
 TEST( VectorTests, OperatorDivTest )
 {
     Vector a = genVec ();
@@ -123,9 +127,9 @@ TEST( VectorTests, equalCmpOperatorTest )
     Vector a = genVec ();
 
     ASSERT_TRUE (a == a);
-    ASSERT_FALSE (a + Vector::e1() * fpCmpW::FP_CMP_PRECISION * 2 == a);
-    ASSERT_FALSE (a + Vector::e2() * fpCmpW::FP_CMP_PRECISION * 2 == a);
-    ASSERT_FALSE (a + Vector::e3() * fpCmpW::FP_CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e1() * fpCmpW::CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e2() * fpCmpW::CMP_PRECISION * 2 == a);
+    ASSERT_FALSE (a + Vector::e3() * fpCmpW::CMP_PRECISION * 2 == a);
 }
 
 TEST( VectorTests, LenTest )
@@ -139,12 +143,12 @@ TEST( VectorTests, LenTest )
 TEST( VectorTests, ScalarProdTest )
 {
     fp_t scalProd1 = Vector::scalarProduct (
-        Vector::e1() + Vector::e2() * 2 + Vector::e3() * 3,
-       -Vector::e2() - Vector::e3() * 1.5);
+        Vector::e1 () + Vector::e2 () * 2 + Vector::e3 () * 3,
+       -Vector::e2 () - Vector::e3 () * 1.5);
 
     fp_t scalProd2 = Vector::scalarProduct (
-        Vector::e3() * 3 - Vector::e2() * 4,
-        Vector::e1() * 100 + Vector::e2() * 3.75 + Vector::e3() * 6);
+        Vector::e3 () * 3 - Vector::e2 () * 4,
+        Vector::e1 () * 100 + Vector::e2 () * 3.75 + Vector::e3 () * 6);
 
     ASSERT_FLOAT_EQ (scalProd1, -6.5);
     ASSERT_FLOAT_EQ (scalProd2, 3);
@@ -153,17 +157,17 @@ TEST( VectorTests, ScalarProdTest )
 TEST( VectorTests, CrossProdTest )
 {
     Vector crossProd1 = Vector::crossProduct (
-        Vector::e1() + Vector::e2() + Vector::e3(), Vector::e1());
+        Vector::e1 () + Vector::e2 () + Vector::e3 (), Vector::e1 ());
 
     Vector crossProd2 = Vector::crossProduct (
-        Vector::e1() + Vector::e2() + Vector::e3(), Vector::e2());
+        Vector::e1 () + Vector::e2 () + Vector::e3 (), Vector::e2 ());
 
     Vector crossProd3 = Vector::crossProduct (
-        Vector::e1() + Vector::e2() + Vector::e3(), Vector::e3());
+        Vector::e1 () + Vector::e2 () + Vector::e3 (), Vector::e3 ());
 
-    ASSERT_TRUE (crossProd1 == Vector::e2() - Vector::e3());
-    ASSERT_TRUE (crossProd2 == Vector::e3() - Vector::e1());
-    ASSERT_TRUE (crossProd3 == Vector::e1() - Vector::e2()); 
+    ASSERT_TRUE (crossProd1 == Vector::e2 () - Vector::e3 ());
+    ASSERT_TRUE (crossProd2 == Vector::e3 () - Vector::e1 ());
+    ASSERT_TRUE (crossProd3 == Vector::e1 () - Vector::e2 ()); 
 }
 
 } // namespace geom3D

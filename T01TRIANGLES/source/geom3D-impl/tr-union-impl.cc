@@ -44,11 +44,11 @@ std::vector<size_t> TrianglesUnion::cross( const TrianglesUnion & sd ) const
 
     for (size_t i = 0; i < ftTrNum; ++i)
         if (ftCrossMask[i])
-            crossedIds.emplace_back (data_[i].second);
+            crossedIds.push_back (data_[i].second);
     
     for (size_t i = 0; i < sdTrNum; ++i)
         if (sdCrossMask[i])
-            crossedIds.emplace_back (sd.data_[i].second);
+            crossedIds.push_back (sd.data_[i].second);
 
     return crossedIds;
 }
@@ -56,49 +56,23 @@ std::vector<size_t> TrianglesUnion::cross( const TrianglesUnion & sd ) const
 namespace
 {
 
-template<class Compare> // Callable to compare coords
-struct CoordBound
-{
-    Coordinates bounds {nan, nan, nan};
-
-    CoordBound( const Triangle & tr )
-    {
-        std::array<Coordinates, 3> coords =
-            { tr.getPoint (0), tr.getPoint (1), tr.getPoint (2) };
-
-        for (size_t i = 0; i < DNUM; ++i)
-            bounds[i] =
-                Compare{} (Compare{} (coords[0][i], coords[1][i]), coords[2][i]);
-    }
-
-    CoordBound extend( const CoordBound& sd )
-    {
-        for (size_t i = 0; i < DNUM; ++i)
-            bounds[i] = Compare{} (bounds[i], sd.bounds[i]);
-
-        return *this;
-    }
-};
-
-struct UpperBoundComparator
-{
-    fp_t operator()( fp_t ft, fp_t sd ) const
-        { return std::max (ft, sd); }
-};
-
-struct LowerBoundComparator
-{
-    fp_t operator()( fp_t ft, fp_t sd ) const
-        { return std::min (ft, sd); }
-};
-
 struct PointSplitter : Point
 {
-    PointSplitter( const CoordBound<UpperBoundComparator>& upper,
-                   const CoordBound<LowerBoundComparator>& lower )
+    // Counts average triangles coordinates.
+    PointSplitter( const std::vector<TrianglesUnion::trNId>& data )
     {
-        for (size_t i = 0; i < DNUM; ++i)
-            coord_[i] = (upper.bounds[i] + lower.bounds[i]) / 2;
+        size_t trNum = data.size ();
+
+        for (size_t i = 0; i < trNum; ++i)
+        {
+            Coordinates MC = data[i].first;
+
+            for (size_t j = 0; j < DNUM; ++j)
+                coord_[j] += MC[j];
+        }
+
+        for (size_t j = 0; j < DNUM; ++j)
+            coord_[j] /= trNum;
     }
 
     enum SpaceEighth : char
@@ -112,7 +86,7 @@ struct PointSplitter : Point
         Seventh,
         Eighth,
 
-        // This object is placed in several eighths ().
+        // This object is placed in several space eighths.
         Several,
     };
 
@@ -137,7 +111,7 @@ struct PointSplitter : Point
         std::array<SpaceEighth, 3> eighths {};
 
         for (size_t i = 0; i < 3; ++i)
-            eighths[i] = getPointEighth (tr.getPoint (i));
+            eighths[i] = getPointEighth (tr[i]);
 
         if (eighths[0] == Several)
             return Several;
@@ -157,16 +131,7 @@ std::vector<TrianglesUnion> TrianglesUnion::split() const
     if (trNum < 100)
         return std::vector<TrianglesUnion> {*this};
 
-    CoordBound<UpperBoundComparator> upperBound {data_[0].first};
-    CoordBound<LowerBoundComparator> lowerBound {data_[0].first};
-
-    for (size_t i = 1; i < trNum; ++i)
-    {
-        upperBound.extend (data_[i].first);
-        lowerBound.extend (data_[i].first);
-    }
-
-    PointSplitter splitter {upperBound, lowerBound};
+    PointSplitter splitter {data_};
     std::vector<TrianglesUnion> unions {9};
 
     for (size_t i = 0; i < trNum; ++i)

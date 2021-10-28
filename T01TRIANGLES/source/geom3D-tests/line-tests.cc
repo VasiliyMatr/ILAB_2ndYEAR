@@ -10,12 +10,8 @@ TEST( LineTests, VecPointCtorTest )
 
     Line line {vec, point};
 
-    ASSERT_FLOAT_EQ (line.dir ()[X], vec[X]);
-    ASSERT_FLOAT_EQ (line.dir ()[Y], vec[Y]);
-    ASSERT_FLOAT_EQ (line.dir ()[Z], vec[Z]);
-    ASSERT_FLOAT_EQ (line.P ()[X], point[X]);
-    ASSERT_FLOAT_EQ (line.P ()[Y], point[Y]);
-    ASSERT_FLOAT_EQ (line.P ()[Z], point[Z]);
+    ASSERT_TRUE (line.dir () == vec);
+    ASSERT_TRUE (line.P () == point);
 }
 
 TEST( LineTests, TwoPointsCtorTest )
@@ -73,7 +69,7 @@ TEST( LineTests, CrossLineOperatorTest )
 {
     Line l1 {{1,1,1}, genP ()};
     Line l2 {{1,2,1}, l1.P ()};
-    Line l3 {l1.dir (), l1.P () + Vector {1,0,0}};
+    Line l3 {l1.dir (), l1.P () + Vector::e1 ()};
     Point p1 = l1 | l2;
     Point p2 = l1 | l3;
 

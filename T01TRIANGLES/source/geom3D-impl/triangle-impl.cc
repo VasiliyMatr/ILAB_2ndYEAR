@@ -86,7 +86,7 @@ bool areCrossed( const Triangle& ft, const Triangle& sd )
         return flatAreCrossed (sd, Segment {bcCross, caCross});
     // Not segment & triangle case.
 
-    if (sd.plane ().contains (ft.AB ().P1 ()))
+    if (sd.plane ().contains (ft[0]))
         // Crossing 2 triangles in the same plane.
         return flatAreCrossed (ft, sd);
 
@@ -167,7 +167,7 @@ bool flatAreCrossed( const Triangle& tr, const Segment& seg )
 
 bool flatAreCrossed( const Triangle& tr, const Point& P )
 {
-    const Point& A = tr.AB ().P1 ();
+    const Point& A = tr[0];
     Line PA = Line {Segment {P, A}};
     if (!PA.isValid ())// P == A
         return true;

@@ -3,14 +3,12 @@
 #include <vector>
 #include "geom3D.hh"
 
-using trPair = std::pair<geom3D::Triangle, bool>;
-
 int main( int argc, char ** argv)
 {
     size_t trNum = 0;
     std::cin >> trNum;
 
-    std::vector<trPair> trVec {0};
+    geom3D::TrianglesUnion triangles{};
 
     for (size_t i = 0; i < trNum; ++i)
     {
@@ -22,22 +20,13 @@ int main( int argc, char ** argv)
             pts[j] = geom3D::Point {coords[0], coords[1], coords[2]};
         }
 
-        trVec[i] = {geom3D::Triangle {pts[0], pts[1], pts[2]}, false};
+        triangles.data_.push_back ({geom3D::Triangle {pts[0], pts[1], pts[2]}, i});
     }
 
-    for (size_t i = 0; i < trNum; ++i)
-    {
-        for (size_t j = i + 1; j < trNum; ++j)
-            if (trVec[i].first.crosses (trVec[j].first))
-            {
-                trVec[i].second = true;
-                trVec[j].second = true;
-            }
-    }
+    std::vector<size_t> crossIds = triangles.cross ();
 
-    for (size_t i = 0; i < trNum; ++i)
-        if (trVec[i].second)
-            std::cout << i << std::endl;
+    for (size_t i = 0, num = crossIds.size (); i != num; ++i)
+        std::cout << crossIds[i] << std::endl;
 
     std::cout << std::endl;
 }

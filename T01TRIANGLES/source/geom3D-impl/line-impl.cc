@@ -29,9 +29,9 @@ Point Line::operator|( const Plane& plane ) const
     const Vector n = plane.n ();
 
     fp_t dirNormScal = Vector::scalarProduct (dir_, n);
-    fp_t palneEVal = P_[X]*n[X] + P_[Y]*n[Y] + P_[Z]*n[Z] + plane.D ();
+    fp_t planeEVal = P_[X]*n[X] + P_[Y]*n[Y] + P_[Z]*n[Z] + plane.D ();
 
-    fp_t k = -palneEVal / dirNormScal;
+    fp_t k = -planeEVal / dirNormScal;
 
     return P_ + k*dir_;
 }

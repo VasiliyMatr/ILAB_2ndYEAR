@@ -10,9 +10,7 @@ TEST( PlaneTests, VecNDCtorTest )
 
     Plane plane {norm, D};
 
-    ASSERT_FLOAT_EQ (plane.n ()[X], norm[X]);
-    ASSERT_FLOAT_EQ (plane.n ()[Y], norm[Y]);
-    ASSERT_FLOAT_EQ (plane.n ()[Z], norm[Z]);
+    ASSERT_TRUE (plane.n () == norm);
     ASSERT_FLOAT_EQ (plane.D (), D);
 }
 

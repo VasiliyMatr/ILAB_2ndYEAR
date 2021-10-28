@@ -57,7 +57,7 @@ foreach( FILE IN LISTS GEOM3D_TESTS_FILES )
 endforeach()
 
 set( DEBUG_DEFINE_NAME "DEBUG" )
-set( DEBUG_FLAGS -D${DEBUG_DEFINE_NAME}=1 -O0 -g -Wall -Wextra -Wpedantic  )
+set( DEBUG_FLAGS -D${DEBUG_DEFINE_NAME}=1 -O0 -g -Wall -Wextra -Wpedantic )
 set( RELEASE_FLAGS -D${DEBUG_DEFINE_NAME}=0 -O2 )
 
 target_compile_features( ${GEOM3D_TEST_NAME} PRIVATE cxx_std_20 )

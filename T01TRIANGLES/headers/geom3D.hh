@@ -19,32 +19,27 @@ const fp_t inf = std::numeric_limits<fp_t>::infinity ();
 
 // fp_t validation function (checks for nan and inf).
 inline bool isValid( fp_t value )
-{
-    return !(std::isnan (value) || std::isinf (value));
-}
+    { return !(std::isnan (value) || std::isinf (value)); }
 
 // Wrapper for fp_t comparsions with precision.
 struct fpCmpW
 {
-    fp_t value = 0;
+    fp_t val_ = 0;
 
-    // cmp precision.
-    static constexpr fp_t FP_CMP_PRECISION = 0.01;
+    // Cmp precision.
+    static constexpr fp_t CMP_PRECISION = 0.01;
 
-    fpCmpW( const fp_t& val ) : value (val) {}
+    fpCmpW( const fp_t& val ) : val_ (val) {}
     fpCmpW() = default;
 
     bool operator==( fpCmpW sd ) const
-        { return std::abs (value - sd.value) <= FP_CMP_PRECISION; }
+        { return std::abs (val_ - sd.val_) <= CMP_PRECISION; }
 
     std::partial_ordering operator <=>( fpCmpW sd ) const
     {
-        if (*this == sd)
-            return std::partial_ordering::equivalent;
-        if (value > sd.value)
-            return std::partial_ordering::greater;
-        if (value < sd.value)
-            return std::partial_ordering::less;
+        if (*this == sd) return std::partial_ordering::equivalent;
+        if (val_ > sd.val_) return std::partial_ordering::greater;
+        if (val_ < sd.val_) return std::partial_ordering::less;
         return std::partial_ordering::unordered;
     }
 };
@@ -58,7 +53,7 @@ struct fpCmpW
 //    half-invalid inputs.
 // 5) It is guaranteed that functions marked as WARNED return invalid values for invalid inputs.
 // 6) It is guaranteed that bool functions marked as WARNED return false for invalid inputs.
-// 7) All methods are considered SAFE unless otherwise specified.
+// 7) All methods/functions for geometrical primitives are considered SAFE unless otherwise specified.
 
 // Geometrical primitives:
 struct Point;
@@ -73,12 +68,7 @@ constexpr size_t DNUM = 3;
 using Coordinates = std::array<fp_t, DNUM>;
 
 // Space coordinates ids for Coordinates.
-enum coordId_t : size_t
-{
-    X = 0,
-    Y = 1,
-    Z = 2
-};
+enum coordId_t : size_t { X, Y, Z };
 
 struct Point
 {
@@ -168,7 +158,7 @@ struct Vector
     }
 
     // WARNED
-    inline Vector operator/=( fp_t num )
+    Vector operator/=( fp_t num )
         { return *this *= 1 / num; }
 
     fp_t sqLen() const
@@ -194,10 +184,10 @@ struct Vector
     }
 
     // Few useful Vector constants.
-    static Vector e1 () { return {1,0,0}; }
-    static Vector e2 () { return {0,1,0}; }
-    static Vector e3 () { return {0,0,1}; }
-    static Vector zero () { return {0,0,0}; }
+    static Vector e1() { return {1,0,0}; }
+    static Vector e2() { return {0,1,0}; }
+    static Vector e3() { return {0,0,1}; }
+    static Vector zero() { return {0,0,0}; }
 };
 
 inline Vector operator+( const Vector& ft, const Vector& sd )
@@ -220,10 +210,7 @@ inline Vector operator*( fp_t num, const Vector& vec )
 
 // WARNED.
 inline Vector operator/( const Vector& vec, fp_t num )
-{
-    Vector copy {vec};
-    return copy /= num;
-}
+    { return vec * (1 / num); }
 
 // WARNED.
 inline bool operator==( const Vector& ft, const Vector& sd )
@@ -244,7 +231,7 @@ inline fp_t det( const Vector& a, const Vector& b, const Vector& c )
 // Lines are stored as point + direction vector
 class Line
 {
-    // dir_ != geom3D::Vector::zero () is a protected invariant.
+    // dir_ != Vector::zero () is a protected invariant.
     Vector dir_ {};
     Point P_ {};
 
@@ -252,17 +239,18 @@ public:
     Vector dir() const { return dir_; }
     Point P() const { return P_; }
 
-    // Line is invalid if Vector == {0,0,0}
+    // Line is invalid if Vector == Vector::zero ()
     Line( const Vector& dir, const Point& P ) :
         dir_ (dir == Vector::zero () ? Vector {} : dir), P_ (P) {}
 
-    // Line is invalid if Segment.P1_ == Segment.P2_.
+    // Line is invalid if Segment.P1_ () == Segment.P2_ ().
     Line( const Segment& );
 
     // Default constructed Line is invalid.
     Line() = default;
 
-    bool isValid() const { return dir_.isValid () && P_.isValid (); }
+    bool isValid() const
+        { return dir_.isValid () && P_.isValid (); }
 
     // Does this line contains the point?
     // WARNED.
@@ -293,16 +281,17 @@ public:
     // If there is infinite number of solutions, or no solutions,
     // or Segment length is zero - returns invalid point.
     // WARNED.
-    Point operator|( const Segment& seg ) const;
+    Point operator|( const Segment& ) const;
 
     // WARNED.
     bool operator==( const Line& sd ) const
     {
-        return sd.contains (P_) && sd.contains (P_ + dir_);
+        return sd.contains (P_) &&
+               sd.contains (P_ + dir_);
     }
 };
 
-// Segments are stored as 2 Points + stores
+// Segments are stored as 2 Points + segment stores
 // self square length (square length is used frequently).
 class Segment
 {
@@ -337,7 +326,8 @@ public:
     }
 
     // WARNED.
-    Point operator|( const Line& line ) const { return line | *this; }
+    Point operator|( const Line& line ) const
+        { return line | *this; }
 
     // Returns segment and plane cross.
     // If there is infinite number of solutions, or no solutions,
@@ -353,7 +343,7 @@ public:
 // n_[X]*x + n_[Y]*y + n_[Z]*z + D = 0
 class Plane
 {
-    // n_ != {0,0,0} is a protected invariant.
+    // n_ != Vector::zero () is a protected invariant.
     Vector n_ {};
     fp_t D_ = nan;
 
@@ -385,10 +375,12 @@ public:
     }
 
     // WARNED.
-    Point operator|( const Line& line ) const { return line | *this; }
+    Point operator|( const Line& line ) const
+        { return line | *this; }
 
     // WARNED.
-    Point operator|( const Segment& seg ) const { return seg | *this; }
+    Point operator|( const Segment& seg ) const
+        { return seg | *this; }
 };
 
 // Stored triangle info - not a geometrical primitive.
@@ -406,10 +398,18 @@ class Triangle
 public:
     Plane plane() const { return plane_; }
     bool isDegen() const { return isDegen_; }
+
     Segment AB() const { return AB_; }
     Segment BC() const { return BC_; }
     Segment CA() const { return CA_; }
-    Point getPoint( size_t pointId ) const
+
+    Triangle( const Point&, const Point&, const Point& );
+    Triangle() = default;
+
+    // Any return value for invalid or half-invalid points.
+    bool crosses( const Triangle& ) const;
+
+    Point operator[]( size_t pointId ) const
     {
         pointId %= 3;
 
@@ -418,11 +418,18 @@ public:
         return BC_.P2 ();
     }
 
-    Triangle( const Point&, const Point&, const Point& );
-    Triangle() = default;
+    // Returns mass center coords.
+    operator Coordinates() const
+    {
+        Coordinates toRet {nan, nan, nan};
 
-    // Any return value for invalid or half-invalid points.
-    bool crosses( const Triangle& ) const;
+        for (size_t i = 0; i < DNUM; ++i)
+            toRet[i] = (operator[](0)[i] +
+                        operator[](1)[i] +
+                        operator[](2)[i]) / 3;
+
+        return toRet;
+    }
 };
 
 // Stores grouped and indexed triangles.

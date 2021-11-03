@@ -58,7 +58,7 @@ endforeach()
 
 set( DEBUG_DEFINE_NAME "DEBUG" )
 set( DEBUG_FLAGS -D${DEBUG_DEFINE_NAME}=1 -O0 -g -Wall -Wextra -Wpedantic )
-set( RELEASE_FLAGS -D${DEBUG_DEFINE_NAME}=0 -O2 )
+set( RELEASE_FLAGS -D${DEBUG_DEFINE_NAME}=0 -O0 -g )
 
 target_compile_features( ${GEOM3D_TEST_NAME} PRIVATE cxx_std_20 )
 target_compile_features( ${TRIANGLES_NAME} PRIVATE cxx_std_20 )

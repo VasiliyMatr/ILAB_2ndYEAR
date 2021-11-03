@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <compare>
+#include <iostream>
 
 #ifndef GEOM3D_HH_INCL
 #define GEOM3D_HH_INCL
@@ -432,25 +433,34 @@ public:
     }
 };
 
-// Stores grouped and indexed triangles.
-struct TrianglesUnion
+using IndexedTrGroup = std::vector<std::pair<Triangle, size_t>>;
+using TrIndexes = std::vector<size_t>;
+
+// Manages organized IndexedTrGroups
+class OrganizedTriangles
 {
-    using trNId = std::pair<Triangle, size_t>;
+    std::vector<IndexedTrGroup> internalTrGroups_ {};
+    std::vector<IndexedTrGroup> borderTrGroups_ {};
 
-    std::vector<trNId> data_ {};
+    const size_t splitDepth_ = 0;
 
-    // Crosses this union triangles.
+public:
+    // Captures IndexedTrGroup and splits it to subgroups for fast cross.
+    OrganizedTriangles( IndexedTrGroup&& toCapture, size_t targetGroupsSize );
+
+    // Crosses captured triangles.
     // Returns crossed triangles indexes.
-    std::vector<size_t> cross() const;
+    TrIndexes cross() const;
 
-    // Crosses this union triangles with second union triangles.
-    // Returns crossed triangles indexes.
-    std::vector<size_t> cross(const TrianglesUnion& ) const;
+private:
+    // Submethods for ctor & cross.
+    static TrIndexes cross( const IndexedTrGroup& );
+    static TrIndexes cross( const IndexedTrGroup&,
+                            const IndexedTrGroup& );
 
-    // Splits this union to subunions.
-    // It is guaranteed that each triangle will belong to only one subunion.
-    // It is guaranted that triangles from different subunions, except last subunion, doesn't cross.
-    std::vector<TrianglesUnion> split() const;
+    void splitGroups();
+    void reorderBorders();
+    static std::vector<IndexedTrGroup> splitGroup( const IndexedTrGroup& );
 };
 
 } // namespace geom3D

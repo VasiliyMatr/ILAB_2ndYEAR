@@ -43,6 +43,8 @@ set( GEOM3D_TESTS_FILES
     "utils-tests.cc"
     "vec-tests.cc"
     "triangle-tests.cc"
+
+    "sd-tests.cc"
 )
 
 target_sources( ${TRIANGLES_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/triangles.cc" )

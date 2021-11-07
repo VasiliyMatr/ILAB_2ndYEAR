@@ -16,6 +16,20 @@ SplittedTrsGroup::SplittedTrsGroup(
     calcBorders ();
 }
 
+SplittedTrsGroup::SplittedTrsGroup( SplittedTrsGroup&& sd )
+{
+    std::swap (splitDepth_, sd.splitDepth_);
+    std::swap (height_, sd.height_);
+    std::swap (root_, sd.root_);
+}
+
+SplittedTrsGroup::~SplittedTrsGroup()
+{
+    auto handler = DeleteHandler {};
+    for (; height_ > 0; --height_)
+        leafsBypass<DeleteHandler> (handler);
+}
+
 namespace
 {
     // Removes all repeats and sorts TrsIndexes.
@@ -45,16 +59,18 @@ void SplittedTrsGroup::leafsBypass( LeafsHandler& handler )
 
     while (true)
     {
-        handler (curNode);
+        SubGroup* handlerPtr = curNode;
+        curNode = curNode->parent_;
+        handler (handlerPtr);
 
         // Seeking for next node.
         size_t seekDepth = height_ - 1;
         for (; true; --seekDepth)
         {
-            curNode = curNode->parent_;
             if (++nodesIds[seekDepth] != SUB_GROUPS_NUM)
                 break;
             nodesIds[seekDepth] = 0;
+            curNode = curNode->parent_;
         }
 
         if (curNode == nullptr) return;
@@ -90,10 +106,10 @@ void SplittedTrsGroup::splitGroup( SubGroup* group )
         for (size_t j = 0; j < DNUM; ++j)
         {
             int jField = i & (1 << j);
-            curGroupSpaceDomain.upper_[j] = !jField ?
-                splitter[j] : group->spaceDomain_.upper_[j];
-            curGroupSpaceDomain.lower_[j] = jField ?
-                splitter[j] : group->spaceDomain_.lower_[j];
+            curGroupSpaceDomain.upper ()[j] = !jField ?
+                splitter[j] : group->spaceDomain_.upper ()[j];
+            curGroupSpaceDomain.lower ()[j] = jField ?
+                splitter[j] : group->spaceDomain_.lower ()[j];
         }
 
         child->parent_ = group;

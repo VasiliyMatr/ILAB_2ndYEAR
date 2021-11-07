@@ -14,32 +14,36 @@ using IndexedTrsGroup = std::vector<std::pair<Triangle, size_t>>;
 using TrsIndexes = std::vector<size_t>;
 
 // Used to compute bounds for space domains containing grouped triangles.
+// Compare should always return false for nan values. Or it is UB.
 template<class Compare>
 struct PointBound : Point
 {
     PointBound() = default;
     PointBound( const Point& P ) : Point {P} {}
 
+    // All nan fields are automatically replaced with sd values.
+    // It is safe to extend default constructed PointBound with valid sd.
     void extend( const PointBound& sd, const Compare& cmp )
     {
         for (size_t i = 0; i < DNUM; ++i)
-            if (cmp (coord_[i], sd.coord_[i]))
+            if (!cmp (sd.coord_[i], coord_[i]))
                 coord_[i] = sd.coord_[i];
     }
 
+    // It is unsafe to use this method with tr that have invalid points.
+    // Result coordinates could be whatever.
     PointBound( const Triangle& tr ) : Point {tr[0]}
     {
         this->extend (tr[1], Compare {});
         this->extend (tr[2], Compare {});
     }
 
+    // It is unsafe to use this method with group that have invalid points.
+    // Result coordinates could be whatever.
     PointBound( const IndexedTrsGroup& group ) : Point {}
     {
         size_t groupSize = group.size ();
-        if (groupSize == 0) return;
-
-        *this = PointBound {group[0].first};
-        for (size_t i = 1; i < groupSize; ++i)
+        for (size_t i = 0; i < groupSize; ++i)
             extend (PointBound {group[i].first}, Compare{});
     }
 };
@@ -48,13 +52,28 @@ using UpperBound = PointBound<std::less<fp_t>>;
 using LowerBound = PointBound<std::greater<fp_t>>;
 
 // Represents 3D space domain.
-struct SpaceDomain
+class SpaceDomain
 {
+    // upper_[i] >= lower_[i] is a protected invariant
     UpperBound upper_ {};
     LowerBound lower_ {};
 
+public:
+    Point upper() const { return upper_; }
+    Point lower() const { return lower_; }
+
     SpaceDomain() = default;
-    SpaceDomain( const Point& up, const Point& lo ) : upper_ {up}, lower_ {lo} {}
+    SpaceDomain( const Point& up, const Point& lo ) : upper_ {up}, lower_ {lo}
+    {
+        for (size_t i = 0; i < DNUM; ++i)
+            if (upper_[i] < lower_[i])
+            {
+                lower_ = Point{};
+                upper_ = Point{};
+                return;
+            }
+    }
+
     SpaceDomain( const IndexedTrsGroup& gr ) : upper_ {gr}, lower_ {gr} {}
 
     // Does this space domain crosses given !BORDER! triangle?
@@ -141,7 +160,7 @@ void concatVectors( std::vector<Data>& dest, std::vector<Data>&& src )
 class SplittedTrsGroup
 {
     static constexpr size_t SUB_GROUPS_NUM = 8;
-    const size_t splitDepth_;
+    size_t splitDepth_ = 0;
     size_t height_ = 1;
 
     // Sub group encased with space domain.
@@ -161,6 +180,15 @@ class SplittedTrsGroup
 
 public:
     SplittedTrsGroup( const IndexedTrsGroup& group, size_t targetGroupSize );
+    // Will implement later.
+    SplittedTrsGroup( const SplittedTrsGroup& ) = delete;
+    SplittedTrsGroup( SplittedTrsGroup&& sd );
+    // Will implement later.
+    SplittedTrsGroup operator=( const SplittedTrsGroup& ) = delete;
+    // Will implement later.
+    SplittedTrsGroup operator=( SplittedTrsGroup&& sd ) = delete;
+   ~SplittedTrsGroup();
+
     TrsIndexes cross();
 
 private:
@@ -189,6 +217,12 @@ private:
     struct CalcBordersBypassHandler
     {
         void operator()( SubGroup* );
+    };
+
+    struct DeleteHandler
+    {
+        void operator()( SubGroup* node )
+            { delete node; }
     };
 };
 

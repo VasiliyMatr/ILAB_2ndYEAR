@@ -172,6 +172,17 @@ struct Vector
     fp_t len() const
         { return std::sqrt (sqLen ()); }
 
+    // Scales too big vectors.
+    Vector scale()
+    {
+        fp_t divider = 0;
+        for (size_t i = 0; i < DNUM; ++i)
+            divider = std::max (divider, std::abs (coord_[i]));
+
+        if (divider > 1) *this *= 1 / divider;
+        return *this;
+    }
+
     static fp_t scalarProduct( const Vector& ft, const Vector& sd )
     {
         return ft[X]*sd[X] + ft[Y]*sd[Y] + ft[Z]*sd[Z];
@@ -252,6 +263,12 @@ public:
 
     bool isValid() const
         { return dir_.isValid () && P_.isValid (); }
+
+    Line scale()
+    {
+        dir_.scale ();
+        return *this;
+    }
 
     // Does this line contains the point?
     // WARNED.
@@ -336,7 +353,7 @@ public:
     // WARNED.
     Point operator|( const Plane& plane ) const
     {
-        Point lineCross = Line {*this} | plane;
+        Point lineCross = Line {*this}.scale () | plane;
         return linearContains (lineCross) ? lineCross : Point {};
     }
 };
@@ -348,6 +365,13 @@ class Plane
     Vector n_ {};
     fp_t D_ = nan;
 
+    bool invarsMet() const
+    {
+        return n_ != Vector::zero () &&
+            // To check that n_ != Vector::zero () is still true for scaled plane. 
+            n_.sqLen ()/(D_*D_) > 3*fpCmpW::CMP_PRECISION*fpCmpW::CMP_PRECISION;
+    }
+
 public:
     Vector n() const { return n_; }
     fp_t D() const { return D_; }
@@ -355,12 +379,14 @@ public:
     // SAFE.
     // Plane is invalid if Vector == {0,0,0}.
     Plane( const Vector& n, fp_t D ) :
-        n_(n == Vector::zero () ? Vector {} : n), D_(D) {}
+        n_(n), D_(D)
+        { if (!invarsMet ()) n_ = Vector{}; }
 
     // Plane is invalid if points lies on one line (or equal).
     Plane( const Point& A, const Point& B, const Point& C ) :
         n_(Vector::crossProduct ({A, B}, {B, C})),
-        D_(n_ == Vector::zero () ? nan : -n_[X]*A[X] - n_[Y]*A[Y] - n_[Z]*A[Z]) {}
+        D_(-n_[X]*A[X] - n_[Y]*A[Y] - n_[Z]*A[Z])
+        { if (!invarsMet ()) n_ = Vector{}; }
 
     // Default constructed Plane is invalid.
     Plane() = default;
@@ -368,6 +394,24 @@ public:
     bool isValid() const
     {
         return n_.isValid () && geom3D::isValid (D_);
+    }
+
+    // Scales planes with too big coeffs.
+    Plane scale()
+    {
+        fp_t divider = 0;
+        for (size_t i = 0; i < DNUM; ++i)
+            divider = std::max (divider, std::abs (n_[i]));
+
+        divider = std::max (divider, std::abs (D_));
+
+        if (divider > 1)
+        {
+            fp_t factor = 1 / divider;
+            D_ *= factor;
+            n_ *= factor;
+        }
+        return *this;
     }
 
     bool contains( const Point& P ) const

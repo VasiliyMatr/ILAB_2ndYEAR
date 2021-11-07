@@ -20,6 +20,8 @@ Triangle::Triangle( const Point& A, const Point& B, const Point& C ) :
         else if (CA_.sqLen () > AB_.sqLen ())
             AB_ = CA_;
     }
+    else
+        plane_.scale ();
 }
 
 namespace
@@ -93,22 +95,22 @@ bool areCrossed( const Triangle& ft, const Triangle& sd )
     return false;
 }
 
-bool areCrossed( const Triangle& trInfo, const Segment& seg )
+bool areCrossed( const Triangle& tr, const Segment& seg )
 {
-    Point segPlaneCross = Line {seg} | trInfo.plane ();
-    if (segPlaneCross.isValid () && seg.linearContains (segPlaneCross))
+    Point segPlaneCross = seg | tr.plane ();
+    if (segPlaneCross.isValid ())
         // Crossing point & triangle.
-        return flatAreCrossed (trInfo, segPlaneCross);
+        return flatAreCrossed (tr, segPlaneCross);
 
     // Crossing segment & triangle.
-    return trInfo.plane ().contains (seg.P1 ()) &&
-           flatAreCrossed (trInfo, seg);
+    return tr.plane ().contains (seg.P1 ()) &&
+           flatAreCrossed (tr, seg);
 }
 
 bool areCrossed( const Segment& ft, const Segment& sd )
 {
-    Line ftLine = Line {ft};
-    Line sdLine = Line {sd};
+    Line ftLine = Line {ft}.scale ();
+    Line sdLine = Line {sd}.scale ();
     if (ftLine == sdLine)
         return linearAreCrossed (ft, sd);
 
@@ -134,7 +136,7 @@ bool flatAreCrossed( const Triangle& ft, const Triangle& sd )
 
 bool flatAreCrossed( const Triangle& tr, const Segment& seg )
 {
-    Line segLine = Line {seg};
+    Line segLine = Line {seg}.scale ();
     if (!segLine.isValid ())
         return flatAreCrossed (tr, seg.P1 ());
 
@@ -168,7 +170,7 @@ bool flatAreCrossed( const Triangle& tr, const Segment& seg )
 bool flatAreCrossed( const Triangle& tr, const Point& P )
 {
     const Point& A = tr[0];
-    Line PA = Line {Segment {P, A}};
+    Line PA = Line {Segment {P, A}}.scale ();
     if (!PA.isValid ())// P == A
         return true;
 

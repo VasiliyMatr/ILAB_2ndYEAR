@@ -38,7 +38,7 @@ Point Line::operator|( const Plane& plane ) const
 
 Point Line::operator|( const Segment& seg ) const
 {
-    Point linesCross = *this | Line {seg};
+    Point linesCross = *this | Line {seg}.scale ();
     return seg.linearContains (linesCross) ? linesCross : Point {};
 }
 

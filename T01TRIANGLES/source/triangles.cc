@@ -25,7 +25,7 @@ int main( int argc, char ** argv)
     }
 
 #if 1
-    geom3D::SplittedTrsGroup splTriangles {std::move (triangles), 20};
+    geom3D::SplittedTrsGroup splTriangles {triangles, 20};
     geom3D::TrsIndexes crossIds = splTriangles.cross ();
 #else
     geom3D::TrsIndexes crossIds = geom3D::cross (triangles);
@@ -34,5 +34,5 @@ int main( int argc, char ** argv)
     for (size_t i = 0, num = crossIds.size (); i != num; ++i)
         std::cout << crossIds[i] << std::endl;
 
-    std::cout << std::endl;
+    std::cout << std::endl << crossIds.size () << std::endl;
 }

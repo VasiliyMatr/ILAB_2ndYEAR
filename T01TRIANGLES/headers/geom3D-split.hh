@@ -1,4 +1,5 @@
 
+#include <cassert>
 #include "geom3D.hh"
 
 #ifndef GEOM3D_SPLIT_HH_INCL
@@ -8,63 +9,43 @@ namespace geom3D
 {
 
 // Triangles will be splitted in smaller groups for
-// asymptotic computational complexity reduction
+// asymptotic computational complexity reduction.
 using IndexedTrsGroup = std::vector<std::pair<Triangle, size_t>>;
 using TrsIndexes = std::vector<size_t>;
 
-TrsIndexes cross( const IndexedTrsGroup& );
-TrsIndexes cross( const IndexedTrsGroup&, const IndexedTrsGroup& );
-
-// Used to compute bounds for space domains with grouped triangles.
-template<class Compare> // Callable to compare coords
+// Used to compute bounds for space domains containing grouped triangles.
+template<class Compare>
 struct PointBound : Point
 {
     PointBound() = default;
     PointBound( const Point& P ) : Point {P} {}
 
-    void extend( const PointBound& sd )
+    void extend( const PointBound& sd, const Compare& cmp )
     {
         for (size_t i = 0; i < DNUM; ++i)
-            coord_[i] = Compare{} (coord_[i], sd.coord_[i]);
+            if (cmp (coord_[i], sd.coord_[i]))
+                coord_[i] = sd.coord_[i];
     }
 
     PointBound( const Triangle& tr ) : Point {tr[0]}
     {
-        this->extend (tr[1]);
-        this->extend (tr[2]);
+        this->extend (tr[1], Compare {});
+        this->extend (tr[2], Compare {});
     }
 
     PointBound( const IndexedTrsGroup& group ) : Point {}
     {
         size_t groupSize = group.size ();
-
         if (groupSize == 0) return;
 
         *this = PointBound {group[0].first};
-
         for (size_t i = 1; i < groupSize; ++i)
-            this->extend (PointBound {group[i].first});
+            extend (PointBound {group[i].first}, Compare{});
     }
 };
 
-// Strict comparator for accurate bounds
-struct UpperBoundComparator
-{
-    fp_t operator()( fp_t ft, fp_t sd ) const
-        { return std::max (ft, sd); }
-};
-
-// Strict comparator for accurate bounds
-struct LowerBoundComparator
-{
-    fp_t operator()( fp_t ft, fp_t sd ) const
-        { return std::min (ft, sd); }
-};
-
-using UpperBound = PointBound<UpperBoundComparator>;
-using LowerBound = PointBound<LowerBoundComparator>;
-
-using Bounds = std::pair<UpperBound, LowerBound>;
+using UpperBound = PointBound<std::less<fp_t>>;
+using LowerBound = PointBound<std::greater<fp_t>>;
 
 // Represents 3D space domain.
 struct SpaceDomain
@@ -73,39 +54,26 @@ struct SpaceDomain
     LowerBound lower_ {};
 
     SpaceDomain() = default;
-    SpaceDomain( const Point& upper, const Point& lower ) :
-        upper_ {upper}, lower_ {lower} {}
-    SpaceDomain( const IndexedTrsGroup& group ) : upper_ {group}, lower_ {group} {}
+    SpaceDomain( const Point& up, const Point& lo ) : upper_ {up}, lower_ {lo} {}
+    SpaceDomain( const IndexedTrsGroup& gr ) : upper_ {gr}, lower_ {gr} {}
 
-    bool contains( const Point& P ) const
-    {
-        for (size_t i = 0; i < DNUM; ++i)
-            if (fpCmpW {upper_[i]} < P[i] || fpCmpW {lower_[i]} > P[i])
-                return false;
-
-        return true;
-    }
-
+    // Does this space domain crosses given !BORDER! triangle?
     bool crosses( const Triangle& tr ) const
     {
         for (size_t i = 0; i < DNUM; ++i)
-            if (fpCmpW {tr[0][i]} < lower_[i] &&
-                fpCmpW {tr[1][i]} < lower_[i] &&
-                fpCmpW {tr[2][i]} < lower_[i])
-            return false;
-
-        for (size_t i = 0; i < DNUM; ++i)
-            if (fpCmpW {tr[0][i]} > upper_[i] &&
-                fpCmpW {tr[1][i]} > upper_[i] &&
-                fpCmpW {tr[2][i]} > upper_[i])
-            return false;
-
+        {
+            size_t j = 0;
+            for (; j < 3; ++j) if (fpCmpW {tr[j][i]} >= lower_[i]) break;
+            if (j == 3) return false;
+            for (j = 0; j < 3; ++j) if (fpCmpW {tr[j][i]} <= upper_[i]) break;
+            if (j == 3) return false;
+        }
         return true;
     }
 };
 
-// Octants could not be in right geometrical order.
-enum class SpaceOctant
+// Octants are not in right geometrical order.
+enum SpaceOctant
 {
     FIRST, SECOND, THIRD, FOURTH,
     FIFTH, SIXTH, SEVENTH, EIGHTH,
@@ -114,6 +82,7 @@ enum class SpaceOctant
     SEVERAL,
 };
 
+// Used to split triangles groups into subgroups.
 struct PointSplitter : Point
 {
     // Counts average grouped triangles coordinates.
@@ -123,38 +92,35 @@ struct PointSplitter : Point
 
         for (size_t i = 0; i < trNum; ++i)
         {
-            Coordinates MC = group[i].first;
+            Coordinates trMassCenter = group[i].first;
 
             for (size_t j = 0; j < DNUM; ++j)
-                coord_[j] += MC[j];
+                coord_[j] += trMassCenter[j];
         }
 
-        for (size_t j = 0; j < DNUM; ++j)
-            coord_[j] /= trNum;
+        for (size_t i = 0; i < DNUM; ++i)
+            coord_[i] /= trNum;
     }
 
-    SpaceOctant getPointEighth( const Point& P )
+    SpaceOctant getOctant( const Point& P )
     {
         for (size_t i = 0; i < DNUM; ++i)
             if (fpCmpW {P[i]} == coord_[i])
                 return SpaceOctant:: SEVERAL;
 
-        std::array<bool, DNUM> isLess {};
-
+        char octant = 0;
         for (size_t i = 0; i < DNUM; ++i)
-            isLess[i] = fpCmpW {P[i]} < coord_[i];
+            octant += (fpCmpW {P[i]} > coord_[i]) << i;
 
-        char mask = isLess[X] + (isLess[Y] << 1) + (isLess[Z] << 2);
-
-        return SpaceOctant (mask);
+        return SpaceOctant (octant);
     }
 
-    SpaceOctant getTriangleEighth( const Triangle& tr )
+    SpaceOctant getOctant( const Triangle& tr )
     {
         std::array<SpaceOctant, 3> eighths {};
 
         for (size_t i = 0; i < 3; ++i)
-            eighths[i] = getPointEighth (tr[i]);
+            eighths[i] = getOctant (tr[i]);
 
         if (eighths[0] != eighths[1] || eighths[1] != eighths[2])
             return SpaceOctant::SEVERAL;
@@ -167,24 +133,27 @@ template<class Data>
 void concatVectors( std::vector<Data>& dest, const std::vector<Data>& src )
     { dest.insert (dest.end (), src.begin (), src.end ()); }
 
+template<class Data>
+void concatVectors( std::vector<Data>& dest, std::vector<Data>&& src )
+    { dest.insert (dest.end (), src.begin (), src.end ()); }
+
+// Octo-tree is used to split triangles into smaller groups.
 class SplittedTrsGroup
 {
     static constexpr size_t SUB_GROUPS_NUM = 8;
-    const size_t treeHeight_;
+    const size_t splitDepth_;
+    size_t height_ = 1;
 
     // Sub group encased with space domain.
     struct SubGroup
     {
         SubGroup* parent_ = nullptr;
-        std::array<SubGroup*, SUB_GROUPS_NUM> subGroups_ {nullptr};
+        std::array<SubGroup*, SUB_GROUPS_NUM> children_ {nullptr};
 
-        SpaceDomain containingSpaceDomain_ {};
-        // For not leaf nodes - stores triangles crosseed by sub groups
-        // partitioning borders (if they are not contained by parents groups borderTrs_)
-        // For leafs - stores triangles that crosses this group domain border.
+        SpaceDomain spaceDomain_ {};
+        // For leafs - stores triangles that crosses this group space domain borders.
         IndexedTrsGroup borderTrs_ {};
-        // Empty for not leaf nodes.
-        // Contains this sub group triangles.
+        // For leafs - contains this sub group space domain internal triangles.
         IndexedTrsGroup internalTrs_ {};
     };
 
@@ -195,14 +164,16 @@ public:
     TrsIndexes cross();
 
 private:
-
-    // Sub funcs for ctor.
+    // Used to perform leafs bypass:
     template <class LeafsHandler>
     void leafsBypass( LeafsHandler& );
-    void splitGroups( const IndexedTrsGroup& group );
-    static void splitGroup( SubGroup* );
-    void calcBorders();
 
+    // Methods for ctor.
+    void splitGroups( const IndexedTrsGroup& group );
+    void calcBorders();
+    static void splitGroup( SubGroup* );
+
+    // Handlers for leafsBypass:
     struct SplitBypassHandler
     {
         void operator()( SubGroup* group )
@@ -212,38 +183,18 @@ private:
     struct CrossBypassHandler
     {
         TrsIndexes crossedIds_ {};
-
-        void operator()( SubGroup* group )
-        {
-            TrsIndexes cross( const IndexedTrsGroup& );
-            TrsIndexes cross( const IndexedTrsGroup&, const IndexedTrsGroup& );
-            concatVectors (crossedIds_, cross (group->internalTrs_));
-            concatVectors (crossedIds_, cross (group->borderTrs_));
-            concatVectors (crossedIds_,
-                cross (group->borderTrs_, group->internalTrs_));
-        }
+        void operator()( SubGroup* );
     };
 
     struct CalcBordersBypassHandler
     {
-        void operator()( SubGroup* group )
-        {
-            IndexedTrsGroup allPossibleBorderTrs {};
-
-            SubGroup* curNode = group->parent_;
-            for (; curNode != nullptr; curNode = curNode->parent_)
-                concatVectors (allPossibleBorderTrs, curNode->borderTrs_);
-
-            size_t trNum = allPossibleBorderTrs.size ();
-            for (size_t i = 0; i < trNum; ++i)
-            {
-                auto curTr = allPossibleBorderTrs[i];
-                if (group->containingSpaceDomain_.crosses (curTr.first))
-                    group->borderTrs_.push_back (curTr);
-            }
-        }
+        void operator()( SubGroup* );
     };
 };
+
+// Returns intersecting trianlges indexes.
+TrsIndexes cross( const IndexedTrsGroup& );
+TrsIndexes cross( const IndexedTrsGroup&, const IndexedTrsGroup& );
 
 } // namespace geom3D
 

@@ -31,7 +31,7 @@ set( GEOM3D_SRC_FILES
     "line-impl.cc"
     "point-impl.cc"
     "triangle-impl.cc"
-    "tr-union-impl.cc"
+    "split-impl.cc"
 )
 
 set( GEOM3D_TESTS_FILES

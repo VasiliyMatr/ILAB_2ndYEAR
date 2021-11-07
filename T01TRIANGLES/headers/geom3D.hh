@@ -433,36 +433,6 @@ public:
     }
 };
 
-using IndexedTrGroup = std::vector<std::pair<Triangle, size_t>>;
-using TrIndexes = std::vector<size_t>;
-
-// Manages organized IndexedTrGroups
-class OrganizedTriangles
-{
-    std::vector<IndexedTrGroup> internalTrGroups_ {};
-    std::vector<IndexedTrGroup> borderTrGroups_ {};
-
-    const size_t splitDepth_ = 0;
-
-public:
-    // Captures IndexedTrGroup and splits it to subgroups for fast cross.
-    OrganizedTriangles( IndexedTrGroup&& toCapture, size_t targetGroupsSize );
-
-    // Crosses captured triangles.
-    // Returns crossed triangles indexes.
-    TrIndexes cross() const;
-
-private:
-    // Submethods for ctor & cross.
-    static TrIndexes cross( const IndexedTrGroup& );
-    static TrIndexes cross( const IndexedTrGroup&,
-                            const IndexedTrGroup& );
-
-    void splitGroups();
-    void reorderBorders();
-    static std::vector<IndexedTrGroup> splitGroup( const IndexedTrGroup& );
-};
-
 } // namespace geom3D
 
 #endif // #ifndef GEOM3D_HH_INCL

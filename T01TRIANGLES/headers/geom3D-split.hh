@@ -76,13 +76,17 @@ public:
     // Works properly only for border triangles! 
     bool crosses( const Triangle& tr ) const
     {
-        for (size_t i = 0; i < DNUM; ++i)
+        for (size_t coordId = 0; coordId < DNUM; ++coordId)
         {
             size_t j = 0;
-            for (; j < 3; ++j) if (fpCmpW {tr[j][i]} >= lower_[i]) break;
-            if (j == 3) return false;
-            for (j = 0; j < 3; ++j) if (fpCmpW {tr[j][i]} <= upper_[i]) break;
-            if (j == 3) return false;
+            for (; j < TR_POINT_NUM; ++j)
+                if (fpCmpW {tr[j][coordId]} >= lower_[coordId])
+                    break;
+            if (j == TR_POINT_NUM) return false;
+            for (j = 0; j < TR_POINT_NUM; ++j)
+                if (fpCmpW {tr[j][coordId]} <= upper_[coordId])
+                    break;
+            if (j == TR_POINT_NUM) return false;
         }
         return true;
     }
@@ -110,8 +114,8 @@ struct PointSplitter : Point
         {
             Coordinates trMassCenter = group[i].first;
 
-            for (size_t j = 0; j < DNUM; ++j)
-                coord_[j] += trMassCenter[j];
+            for (size_t coordId = 0; coordId < DNUM; ++coordId)
+                coord_[coordId] += trMassCenter[coordId];
         }
 
         for (size_t i = 0; i < DNUM; ++i)
@@ -133,9 +137,9 @@ struct PointSplitter : Point
 
     SpaceOctant getOctant( const Triangle& tr )
     {
-        std::array<SpaceOctant, 3> eighths {};
+        std::array<SpaceOctant, TR_POINT_NUM> eighths {};
 
-        for (size_t i = 0; i < 3; ++i)
+        for (size_t i = 0; i < TR_POINT_NUM; ++i)
             eighths[i] = getOctant (tr[i]);
 
         if (eighths[0] != eighths[1] || eighths[1] != eighths[2])

@@ -29,7 +29,7 @@ bool SplittedTrsGroup::testSplitting()
         {
             Triangle tr = child->internalTrs_[trId].first;
             for (size_t coordId = 0; coordId < DNUM; ++coordId)
-            for (size_t pointId = 0; pointId < 3; ++pointId)
+            for (size_t pointId = 0; pointId < TR_POINT_NUM; ++pointId)
                 if (tr[pointId][coordId] > childSD.upper ()[coordId] ||
                     tr[pointId][coordId] < childSD.lower ()[coordId])
                 testResult = false;
@@ -43,9 +43,9 @@ bool SplittedTrsGroup::testSplitting()
     for (size_t i = 0; i < borderSize; ++i)
     {
         Triangle borderTr = splGr.borderTrs_[i].first;
-        for (size_t j = 0; j < SUB_GROUPS_NUM; ++j)
+        for (size_t childId = 0; childId < SUB_GROUPS_NUM; ++childId)
         {
-            SubGroup* child = splGr.children_[j];
+            SubGroup* child = splGr.children_[childId];
             if (child->spaceDomain_.crosses (borderTr))
                 mask[i] = true;
         }

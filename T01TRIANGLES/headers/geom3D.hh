@@ -409,6 +409,9 @@ public:
         { return seg | *this; }
 };
 
+// Expected, right?
+constexpr size_t TR_POINT_NUM = 3;
+
 // Stored triangle info - not a geometrical primitive.
 class Triangle
 {
@@ -437,7 +440,7 @@ public:
 
     Point operator[]( size_t pointId ) const
     {
-        pointId %= 3;
+        pointId %= TR_POINT_NUM;
 
         if (pointId == 0) return AB_.P1 ();
         if (pointId == 1) return AB_.P2 ();
@@ -452,7 +455,7 @@ public:
         for (size_t i = 0; i < DNUM; ++i)
             toRet[i] = (operator[](0)[i] +
                         operator[](1)[i] +
-                        operator[](2)[i]) / 3;
+                        operator[](2)[i]) / TR_POINT_NUM;
 
         return toRet;
     }

@@ -41,10 +41,10 @@ TEST( BoundsTests, ExtendTest )
 
     for (size_t i = 0; i < PTS_NUM; ++i)
     {
-        for (size_t j = 0; j < DNUM; ++j)
+        for (size_t coordId = 0; coordId < DNUM; ++coordId)
         {
-            ASSERT_TRUE (upper[j] >= points[i][j]);
-            ASSERT_TRUE (lower[j] <= points[i][j]);
+            ASSERT_TRUE (upper[coordId] >= points[i][coordId]);
+            ASSERT_TRUE (lower[coordId] <= points[i][coordId]);
         }
     }
 }

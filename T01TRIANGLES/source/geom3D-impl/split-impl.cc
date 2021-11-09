@@ -116,13 +116,13 @@ void SplittedTrsGroup::splitGroup( SubGroup* group )
         Point upper {};
         Point lower {};
 
-        for (size_t j = 0; j < DNUM; ++j)
+        for (size_t coordId = 0; coordId < DNUM; ++coordId)
         {
-            int jField = i & (1 << j);
-            upper[j] = !jField ?
-                splitter[j] : group->spaceDomain_.upper ()[j];
-            lower[j] = jField ?
-                splitter[j] : group->spaceDomain_.lower ()[j];
+            SpaceOctant octant = SpaceOctant (i & (1 << coordId));
+            upper[coordId] = !octant ?
+                splitter[coordId] : group->spaceDomain_.upper ()[coordId];
+            lower[coordId] = octant ?
+                splitter[coordId] : group->spaceDomain_.lower ()[coordId];
         }
 
         child->parent_ = group;

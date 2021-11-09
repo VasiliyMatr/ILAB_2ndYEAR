@@ -1,5 +1,6 @@
 
 #include <cassert>
+
 #include "geom3D.hh"
 
 #ifndef GEOM3D_SPLIT_HH_INCL

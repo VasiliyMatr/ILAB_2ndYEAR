@@ -4,6 +4,8 @@
 namespace geom3D
 {
 
+// Few simple tests at first:
+
 TEST( TrCrossTests, SegNSegTest )
 {
     Triangle t1 {{1,1,1}, {2,2,2}, {3,3,3}}; // Main segment in test.
@@ -78,6 +80,8 @@ TEST( TrCrossTests, TrNTrTest )
     ASSERT_TRUE (t1.crosses (t5) && t5.crosses (t1));
     ASSERT_TRUE (t1.crosses (t6) && t6.crosses (t1));
 }
+
+// Tests with data gen:
 
 namespace
 {

@@ -1,6 +1,4 @@
 
-#include "geom3D.hh"
-#include "geom3D-split.hh"
 #include "geom3D-tests.hh"
 
 namespace geom3D

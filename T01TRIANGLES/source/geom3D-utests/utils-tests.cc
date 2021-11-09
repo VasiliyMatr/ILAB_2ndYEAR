@@ -1,26 +1,28 @@
 
 
 #include "geom3D-tests.hh"
+
 namespace geom3D
 {
 
-TEST( UtilsTests, isValidTest )
+TEST( UtilsTests, ValidationTest )
 {
     ASSERT_FALSE (isValid (geom3D::nan));
     ASSERT_FALSE (isValid (geom3D::inf));
     ASSERT_TRUE (isValid (genFP ()));
 }
 
-TEST( UtilsTests, cmpTest )
+TEST( UtilsTests, ComparisonTest )
 {
     fp_t a = genFP ();
-    fp_t b = a;
 
-    ASSERT_TRUE (fpCmpW {a} == b);
-    ASSERT_FALSE (fpCmpW {a} == b + fpCmpW::CMP_PRECISION * 2);
+    ASSERT_TRUE (fpCmpW {a} == a);
+    ASSERT_TRUE (fpCmpW {a} != a + fpCmpW::CMP_PRECISION * 2);
+    ASSERT_TRUE (fpCmpW {a} < a + fpCmpW::CMP_PRECISION * 2);
+    ASSERT_TRUE (fpCmpW {a} > a - fpCmpW::CMP_PRECISION * 2);
 }
 
-TEST( UtilsTests, detTests )
+TEST( UtilsTests, DeterminantTest )
 {
     fp_t det1 = det ({1,1,1},
                      {0,1,1},

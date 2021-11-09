@@ -1,5 +1,5 @@
 
-#include "geom3D-tests.hh"
+#include <gtest/gtest.h>
 
 int main( int argc, char ** argv )
 {

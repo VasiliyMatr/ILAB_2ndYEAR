@@ -1,5 +1,6 @@
 
 #include "geom3D-tests.hh"
+
 namespace geom3D
 {
 
@@ -22,7 +23,7 @@ TEST( LineTests, TwoPointsCtorTest )
     ASSERT_TRUE (l.contains (seg.P1 ()) && l.contains (seg.P2 ()));
 }
 
-TEST( LineTests, ValidationTests )
+TEST( LineTests, ValidationTest )
 {
     for (int i = 0; i < 6; ++i)
     {

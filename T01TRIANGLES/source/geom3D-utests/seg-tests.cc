@@ -1,9 +1,10 @@
 
 #include "geom3D-tests.hh"
+
 namespace geom3D
 {
 
-TEST( SegTests, ValidationTests )
+TEST( SegTests, ValidationTest )
 {
     for (int i = 0; i < 6; ++i)
     {

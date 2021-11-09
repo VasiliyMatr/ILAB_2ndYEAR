@@ -1,7 +1,8 @@
 
+#include <gtest/gtest.h>
+
 #include "geom3D.hh"
 #include "geom3D-split.hh"
-#include <gtest/gtest.h>
 
 #ifndef GEOM3D_TESTS_HH_INCL
 #define GEOM3D_TESTS_HH_INCL

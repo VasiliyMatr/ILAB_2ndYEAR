@@ -1,5 +1,6 @@
 
 #include "geom3D-tests.hh"
+
 namespace geom3D
 {
 
@@ -24,7 +25,7 @@ TEST( VectorTests, TwoPointCtorTest )
     ASSERT_FLOAT_EQ (B[Z] - A[Z], vec[Z]);
 }
 
-TEST( VectorTests, ValidationTests )
+TEST( VectorTests, ValidationTest )
 {
     for (int i = 0; i < 3; ++i)
     {

@@ -1,6 +1,4 @@
 
-#include <iostream>
-#include <vector>
 #include "geom3D.hh"
 #include "geom3D-split.hh"
 

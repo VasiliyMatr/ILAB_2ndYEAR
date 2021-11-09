@@ -1,5 +1,6 @@
 
 #include "geom3D-tests.hh"
+
 namespace geom3D
 {
 
@@ -25,7 +26,7 @@ TEST( PlaneTests, ThreePtsCtorTest )
     ASSERT_FLOAT_EQ (-1, plane.D ());
 }
 
-TEST( PlaneTests, ValidationTests )
+TEST( PlaneTests, ValidationTest )
 {
     for (int i = 0; i < 4; ++i)
     {

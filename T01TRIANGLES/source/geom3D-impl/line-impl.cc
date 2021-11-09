@@ -13,7 +13,7 @@ Point Line::operator|( const Line& sd ) const
     static constexpr fp_t DET_CMP_PRECISION = 1E-6;
     const Vector& a = dir_;
     const Vector& b = sd.dir_;
-    const Vector c = Vector::crossProduct (dir_, sd.dir_).scale ();
+    const Vector c = Vector::crossProduct (dir_, sd.dir_);
     const Vector d {P_, sd.P_};
 
     // Solving system: a*k1 + b*k2 + c*k3 = d

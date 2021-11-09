@@ -1,5 +1,8 @@
 
-#include "geom3D-tests.hh"
+#include <gtest/gtest.h>
+
+#include "geom3D.hh"
+#include "geom3D-gen.hh"
 
 namespace geom3D
 {
@@ -109,9 +112,9 @@ TEST( TrCrossTests, OneCommonPointTest )
 
     for (size_t i = 0; i < BIG_TESTS_ITERATIONS_NUM; ++i)
     {
-        Point A = genP ();
-        Triangle tr1 {A, A + genSmallVec (), A + genSmallVec ()},
-                 tr2 {A, A + genSmallVec (), A + genSmallVec ()};
+        Point A = genCloseP ();
+        Triangle tr1 {A, genCloseP (), genCloseP ()},
+                 tr2 {A, genCloseP (), genCloseP ()};
 
         if (!tr1.crosses (tr2)) ++failNum;
     }
@@ -125,9 +128,7 @@ TEST( TrCrossTests, TwoCommonPointsTest )
 
     for (size_t i = 0; i < BIG_TESTS_ITERATIONS_NUM; ++i)
     {
-        Triangle tr1 = genSmallTr (),
-                 tr2 {tr1[0], tr1[1], tr1[2] + genSmallVec ()};
-
+        Triangle tr1 = genSmallTr (), tr2 {tr1[0], tr1[1], genCloseP ()};
         if (!tr1.crosses (tr2)) ++failNum;
     }
 

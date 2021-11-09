@@ -458,6 +458,11 @@ public:
     }
 };
 
+// Triangles will be splitted in smaller groups for
+// asymptotic computational complexity reduction.
+using IndexedTrsGroup = std::vector<std::pair<Triangle, size_t>>;
+using TrsIndexes = std::vector<size_t>;
+
 } // namespace geom3D
 
 #endif // #ifndef GEOM3D_HH_INCL

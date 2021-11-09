@@ -1,18 +1,13 @@
 
 #include <cassert>
 
-#include "geom3D.hh"
-
 #ifndef GEOM3D_SPLIT_HH_INCL
 #define GEOM3D_SPLIT_HH_INCL
 
+#include "geom3D.hh"
+
 namespace geom3D
 {
-
-// Triangles will be splitted in smaller groups for
-// asymptotic computational complexity reduction.
-using IndexedTrsGroup = std::vector<std::pair<Triangle, size_t>>;
-using TrsIndexes = std::vector<size_t>;
 
 // Used to compute bounds for space domains containing grouped triangles.
 // Compare should always return false for nan values. Or it is UB.
@@ -77,7 +72,8 @@ public:
 
     SpaceDomain( const IndexedTrsGroup& gr ) : upper_ {gr}, lower_ {gr} {}
 
-    // Does this space domain crosses given !BORDER! triangle?
+    // Does this space domain crosses given triangle?
+    // Works properly only for border triangles! 
     bool crosses( const Triangle& tr ) const
     {
         for (size_t i = 0; i < DNUM; ++i)
@@ -126,7 +122,7 @@ struct PointSplitter : Point
     {
         for (size_t i = 0; i < DNUM; ++i)
             if (fpCmpW {P[i]} == coord_[i])
-                return SpaceOctant:: SEVERAL;
+                return SpaceOctant::SEVERAL;
 
         char octant = 0;
         for (size_t i = 0; i < DNUM; ++i)
@@ -161,8 +157,6 @@ void concatVectors( std::vector<Data>& dest, std::vector<Data>&& src )
 class SplittedTrsGroup
 {
     static constexpr size_t SUB_GROUPS_NUM = 8;
-    size_t splitDepth_ = 0;
-    size_t height_ = 1;
 
     // Sub group encased with space domain.
     struct SubGroup
@@ -177,54 +171,62 @@ class SplittedTrsGroup
         IndexedTrsGroup internalTrs_ {};
     };
 
+    // Iterator used for passes on specified depth.
+    struct DepthIter
+    {
+        SubGroup* node_ = nullptr;
+        const size_t depth_;
+
+    private:
+        // This node branches ids
+        std::vector<size_t> branchesIds {};
+
+    public:
+        DepthIter( SubGroup* root, size_t depth ) :
+            node_ (root), depth_ (depth), branchesIds (depth + 1, 0)
+        {
+            for (size_t i = 0; i < depth && node_ != nullptr; ++i)
+                node_ = node_->children_[0];
+        }
+
+        DepthIter operator++();
+
+        bool operator==( const DepthIter& sd ) const
+            { return node_ == sd.node_; }
+
+        static DepthIter end()
+            { return DepthIter { nullptr, 0 }; }
+    };
+
+    const size_t splitDepth_;
     SubGroup* root_;
 
+    fp_t avgGroupsSize_ = 0;
+    fp_t avgBordsSize_ = 0;
+
 public:
+
     SplittedTrsGroup( const IndexedTrsGroup& group, size_t targetGroupSize );
-    // Will implement later.
-    SplittedTrsGroup( const SplittedTrsGroup& ) = delete;
-    SplittedTrsGroup( SplittedTrsGroup&& sd );
-    // Will implement later.
-    SplittedTrsGroup operator=( const SplittedTrsGroup& ) = delete;
-    // Will implement later.
-    SplittedTrsGroup operator=( SplittedTrsGroup&& sd ) = delete;
    ~SplittedTrsGroup();
 
-    TrsIndexes cross();
+    // Will implement later.
+    SplittedTrsGroup( const SplittedTrsGroup& ) = delete;
+    SplittedTrsGroup( SplittedTrsGroup&& sd ) = delete;
+    SplittedTrsGroup operator=( const SplittedTrsGroup& ) = delete;
+    SplittedTrsGroup operator=( SplittedTrsGroup&& sd ) = delete;
+
+    TrsIndexes cross() const;
 
 private:
-    // Used to perform leafs bypass:
-    template <class LeafsHandler>
-    void leafsBypass( LeafsHandler& );
-
     // Methods for ctor.
     void splitGroups( const IndexedTrsGroup& group );
     void calcBorders();
     static void splitGroup( SubGroup* );
+    static void caclBorder( SubGroup* );
 
-    // Handlers for leafsBypass:
-    struct SplitBypassHandler
-    {
-        void operator()( SubGroup* group )
-            { splitGroup (group); }
-    };
-
-    struct CrossBypassHandler
-    {
-        TrsIndexes crossedIds_ {};
-        void operator()( SubGroup* );
-    };
-
-    struct CalcBordersBypassHandler
-    {
-        void operator()( SubGroup* );
-    };
-
-    struct DeleteHandler
-    {
-        void operator()( SubGroup* node )
-            { delete node; }
-    };
+public:
+    // Testing stuff - implemented in tests files.
+    static bool testSplitting();
 };
 
 // Returns intersecting trianlges indexes.

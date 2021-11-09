@@ -16,18 +16,16 @@ SplittedTrsGroup::SplittedTrsGroup(
     calcBorders ();
 }
 
-SplittedTrsGroup::SplittedTrsGroup( SplittedTrsGroup&& sd )
-{
-    std::swap (splitDepth_, sd.splitDepth_);
-    std::swap (height_, sd.height_);
-    std::swap (root_, sd.root_);
-}
-
 SplittedTrsGroup::~SplittedTrsGroup()
 {
-    auto handler = DeleteHandler {};
-    for (; height_ > 0; --height_)
-        leafsBypass<DeleteHandler> (handler);
+    for (int depth = splitDepth_; depth >= 0; --depth)
+    for (DepthIter dIt {root_, static_cast<size_t> (depth)},
+         end = DepthIter::end (); dIt != end;)
+    {
+        DepthIter toDel = dIt;
+        ++dIt;
+        delete toDel.node_;
+    }
 }
 
 namespace
@@ -36,48 +34,23 @@ namespace
     void removeRepeatsNSort( TrsIndexes& );
 } // namespace
 
-TrsIndexes SplittedTrsGroup::cross()
+TrsIndexes SplittedTrsGroup::cross() const
 {
-    CrossBypassHandler handler {};
-    leafsBypass<CrossBypassHandler> (handler);
+    TrsIndexes ids {};
 
-    removeRepeatsNSort (handler.crossedIds_);
-    return handler.crossedIds_;
-}
-
-template <class LeafsHandler>
-void SplittedTrsGroup::leafsBypass( LeafsHandler& handler )
-{
-    assert (root_ != nullptr);
-    SubGroup* curNode = root_;
-
-    for (size_t i = 1; i < height_; ++i)
-        curNode = curNode->children_[0];
-
-    // Currently process nodes ids for each tree level.
-    std::vector<size_t> nodesIds (height_, 0);
-
-    while (true)
+    for (DepthIter dIt {root_, splitDepth_}, end = DepthIter::end ();
+         dIt != end; ++dIt)
     {
-        SubGroup* handlerPtr = curNode;
-        curNode = curNode->parent_;
-        handler (handlerPtr);
+        const IndexedTrsGroup& intr = dIt.node_->internalTrs_;
+        const IndexedTrsGroup& bord = dIt.node_->borderTrs_;
 
-        // Seeking for next node.
-        size_t seekDepth = height_ - 1;
-        for (; true; --seekDepth)
-        {
-            if (++nodesIds[seekDepth] != SUB_GROUPS_NUM)
-                break;
-            nodesIds[seekDepth] = 0;
-            curNode = curNode->parent_;
-        }
-
-        if (curNode == nullptr) return;
-
-        for (; seekDepth < height_; ++seekDepth)
-            curNode = curNode->children_[nodesIds[seekDepth]];
+        concatVectors (ids, geom3D::cross (intr));
+        concatVectors (ids, geom3D::cross (bord));
+        concatVectors (ids, geom3D::cross (intr, bord));
     }
+
+    removeRepeatsNSort (ids);
+    return ids;
 }
 
 void SplittedTrsGroup::splitGroups( const IndexedTrsGroup& group )
@@ -86,9 +59,48 @@ void SplittedTrsGroup::splitGroups( const IndexedTrsGroup& group )
     root_->internalTrs_ = group;
     root_->spaceDomain_ = SpaceDomain {group};
 
-    auto handler = SplitBypassHandler {};
-    for (; height_ < splitDepth_ + 1; ++height_)
-        leafsBypass<SplitBypassHandler> (handler);
+    for (size_t depth = 0; depth < splitDepth_; ++depth)
+    for (DepthIter dIt {root_, depth}, end = DepthIter::end ();
+         dIt != end; ++dIt)
+    {
+        splitGroup (dIt.node_);
+    }
+}
+
+void SplittedTrsGroup::calcBorders()
+{
+    for (DepthIter dIt {root_, splitDepth_}, end = DepthIter::end ();
+         dIt != end; ++dIt)
+    {
+        caclBorder (dIt.node_);
+    }
+}
+
+SplittedTrsGroup::DepthIter SplittedTrsGroup::DepthIter::operator++()
+{
+    if (node_ == nullptr)
+        return *this;
+
+    size_t seekDepth = depth_;
+    while (true)
+    {
+        node_ = node_->parent_;
+        if (++branchesIds[seekDepth--] != SUB_GROUPS_NUM)
+            break;
+        branchesIds[seekDepth + 1] = 0;
+    }
+
+    // All nodes on this level are passed.
+    if (branchesIds[0] != 0)
+    {
+        node_ = nullptr;
+        return *this;
+    }
+
+    for (; seekDepth < depth_; ++seekDepth)
+        node_ = node_->children_[branchesIds[seekDepth + 1]];
+
+    return *this;
 }
 
 void SplittedTrsGroup::splitGroup( SubGroup* group )
@@ -101,19 +113,20 @@ void SplittedTrsGroup::splitGroup( SubGroup* group )
     for (size_t i = 0; i < SUB_GROUPS_NUM; ++i)
     {
         SubGroup* child = new SubGroup;
-        SpaceDomain curGroupSpaceDomain {};
+        Point upper {};
+        Point lower {};
 
         for (size_t j = 0; j < DNUM; ++j)
         {
             int jField = i & (1 << j);
-            curGroupSpaceDomain.upper ()[j] = !jField ?
+            upper[j] = !jField ?
                 splitter[j] : group->spaceDomain_.upper ()[j];
-            curGroupSpaceDomain.lower ()[j] = jField ?
+            lower[j] = jField ?
                 splitter[j] : group->spaceDomain_.lower ()[j];
         }
 
         child->parent_ = group;
-        child->spaceDomain_ = curGroupSpaceDomain;
+        child->spaceDomain_ = SpaceDomain {upper, lower};
         group->children_[i] = child;
     }
 
@@ -130,20 +143,7 @@ void SplittedTrsGroup::splitGroup( SubGroup* group )
     group->internalTrs_.clear ();
 }
 
-void SplittedTrsGroup::calcBorders()
-{
-    CalcBordersBypassHandler handler {};
-    leafsBypass<CalcBordersBypassHandler> (handler);
-}
-
-void SplittedTrsGroup::CrossBypassHandler::operator()( SubGroup* group )
-{
-    concatVectors (crossedIds_, geom3D::cross (group->internalTrs_));
-    concatVectors (crossedIds_, geom3D::cross (group->borderTrs_));
-    concatVectors (crossedIds_, geom3D::cross (group->borderTrs_, group->internalTrs_));
-}
-
-void SplittedTrsGroup::CalcBordersBypassHandler::operator()( SubGroup* gr )
+void SplittedTrsGroup::caclBorder( SubGroup* gr )
 {
     IndexedTrsGroup allPossibleBorderTrs {};
 

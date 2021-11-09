@@ -1,10 +1,10 @@
 
-# This script is used to generate triangles for E2E tests.
+# This script is used to generate many small triangles for E2E speed tests.
 
 import random
 
 TRS_NUM = 10000
-TRS_SIZE = 20
+TRS_SIZE = 10
 DOMAIN_SIZE = 1000
 
 def genBigFP() :

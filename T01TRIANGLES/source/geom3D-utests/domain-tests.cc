@@ -1,5 +1,8 @@
 
-#include "geom3D-tests.hh"
+#include <gtest/gtest.h>
+
+#include "geom3D-gen.hh"
+#include "geom3D-split.hh"
 
 namespace geom3D
 {

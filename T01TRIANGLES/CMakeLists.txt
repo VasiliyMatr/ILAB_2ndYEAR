@@ -50,8 +50,8 @@ set( GEOM3D_TESTS_FILES
     "vec-tests.cc"
     "triangle-tests.cc"
 
-    "sd-tests.cc"
-    "splitting-tests.cc"
+    "domain-tests.cc"
+    "split-tests.cc"
 )
 
 target_sources( ${TRIANGLES_NAME} PRIVATE
@@ -93,10 +93,11 @@ enable_testing()
 add_test( NAME UnitTests COMMAND
     ${GEOM3D_UTEST_NAME}
 )
+
 add_test( NAME ValgrindTest COMMAND
-    sh -c "valgrind ./${DEBUG_TRIANGLES_NAME} < ${GEN_OUTPUT_NAME}"
+    sh -c "valgrind --leak-check=full --error-exitcode=1 ${VALGRIND_FLAGS} ./${DEBUG_TRIANGLES_NAME} < ${GEN_OUTPUT_NAME}"
 )
 add_test( NAME SpeedTest COMMAND
     sh -c "./${TRIANGLES_NAME} < ${GEN_OUTPUT_NAME}"
 )
-set_tests_properties( SpeedTest PROPERTIES TIMEOUT 1 )
+set_tests_properties( SpeedTest PROPERTIES TIMEOUT 2 )

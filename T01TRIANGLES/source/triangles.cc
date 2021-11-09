@@ -4,7 +4,7 @@
 #include "geom3D.hh"
 #include "geom3D-split.hh"
 
-int main( int argc, char ** argv)
+int main()
 {
     size_t trNum = 0;
     std::cin >> trNum;

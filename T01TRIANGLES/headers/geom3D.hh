@@ -172,15 +172,13 @@ struct Vector
     fp_t len() const
         { return std::sqrt (sqLen ()); }
 
-    // Scales too big vectors.
     Vector scale()
     {
         fp_t divider = 0;
         for (size_t i = 0; i < DNUM; ++i)
             divider = std::max (divider, std::abs (coord_[i]));
 
-        if (divider > 1) *this *= 1 / divider;
-        return *this;
+        return *this *= 1 / divider;
     }
 
     static fp_t scalarProduct( const Vector& ft, const Vector& sd )
@@ -253,7 +251,12 @@ public:
 
     // Line is invalid if Vector == Vector::zero ()
     Line( const Vector& dir, const Point& P ) :
-        dir_ (dir == Vector::zero () ? Vector {} : dir), P_ (P) {}
+        dir_ (dir), P_ (P)
+    {
+        if (dir_ == Vector::zero ())
+            dir_ = Vector {};
+        else dir_.scale ();
+    }
 
     // Line is invalid if Segment.P1_ () == Segment.P2_ ().
     Line( const Segment& );
@@ -263,12 +266,6 @@ public:
 
     bool isValid() const
         { return dir_.isValid () && P_.isValid (); }
-
-    Line scale()
-    {
-        dir_.scale ();
-        return *this;
-    }
 
     // Does this line contains the point?
     // WARNED.
@@ -353,7 +350,7 @@ public:
     // WARNED.
     Point operator|( const Plane& plane ) const
     {
-        Point lineCross = Line {*this}.scale () | plane;
+        Point lineCross = Line {*this} | plane;
         return linearContains (lineCross) ? lineCross : Point {};
     }
 };
@@ -365,28 +362,30 @@ class Plane
     Vector n_ {};
     fp_t D_ = nan;
 
-    bool invarsMet() const
-    {
-        return n_ != Vector::zero () &&
-            // To check that n_ != Vector::zero () is still true for scaled plane. 
-            n_.sqLen ()/(D_*D_) > 3*fpCmpW::CMP_PRECISION*fpCmpW::CMP_PRECISION;
-    }
-
 public:
     Vector n() const { return n_; }
     fp_t D() const { return D_; }
 
     // SAFE.
-    // Plane is invalid if Vector == {0,0,0}.
-    Plane( const Vector& n, fp_t D ) :
-        n_(n), D_(D)
-        { if (!invarsMet ()) n_ = Vector{}; }
+    // Plane is invalid if n_ == Vector::zero ().
+    Plane( const Vector& n, fp_t D ) : n_(n), D_(D)
+    {
+        if (n_ == Vector::zero ())
+            n_ = Vector{};
+    }
 
     // Plane is invalid if points lies on one line (or equal).
     Plane( const Point& A, const Point& B, const Point& C ) :
-        n_(Vector::crossProduct ({A, B}, {B, C})),
-        D_(-n_[X]*A[X] - n_[Y]*A[Y] - n_[Z]*A[Z])
-        { if (!invarsMet ()) n_ = Vector{}; }
+        n_(Vector::crossProduct ({A, B}, {B, C}))
+    {
+        if (n_ == Vector::zero ())
+            n_ = Vector{};
+        else
+        {
+            n_.scale ();
+            D_ = -n_[X]*A[X] - n_[Y]*A[Y] - n_[Z]*A[Z];
+        }
+    }
 
     // Default constructed Plane is invalid.
     Plane() = default;
@@ -394,24 +393,6 @@ public:
     bool isValid() const
     {
         return n_.isValid () && geom3D::isValid (D_);
-    }
-
-    // Scales planes with too big coeffs.
-    Plane scale()
-    {
-        fp_t divider = 0;
-        for (size_t i = 0; i < DNUM; ++i)
-            divider = std::max (divider, std::abs (n_[i]));
-
-        divider = std::max (divider, std::abs (D_));
-
-        if (divider > 1)
-        {
-            fp_t factor = 1 / divider;
-            D_ *= factor;
-            n_ *= factor;
-        }
-        return *this;
     }
 
     bool contains( const Point& P ) const

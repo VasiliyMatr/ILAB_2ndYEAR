@@ -4,7 +4,7 @@
 namespace geom3D
 {
 
-TEST( trCrossTests, segNSeg )
+TEST( TrCrossTests, SegNSegTest )
 {
     Triangle t1 {{1,1,1}, {2,2,2}, {3,3,3}}; // Main segment in test.
     Triangle t2 {{1,1,0}, {2,2,1}, {3,3,2}}; // Parallel to main segment.
@@ -29,7 +29,7 @@ TEST( trCrossTests, segNSeg )
     ASSERT_TRUE (t1.crosses (t8) && t8.crosses (t1));
 }
 
-TEST( trCrossTests, trNSeg )
+TEST( TrCrossTests, TrNSegTest )
 {
     Triangle t01 {{1,1,1}, {1,5,1}, {5,1,1}}; // Triangle to cross with segments.
     Triangle t02 {{1,1,2}, {1,1,2}, {2,2,2}}; // Segment in parallel plane.
@@ -57,7 +57,7 @@ TEST( trCrossTests, trNSeg )
     ASSERT_TRUE (t01.crosses (t11) && t11.crosses (t01));
 }
 
-TEST( trCrossTests, trNTr )
+TEST( TrCrossTests, TrNTrTest )
 {
     Triangle t1 {{1,1,1}, {5,1,1}, {3,4,1}}; // Main triangle
     Triangle t2 {{3,1,-3}, {3,1,3}, {3,4,0}}; // Crosses main triangle by Segment.
@@ -77,6 +77,71 @@ TEST( trCrossTests, trNTr )
     ASSERT_TRUE (t1.crosses (t4) && t4.crosses (t1));
     ASSERT_TRUE (t1.crosses (t5) && t5.crosses (t1));
     ASSERT_TRUE (t1.crosses (t6) && t6.crosses (t1));
+}
+
+namespace
+{
+    constexpr size_t BIG_TESTS_ITERATIONS_NUM = 100000;
+    // 0.1% of failures is acceptable.
+    constexpr size_t ACCEPTABLE_FAILURES_NUM = BIG_TESTS_ITERATIONS_NUM / 1000;
+} // namespace
+
+TEST( TrCrossTests, SelfCrossTest )
+{
+    size_t failNum = 0;
+
+    for (size_t i = 0; i < BIG_TESTS_ITERATIONS_NUM; ++i)
+    {
+        Triangle tr = genSmallTr ();
+        if (!tr.crosses (tr)) ++failNum;
+    }
+
+    ASSERT_TRUE (failNum < ACCEPTABLE_FAILURES_NUM);
+}
+
+TEST( TrCrossTests, OneCommonPointTest )
+{
+    size_t failNum = 0;
+
+    for (size_t i = 0; i < BIG_TESTS_ITERATIONS_NUM; ++i)
+    {
+        Point A = genP ();
+        Triangle tr1 {A, A + genSmallVec (), A + genSmallVec ()},
+                 tr2 {A, A + genSmallVec (), A + genSmallVec ()};
+
+        if (!tr1.crosses (tr2)) ++failNum;
+    }
+
+    ASSERT_TRUE (failNum < ACCEPTABLE_FAILURES_NUM);
+}
+
+TEST( TrCrossTests, TwoCommonPointsTest )
+{
+    size_t failNum = 0;
+
+    for (size_t i = 0; i < BIG_TESTS_ITERATIONS_NUM; ++i)
+    {
+        Triangle tr1 = genSmallTr (),
+                 tr2 {tr1[0], tr1[1], tr1[2] + genSmallVec ()};
+
+        if (!tr1.crosses (tr2)) ++failNum;
+    }
+
+    ASSERT_TRUE (failNum < ACCEPTABLE_FAILURES_NUM);
+}
+
+TEST( TrCrossTests, CommutativityTest )
+{
+    size_t failNum = 0;
+
+    for (size_t i = 0; i < BIG_TESTS_ITERATIONS_NUM; ++i)
+    {
+        Triangle tr1 = genSmallTr (), tr2 = genSmallTr ();
+        if (tr1.crosses (tr2) != tr2.crosses (tr1))
+            ++failNum;
+    }
+
+    ASSERT_TRUE (failNum < ACCEPTABLE_FAILURES_NUM);
 }
 
 } // namespace geom3D

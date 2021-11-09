@@ -10,8 +10,8 @@ TEST( LineTests, VecPointCtorTest )
 
     Line line {vec, point};
 
-    ASSERT_TRUE (line.dir () == vec);
-    ASSERT_TRUE (line.P () == point);
+    ASSERT_TRUE (line.contains (point));
+    ASSERT_TRUE (line.contains (point + vec));
 }
 
 TEST( LineTests, TwoPointsCtorTest )

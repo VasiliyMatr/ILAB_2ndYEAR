@@ -8,6 +8,10 @@ Triangle::Triangle( const Point& A, const Point& B, const Point& C ) :
     plane_ (A, B, C), isDegen_ (!plane_.isValid ()),
     AB_ ({A, B}), BC_ ({B, C}), CA_ ({C, A})
 {
+    if (!(Line {AB_} | Line {BC_}).isValid () ||
+        !(Line {AB_} | Line {CA_}).isValid ())
+        isDegen_ = true;
+
     if (isDegen_)
     {
         if (BC_.sqLen () > AB_.sqLen ())
@@ -20,8 +24,6 @@ Triangle::Triangle( const Point& A, const Point& B, const Point& C ) :
         else if (CA_.sqLen () > AB_.sqLen ())
             AB_ = CA_;
     }
-    else
-        plane_.scale ();
 }
 
 namespace
@@ -88,7 +90,9 @@ bool areCrossed( const Triangle& ft, const Triangle& sd )
         return flatAreCrossed (sd, Segment {bcCross, caCross});
     // Not segment & triangle case.
 
-    if (sd.plane ().contains (ft[0]))
+    if (sd.plane ().contains (ft[0]) &&
+        sd.plane ().contains (ft[1]) &&
+        sd.plane ().contains (ft[2]))
         // Crossing 2 triangles in the same plane.
         return flatAreCrossed (ft, sd);
 
@@ -109,8 +113,8 @@ bool areCrossed( const Triangle& tr, const Segment& seg )
 
 bool areCrossed( const Segment& ft, const Segment& sd )
 {
-    Line ftLine = Line {ft}.scale ();
-    Line sdLine = Line {sd}.scale ();
+    Line ftLine = Line {ft};
+    Line sdLine = Line {sd};
     if (ftLine == sdLine)
         return linearAreCrossed (ft, sd);
 
@@ -136,7 +140,7 @@ bool flatAreCrossed( const Triangle& ft, const Triangle& sd )
 
 bool flatAreCrossed( const Triangle& tr, const Segment& seg )
 {
-    Line segLine = Line {seg}.scale ();
+    Line segLine = Line {seg};
     if (!segLine.isValid ())
         return flatAreCrossed (tr, seg.P1 ());
 
@@ -151,28 +155,23 @@ bool flatAreCrossed( const Triangle& tr, const Segment& seg )
     if (abCross.isValid ())
     {
         if (bcCross.isValid ())
-        {
-            if (caCross.isValid ())
-                // segLine crossed triangle vertex & opposite segment.
-                return fpCmpW {} == abbcSeg.sqLen () ?
-                       linearAreCrossed (abcaSeg, seg) :
-                       linearAreCrossed (abbcSeg, seg);
-
             return linearAreCrossed (abbcSeg, seg);
-        }
 
         return linearAreCrossed (abcaSeg, seg);
     }
 
-    return bcCross.isValid () && linearAreCrossed (bccaSeg, seg);
+    if (bcCross.isValid ())
+            return linearAreCrossed (bccaSeg, seg);
+
+    return false;
 }
 
 bool flatAreCrossed( const Triangle& tr, const Point& P )
 {
     const Point& A = tr[0];
-    Line PA = Line {Segment {P, A}}.scale ();
-    if (!PA.isValid ())// P == A
-        return true;
+    Line PA = Line {Segment {P, A}};
+    if (!PA.isValid ())
+        return true; // P == A
 
     return Segment {PA | tr.BC (), A}.linearContains (P);
 }

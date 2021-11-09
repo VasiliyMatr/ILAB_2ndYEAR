@@ -15,8 +15,8 @@ namespace geom3D
 // Choosen floating point type for all geom3D functionallity.
 using fp_t = float;
 
-const fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
-const fp_t inf = std::numeric_limits<fp_t>::infinity ();
+constexpr fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
+constexpr fp_t inf = std::numeric_limits<fp_t>::infinity ();
 
 // fp_t validation function (checks for nan and inf).
 inline bool isValid( fp_t value )

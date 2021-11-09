@@ -144,9 +144,6 @@ class SplittedTrsGroup
     const size_t splitDepth_;
     SubGroup* root_;
 
-    fp_t avgGroupsSize_ = 0;
-    fp_t avgBordsSize_ = 0;
-
 public:
 
     SplittedTrsGroup( const IndexedTrsGroup& group, size_t targetGroupSize );
@@ -161,6 +158,9 @@ public:
     TrsIndexes cross() const;
 
 private:
+    // Calc SplittedTrsGroup computational complexity related to
+    // cross (root_->internalTrs_) call computational complexity.
+    fp_t calcСomplexityRatio() const;
     // Methods for ctor.
     void splitGroups( const IndexedTrsGroup& group );
     void calcBorders();

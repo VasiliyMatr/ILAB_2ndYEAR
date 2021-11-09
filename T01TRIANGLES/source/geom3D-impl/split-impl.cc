@@ -106,20 +106,48 @@ namespace
     void removeRepeatsNSort( TrsIndexes& );
 } // namespace
 
-TrsIndexes SplittedTrsGroup::cross() const
+fp_t SplittedTrsGroup::calcСomplexityRatio() const
 {
-    TrsIndexes ids {};
+    fp_t avgGSz = 0;
+    fp_t avgBSz = 0;
 
     for (DepthIter dIt {root_, splitDepth_}, end = DepthIter::end ();
          dIt != end; ++dIt)
     {
-        const IndexedTrsGroup& intr = dIt.node_->internalTrs_;
-        const IndexedTrsGroup& bord = dIt.node_->borderTrs_;
-
-        concatVectors (ids, geom3D::cross (intr));
-        concatVectors (ids, geom3D::cross (bord));
-        concatVectors (ids, geom3D::cross (intr, bord));
+        avgGSz += dIt.node_->internalTrs_.size ();
+        avgBSz += dIt.node_->borderTrs_.size ();
     }
+
+    fp_t allTrsNum = root_->internalTrs_.size ();
+    fp_t leafsNum = std::pow (8, splitDepth_);
+    avgGSz /= leafsNum;
+    avgBSz /= leafsNum;
+
+    return leafsNum * (avgGSz*avgGSz + avgBSz*avgBSz + avgGSz*avgBSz) /
+        (allTrsNum * allTrsNum);
+}
+
+TrsIndexes SplittedTrsGroup::cross() const
+{
+    TrsIndexes ids {};
+
+// Removed in debug build for representative unit tests.
+#if !DEBUG
+    if (calcСomplexityRatio () < 1)
+#endif
+        for (DepthIter dIt {root_, splitDepth_}, end = DepthIter::end ();
+             dIt != end; ++dIt)
+        {
+            const IndexedTrsGroup& intr = dIt.node_->internalTrs_;
+            const IndexedTrsGroup& bord = dIt.node_->borderTrs_;
+
+            concatVectors (ids, geom3D::cross (intr));
+            concatVectors (ids, geom3D::cross (bord));
+            concatVectors (ids, geom3D::cross (intr, bord));
+        }
+#if !DEBUG
+    else ids = geom3D::cross (root_->internalTrs_);
+#endif
 
     removeRepeatsNSort (ids);
     return ids;
@@ -212,7 +240,8 @@ void SplittedTrsGroup::splitGroup( SubGroup* group )
             group->children_[eighth]->internalTrs_.emplace_back (currTrInfo);
     }
 
-    group->internalTrs_.clear ();
+    if (group->parent_ != nullptr)
+        group->internalTrs_.clear ();
 }
 
 void SplittedTrsGroup::caclBorder( SubGroup* gr )

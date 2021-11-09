@@ -50,7 +50,8 @@ using LowerBound = PointBound<std::greater<fp_t>>;
 // Represents 3D space domain.
 class SpaceDomain
 {
-    // upper_[i] >= lower_[i] is a protected invariant
+    // (upper_[i] >= lower_[i] or upper_ and lower are invalid)
+    // is a protected invariant.
     UpperBound upper_ {};
     LowerBound lower_ {};
 
@@ -59,37 +60,12 @@ public:
     Point lower() const { return lower_; }
 
     SpaceDomain() = default;
-    SpaceDomain( const Point& up, const Point& lo ) : upper_ {up}, lower_ {lo}
-    {
-        for (size_t i = 0; i < DNUM; ++i)
-            if (upper_[i] < lower_[i])
-            {
-                lower_ = Point{};
-                upper_ = Point{};
-                return;
-            }
-    }
-
+    SpaceDomain( const Point& up, const Point& lo );
     SpaceDomain( const IndexedTrsGroup& gr ) : upper_ {gr}, lower_ {gr} {}
 
     // Does this space domain crosses given triangle?
     // Works properly only for border triangles! 
-    bool crosses( const Triangle& tr ) const
-    {
-        for (size_t coordId = 0; coordId < DNUM; ++coordId)
-        {
-            size_t j = 0;
-            for (; j < TR_POINT_NUM; ++j)
-                if (fpCmpW {tr[j][coordId]} >= lower_[coordId])
-                    break;
-            if (j == TR_POINT_NUM) return false;
-            for (j = 0; j < TR_POINT_NUM; ++j)
-                if (fpCmpW {tr[j][coordId]} <= upper_[coordId])
-                    break;
-            if (j == TR_POINT_NUM) return false;
-        }
-        return true;
-    }
+    bool crosses( const Triangle& tr ) const;
 };
 
 // Octants are not in right geometrical order.
@@ -106,47 +82,10 @@ enum SpaceOctant
 struct PointSplitter : Point
 {
     // Counts average grouped triangles coordinates.
-    PointSplitter( const IndexedTrsGroup& group ) : Point {0,0,0}
-    {
-        size_t trNum = group.size ();
+    PointSplitter( const IndexedTrsGroup& group );
 
-        for (size_t i = 0; i < trNum; ++i)
-        {
-            Coordinates trMassCenter = group[i].first;
-
-            for (size_t coordId = 0; coordId < DNUM; ++coordId)
-                coord_[coordId] += trMassCenter[coordId];
-        }
-
-        for (size_t i = 0; i < DNUM; ++i)
-            coord_[i] /= trNum;
-    }
-
-    SpaceOctant getOctant( const Point& P )
-    {
-        for (size_t i = 0; i < DNUM; ++i)
-            if (fpCmpW {P[i]} == coord_[i])
-                return SpaceOctant::SEVERAL;
-
-        char octant = 0;
-        for (size_t i = 0; i < DNUM; ++i)
-            octant += (fpCmpW {P[i]} > coord_[i]) << i;
-
-        return SpaceOctant (octant);
-    }
-
-    SpaceOctant getOctant( const Triangle& tr )
-    {
-        std::array<SpaceOctant, TR_POINT_NUM> eighths {};
-
-        for (size_t i = 0; i < TR_POINT_NUM; ++i)
-            eighths[i] = getOctant (tr[i]);
-
-        if (eighths[0] != eighths[1] || eighths[1] != eighths[2])
-            return SpaceOctant::SEVERAL;
-
-        return eighths[0];
-    }
+    SpaceOctant getOctant( const Point& P ) const;
+    SpaceOctant getOctant( const Triangle& tr ) const;
 };
 
 template<class Data>

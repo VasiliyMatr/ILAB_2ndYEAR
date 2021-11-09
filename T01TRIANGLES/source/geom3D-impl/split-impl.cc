@@ -5,6 +5,78 @@
 namespace geom3D
 {
 
+SpaceDomain::SpaceDomain( const Point& up, const Point& lo ) :
+    upper_ {up}, lower_ {lo}
+{
+    for (size_t i = 0; i < DNUM; ++i)
+        if (upper_[i] < lower_[i])
+        {
+            lower_ = Point {};
+            upper_ = Point {};
+            return;
+        }
+}
+
+bool SpaceDomain::crosses( const Triangle& tr ) const
+{
+    for (size_t coordId = 0; coordId < DNUM; ++coordId)
+    {
+        size_t j = 0;
+        for (; j < TR_POINT_NUM; ++j)
+            if (fpCmpW {tr[j][coordId]} >= lower_[coordId])
+                break;
+        if (j == TR_POINT_NUM) return false;
+        for (j = 0; j < TR_POINT_NUM; ++j)
+            if (fpCmpW {tr[j][coordId]} <= upper_[coordId])
+                break;
+        if (j == TR_POINT_NUM) return false;
+    }
+    return true;
+}
+
+PointSplitter::PointSplitter( const IndexedTrsGroup& group ) :
+    Point {0, 0, 0}
+{
+    size_t trNum = group.size ();
+
+    for (size_t i = 0; i < trNum; ++i)
+    {
+        Coordinates trMassCenter = group[i].first;
+
+        for (size_t coordId = 0; coordId < DNUM; ++coordId)
+            coord_[coordId] += trMassCenter[coordId];
+    }
+
+    for (size_t i = 0; i < DNUM; ++i)
+        coord_[i] /= trNum;
+}
+
+SpaceOctant PointSplitter::getOctant( const Point& P ) const
+{
+    for (size_t i = 0; i < DNUM; ++i)
+        if (fpCmpW {P[i]} == coord_[i])
+            return SpaceOctant::SEVERAL;
+
+    char octant = 0;
+    for (size_t i = 0; i < DNUM; ++i)
+        octant += (fpCmpW {P[i]} > coord_[i]) << i;
+
+    return SpaceOctant (octant);
+}
+
+SpaceOctant PointSplitter::getOctant( const Triangle& tr ) const
+{
+    std::array<SpaceOctant, TR_POINT_NUM> eighths {};
+
+    for (size_t i = 0; i < TR_POINT_NUM; ++i)
+        eighths[i] = getOctant (tr[i]);
+
+    if (eighths[0] != eighths[1] || eighths[1] != eighths[2])
+        return SpaceOctant::SEVERAL;
+
+    return eighths[0];
+}
+
 SplittedTrsGroup::SplittedTrsGroup(
     const IndexedTrsGroup& group, size_t targetGroupsSize ) :
     splitDepth_ {group.size () <= targetGroupsSize ? size_t {0} :

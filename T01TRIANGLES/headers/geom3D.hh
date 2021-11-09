@@ -36,7 +36,7 @@ struct fpCmpW
     bool operator==( fpCmpW sd ) const
         { return std::abs (val_ - sd.val_) <= CMP_PRECISION; }
 
-    std::partial_ordering operator <=>( fpCmpW sd ) const
+    std::partial_ordering operator<=>( fpCmpW sd ) const
     {
         if (*this == sd) return std::partial_ordering::equivalent;
         if (val_ > sd.val_) return std::partial_ordering::greater;
@@ -68,7 +68,7 @@ constexpr size_t DNUM = 3;
 
 using Coordinates = std::array<fp_t, DNUM>;
 
-// Space coordinates ids for Coordinates.
+// Space coordinates ids for Coordinates alias.
 enum coordId_t : size_t { X, Y, Z };
 
 struct Point
@@ -172,6 +172,7 @@ struct Vector
     fp_t len() const
         { return std::sqrt (sqLen ()); }
 
+    // Cheap scaling is used to fix precision problems.
     Vector scale()
     {
         fp_t divider = 0;
@@ -249,7 +250,7 @@ public:
     Vector dir() const { return dir_; }
     Point P() const { return P_; }
 
-    // Line is invalid if Vector == Vector::zero ()
+    // Line is invalid if dir == Vector::zero ()
     Line( const Vector& dir, const Point& P ) :
         dir_ (dir), P_ (P)
     {
@@ -258,8 +259,8 @@ public:
         else dir_.scale ();
     }
 
-    // Line is invalid if Segment.P1_ () == Segment.P2_ ().
-    Line( const Segment& );
+    // Line is invalid if seg.P1_ () == seg.P2_ ().
+    Line( const Segment& seg );
 
     // Default constructed Line is invalid.
     Line() = default;
@@ -374,7 +375,7 @@ public:
             n_ = Vector{};
     }
 
-    // Plane is invalid if points lies on one line (or equal).
+    // Plane is invalid if points lies on one line.
     Plane( const Point& A, const Point& B, const Point& C ) :
         n_(Vector::crossProduct ({A, B}, {B, C}))
     {
@@ -453,9 +454,8 @@ public:
         Coordinates toRet {nan, nan, nan};
 
         for (size_t i = 0; i < DNUM; ++i)
-            toRet[i] = (operator[](0)[i] +
-                        operator[](1)[i] +
-                        operator[](2)[i]) / TR_POINT_NUM;
+            toRet[i] =
+            (AB_.P1 ()[i] + AB_.P2 ()[i] + BC_.P2 ()[i]) / TR_POINT_NUM;
 
         return toRet;
     }

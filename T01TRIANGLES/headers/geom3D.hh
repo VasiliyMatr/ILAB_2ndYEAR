@@ -19,7 +19,7 @@ constexpr fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
 constexpr fp_t inf = std::numeric_limits<fp_t>::infinity ();
 
 // fp_t validation function (checks for nan and inf).
-inline bool isValid( fp_t value )
+inline bool isValid( fp_t value ) noexcept
     { return !(std::isnan (value) || std::isinf (value)); }
 
 // Wrapper for fp_t comparsions with precision.
@@ -33,10 +33,10 @@ struct fpCmpW
     fpCmpW( const fp_t& val ) : val_ (val) {}
     fpCmpW() = default;
 
-    bool operator==( fpCmpW sd ) const
+    bool operator==( fpCmpW sd ) const noexcept
         { return std::abs (val_ - sd.val_) <= CMP_PRECISION; }
 
-    std::partial_ordering operator<=>( fpCmpW sd ) const
+    std::partial_ordering operator<=>( fpCmpW sd ) const noexcept
     {
         if (*this == sd) return std::partial_ordering::equivalent;
         if (val_ > sd.val_) return std::partial_ordering::greater;
@@ -79,18 +79,18 @@ struct Point
         coord_ {x, y, z} {}
 
     // Default constructed point is invalid.
-    Point () = default;
+    Point() = default;
 
-    fp_t& operator[]( size_t coordId )
+    fp_t& operator[]( size_t coordId ) noexcept
         { return coord_[coordId % DNUM]; }
 
-    const fp_t& operator[]( size_t coordId ) const
+    const fp_t& operator[]( size_t coordId ) const noexcept
         { return coord_[coordId % DNUM]; }
 
     operator Coordinates() const
         { return coord_; }
 
-    bool isValid() const
+    bool isValid() const noexcept
     {
         return geom3D::isValid (coord_[X]) &&
                geom3D::isValid (coord_[Y]) &&
@@ -123,17 +123,17 @@ struct Vector
     // Default constructed vector is invalid.
     Vector() = default;
 
-    bool isValid() const
+    bool isValid() const noexcept
     {
         return geom3D::isValid (coord_[X]) &&
                geom3D::isValid (coord_[Y]) &&
                geom3D::isValid (coord_[Z]);
     }
 
-    fp_t& operator[]( size_t coordId )
+    fp_t& operator[]( size_t coordId ) noexcept
         { return coord_[coordId % DNUM]; }
 
-    const fp_t& operator[]( size_t coordId ) const
+    const fp_t& operator[]( size_t coordId ) const noexcept
         { return coord_[coordId % DNUM]; }
 
     Vector operator-() const
@@ -162,7 +162,7 @@ struct Vector
     Vector operator/=( fp_t num )
         { return *this *= 1 / num; }
 
-    fp_t sqLen() const
+    fp_t sqLen() const noexcept
     {
         return coord_[X] * coord_[X] +
                coord_[Y] * coord_[Y] +
@@ -182,7 +182,7 @@ struct Vector
         return *this *= 1 / divider;
     }
 
-    static fp_t scalarProduct( const Vector& ft, const Vector& sd )
+    static fp_t scalarProduct( const Vector& ft, const Vector& sd ) noexcept
     {
         return ft[X]*sd[X] + ft[Y]*sd[Y] + ft[Z]*sd[Z];
     }
@@ -232,7 +232,7 @@ inline bool operator==( const Vector& ft, const Vector& sd )
 }
 
 // Calculates 3x3 determinant.
-inline fp_t det( const Vector& a, const Vector& b, const Vector& c )
+inline fp_t det( const Vector& a, const Vector& b, const Vector& c ) noexcept
 {
     return a[X] * (b[Y]*c[Z] - b[Z]*c[Y]) -
            a[Y] * (b[X]*c[Z] - b[Z]*c[X]) +
@@ -265,7 +265,7 @@ public:
     // Default constructed Line is invalid.
     Line() = default;
 
-    bool isValid() const
+    bool isValid() const noexcept
         { return dir_.isValid () && P_.isValid (); }
 
     // Does this line contains the point?
@@ -319,7 +319,7 @@ class Segment
 public:
     Point P1() const { return P1_; }
     Point P2() const { return P2_; }
-    fp_t sqLen() const { return sqLen_; }
+    fp_t sqLen() const noexcept { return sqLen_; }
     
     Segment( const Point& P1, const Point& P2 ) :
         P1_ (P1), P2_ (P2), sqLen_ (sqDst (P1, P2)) {}
@@ -327,7 +327,7 @@ public:
     // Default constructed Segment is invalid.
     Segment() = default;
 
-    bool isValid() const
+    bool isValid() const noexcept
     {
         return P1_.isValid () && P2_.isValid () && geom3D::isValid (sqLen_);
     }
@@ -365,7 +365,7 @@ class Plane
 
 public:
     Vector n() const { return n_; }
-    fp_t D() const { return D_; }
+    fp_t D() const noexcept { return D_; }
 
     // SAFE.
     // Plane is invalid if n_ == Vector::zero ().
@@ -391,7 +391,7 @@ public:
     // Default constructed Plane is invalid.
     Plane() = default;
 
-    bool isValid() const
+    bool isValid() const noexcept
     {
         return n_.isValid () && geom3D::isValid (D_);
     }

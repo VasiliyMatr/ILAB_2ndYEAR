@@ -134,7 +134,7 @@ class SplittedTrsGroup
 
         DepthIter operator++();
 
-        bool operator==( const DepthIter& sd ) const
+        bool operator==( const DepthIter& sd ) const noexcept
             { return node_ == sd.node_; }
 
         static DepthIter end()

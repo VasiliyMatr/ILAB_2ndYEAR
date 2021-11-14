@@ -4,8 +4,8 @@
 import random
 
 TRS_NUM = 10000
-TRS_SIZE = 10
-DOMAIN_SIZE = 1000
+TRS_SIZE = 100
+DOMAIN_SIZE = 12000
 
 def genBigFP() :
     return random.random() * DOMAIN_SIZE

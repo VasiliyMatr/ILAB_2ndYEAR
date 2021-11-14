@@ -8,8 +8,8 @@ namespace geom3D
 {
 
 // Bounds for gen values.
-constexpr fp_t MAX_TEST_FP_VAL = 1000;
-constexpr fp_t MIN_TEST_FP_VAL = -1000;
+constexpr fp_t MAX_TEST_FP_VAL = 12000;
+constexpr fp_t MIN_TEST_FP_VAL = -12000;
 
 // Generates fp_t value in range:
 // [MIN_TEST_FP_VAL; MAX_TEST_FP_VAL] \ {0}
@@ -34,7 +34,7 @@ inline Vector genVec()
 }
 
 // To gen point near (0,0,0).
-constexpr fp_t SMALL_FACTOR = 20 / (MAX_TEST_FP_VAL - MIN_TEST_FP_VAL);
+constexpr fp_t SMALL_FACTOR = 80 / (MAX_TEST_FP_VAL - MIN_TEST_FP_VAL);
 inline Point genCloseP()
 {
     return Point {0, 0, 0} + genVec () * SMALL_FACTOR;

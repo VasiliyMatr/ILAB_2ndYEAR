@@ -337,8 +337,8 @@ public:
     // WARNED.
     bool linearContains( const Point& P ) const
     {
-        return fpCmpW {sqLen_} >= sqDst (P, P1_) &&
-               fpCmpW {sqLen_} >= sqDst (P, P2_);
+        return (P == P1_ || P == P2_) ||
+            (sqLen_ > sqDst (P, P1_) && sqLen_ > sqDst (P, P2_));
     }
 
     // WARNED.

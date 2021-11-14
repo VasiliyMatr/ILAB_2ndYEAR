@@ -31,6 +31,4 @@ int main()
 
     for (size_t i = 0, num = crossIds.size (); i != num; ++i)
         std::cout << crossIds[i] << std::endl;
-
-    // std::cout << std::endl << crossIds.size () << std::endl;
 }

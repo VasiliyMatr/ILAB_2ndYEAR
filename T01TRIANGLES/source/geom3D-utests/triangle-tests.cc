@@ -89,8 +89,8 @@ TEST( TrCrossTests, TrNTrTest )
 namespace
 {
     constexpr size_t BIG_TESTS_ITERATIONS_NUM = 100000;
-    // 0.1% of failures is acceptable.
-    constexpr size_t ACCEPTABLE_FAILURES_NUM = BIG_TESTS_ITERATIONS_NUM / 1000;
+    // 0.01% of failures is acceptable.
+    constexpr size_t ACCEPTABLE_FAILURES_NUM = BIG_TESTS_ITERATIONS_NUM / 10000;
 } // namespace
 
 TEST( TrCrossTests, SelfCrossTest )
@@ -129,7 +129,11 @@ TEST( TrCrossTests, TwoCommonPointsTest )
     for (size_t i = 0; i < BIG_TESTS_ITERATIONS_NUM; ++i)
     {
         Triangle tr1 = genSmallTr (), tr2 {tr1[0], tr1[1], genCloseP ()};
-        if (!tr1.crosses (tr2)) ++failNum;
+        if (!tr1.crosses (tr2))
+        {
+            tr1.crosses (tr2);
+            ++failNum;
+        }
     }
 
     ASSERT_TRUE (failNum < ACCEPTABLE_FAILURES_NUM);

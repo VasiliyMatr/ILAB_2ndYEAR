@@ -14,7 +14,13 @@ bool SplittedTrsGroup::testSplitting()
 
     bool testResult = true;
     PointSplitter splitter {gr};
-    SubGroup splGr {nullptr, {}, SpaceDomain {gr}, {}, gr };
+    if (!splitter.isValid ())
+        return false;
+
+    SubGroup splGr {nullptr, {}, SpaceDomain {gr}, {}, gr};
+    if (!splGr.spaceDomain_.lower ().isValid () ||
+        !splGr.spaceDomain_.upper ().isValid ())
+        return false;
 
     splitGroup (&splGr);
 
@@ -36,7 +42,7 @@ bool SplittedTrsGroup::testSplitting()
         }
     }
 
-    // Test border trs. 
+    // Test border trs.
     size_t borderSize = splGr.borderTrs_.size ();
     std::vector<bool> mask (borderSize, false);
 

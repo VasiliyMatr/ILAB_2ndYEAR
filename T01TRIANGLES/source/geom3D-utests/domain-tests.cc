@@ -25,18 +25,16 @@ TEST( BoundsTests, PointCtorTest )
 TEST( BoundsTests, ExtendTest )
 {
     static constexpr size_t PTS_NUM = 100;
-    UpperBound upper{};
-    LowerBound lower{};
-    std::less<fp_t> cmpUpper{};
-    std::greater<fp_t> cmpLower{};
+    std::vector<Point> points {genP ()};
+    UpperBound upper {points[0]};
+    LowerBound lower {points[0]};
 
-    std::vector<Point> points {};
-    for (size_t i = 0; i < PTS_NUM; ++i)
+    for (size_t i = 0; i < PTS_NUM - 1; ++i)
     {
         Point P = genP ();
         points.push_back (P);
-        upper.extend (P, cmpUpper);
-        lower.extend (P, cmpLower);
+        upper.extend (P);
+        lower.extend (P);
     }
 
     for (size_t i = 0; i < PTS_NUM; ++i)
@@ -55,9 +53,9 @@ TEST( SpaceDomainTests, TwoPointsCtorTest )
     Point P2 = genP ();
 
     UpperBound upper {P1};
-    upper.extend (P2, std::less<fp_t> ());
+    upper.extend (P2);
     LowerBound lower {P2};
-    lower.extend (P1, std::greater<fp_t> ());
+    lower.extend (P1);
 
     SpaceDomain domain {upper, lower};
     for (size_t i = 0; i < DNUM; ++i)

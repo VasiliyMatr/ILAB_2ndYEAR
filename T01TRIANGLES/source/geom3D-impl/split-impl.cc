@@ -19,6 +19,9 @@ SpaceDomain::SpaceDomain( const Point& up, const Point& lo ) :
 
 bool SpaceDomain::crosses( const Triangle& tr ) const
 {
+    if (!lower_.isValid () || !upper_.isValid ())
+        return false;
+
     for (size_t coordId = 0; coordId < DNUM; ++coordId)
     {
         size_t j = 0;
@@ -53,6 +56,8 @@ PointSplitter::PointSplitter( const IndexedTrsGroup& group ) :
 
 SpaceOctant PointSplitter::getOctant( const Point& P ) const
 {
+    if (!isValid ()) return SpaceOctant::SEVERAL;
+
     for (size_t i = 0; i < DNUM; ++i)
         if (fpCmpW {P[i]} == coord_[i])
             return SpaceOctant::SEVERAL;
@@ -108,23 +113,19 @@ namespace
 
 fp_t SplittedTrsGroup::calcСomplexityRatio() const
 {
-    fp_t avgGSz = 0;
-    fp_t avgBSz = 0;
+    fp_t fullCrossesNum = std::pow (root_->internalTrs_.size (), 2);
+    fp_t splitCrossesNum = 0;
 
     for (DepthIter dIt {root_, splitDepth_}, end = DepthIter::end ();
          dIt != end; ++dIt)
     {
-        avgGSz += dIt.node_->internalTrs_.size ();
-        avgBSz += dIt.node_->borderTrs_.size ();
+        fp_t iSz = dIt.node_->internalTrs_.size ();
+        fp_t bSz = dIt.node_->borderTrs_.size ();
+
+        splitCrossesNum += iSz*iSz + bSz*bSz + iSz*bSz;
     }
 
-    fp_t allTrsNum = root_->internalTrs_.size ();
-    fp_t leafsNum = std::pow (8, splitDepth_);
-    avgGSz /= leafsNum;
-    avgBSz /= leafsNum;
-
-    return leafsNum * (avgGSz*avgGSz + avgBSz*avgBSz + avgGSz*avgBSz) /
-        (allTrsNum * allTrsNum);
+    return splitCrossesNum / fullCrossesNum;
 }
 
 TrsIndexes SplittedTrsGroup::cross() const
@@ -207,7 +208,10 @@ void SplittedTrsGroup::splitGroup( SubGroup* group )
 {
     size_t trNum = group->internalTrs_.size ();
 
-    PointSplitter splitter {group->internalTrs_};
+    PointSplitter splitter  = trNum == 0 ?
+        PointSplitter {group->spaceDomain_} :
+        PointSplitter {group->internalTrs_};
+
     std::vector<IndexedTrsGroup> subGroups (SUB_GROUPS_NUM + 1);
 
     for (size_t i = 0; i < SUB_GROUPS_NUM; ++i)

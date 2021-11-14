@@ -10,37 +10,42 @@ namespace geom3D
 {
 
 // Used to compute bounds for space domains containing grouped triangles.
-// Compare should always return false for nan values. Or it is UB.
+// Compare should always return false for nan values.
+// Otherwise result coords are undefined.
 template<class Compare>
 struct PointBound : Point
 {
     PointBound() = default;
     PointBound( const Point& P ) : Point {P} {}
 
-    // All nan fields are automatically replaced with sd values.
-    // It is safe to extend default constructed PointBound with valid sd.
-    void extend( const PointBound& sd, const Compare& cmp )
+    // WARNED.
+    void extend( const PointBound& sd )
     {
+        if (!sd.isValid ())
+            *this = Point {};
+
+        const Compare cmp {};
         for (size_t i = 0; i < DNUM; ++i)
-            if (!cmp (sd.coord_[i], coord_[i]))
+            if (cmp (coord_[i], sd.coord_[i]))
                 coord_[i] = sd.coord_[i];
     }
 
-    // It is unsafe to use this method with tr that have invalid points.
-    // Result coordinates could be whatever.
+    // WARNED.
     PointBound( const Triangle& tr ) : Point {tr[0]}
     {
-        this->extend (tr[1], Compare {});
-        this->extend (tr[2], Compare {});
+        this->extend (tr[1]);
+        this->extend (tr[2]);
     }
 
-    // It is unsafe to use this method with group that have invalid points.
-    // Result coordinates could be whatever.
+    // WARNED.
+    // Result is invalid for empty IndexedTrsGroup.
     PointBound( const IndexedTrsGroup& group ) : Point {}
     {
         size_t groupSize = group.size ();
-        for (size_t i = 0; i < groupSize; ++i)
-            extend (PointBound {group[i].first}, Compare{});
+        if (groupSize == 0) return;
+        *this = PointBound {group[0].first};
+        for (size_t i = 1; i < groupSize; ++i)
+            extend (PointBound {group[i].first});
     }
 };
 
@@ -50,10 +55,10 @@ using LowerBound = PointBound<std::greater<fp_t>>;
 // Represents 3D space domain.
 class SpaceDomain
 {
-    // (upper_[i] >= lower_[i] or upper_ and lower are invalid)
+    // (upper_[i] >= lower_[i] or upper_ and lower_ are invalid)
     // is a protected invariant.
-    UpperBound upper_ {};
-    LowerBound lower_ {};
+    UpperBound upper_;
+    LowerBound lower_;
 
 public:
     Point upper() const { return upper_; }
@@ -64,7 +69,8 @@ public:
     SpaceDomain( const IndexedTrsGroup& gr ) : upper_ {gr}, lower_ {gr} {}
 
     // Does this space domain crosses given triangle?
-    // Works properly only for border triangles! 
+    // Works properly only for valid border triangles!
+    // Always false for invalid upper_ or lower_.
     bool crosses( const Triangle& tr ) const;
 };
 
@@ -76,24 +82,32 @@ enum SpaceOctant
 
     // This object is placed in several space octants.
     SEVERAL,
+    INVALID
 };
 
 // Used to split triangles groups into subgroups.
 struct PointSplitter : Point
 {
     // Counts average grouped triangles coordinates.
+    // Splitter is invalid for empty group.
     PointSplitter( const IndexedTrsGroup& group );
+    PointSplitter( const SpaceDomain& domain )
+    {
+        for (size_t i = 0; i < DNUM; ++i)
+            coord_[i] = (domain.lower ()[i] + domain.upper ()[i]) / 2;
+    }
 
+    // Always returns SEVERAL for invalid PointSplitter.
     SpaceOctant getOctant( const Point& P ) const;
     SpaceOctant getOctant( const Triangle& tr ) const;
 };
 
 template<class Data>
-void concatVectors( std::vector<Data>& dest, const std::vector<Data>& src )
+inline void concatVectors( std::vector<Data>& dest, const std::vector<Data>& src )
     { dest.insert (dest.end (), src.begin (), src.end ()); }
 
 template<class Data>
-void concatVectors( std::vector<Data>& dest, std::vector<Data>&& src )
+inline void concatVectors( std::vector<Data>& dest, std::vector<Data>&& src )
     { dest.insert (dest.end (), src.begin (), src.end ()); }
 
 // Octo-tree is used to split triangles into smaller groups.

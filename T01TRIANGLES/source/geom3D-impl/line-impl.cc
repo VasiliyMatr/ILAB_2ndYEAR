@@ -10,10 +10,11 @@ Line::Line( const Segment& seg ) :
 Point Line::operator|( const Line& sd ) const
 {
     // General determinant should be compared with higher accuracy.
-    static constexpr fp_t DET_CMP_PRECISION = 1E-6;
+    static constexpr fp_t DET_CMP_PRECISION = // std::pow (fpCmpW::CMP_PRECISION, 3);
+        fpCmpW::CMP_PRECISION * fpCmpW::CMP_PRECISION * fpCmpW::CMP_PRECISION;
     const Vector& a = dir_;
     const Vector& b = sd.dir_;
-    const Vector c = Vector::crossProduct (dir_, sd.dir_);
+    const Vector c = Vector::crossProduct (dir_, sd.dir_).scale ();
     const Vector d {P_, sd.P_};
 
     // Solving system: a*k1 + b*k2 + c*k3 = d
@@ -30,7 +31,8 @@ Point Line::operator|( const Line& sd ) const
 Point Line::operator|( const Plane& plane ) const
 {
     // Scalar product should be compared with higher accuracy.
-    static constexpr fp_t SCAL_PROD_CMP_PRECISION = 1E-4;
+    static constexpr fp_t SCAL_PROD_CMP_PRECISION = // std::pow (fpCmpW::CMP_PRECISION, 2);
+        fpCmpW::CMP_PRECISION * fpCmpW::CMP_PRECISION;
     const Vector& n = plane.n ();
 
     fp_t dirNormScal = Vector::scalarProduct (dir_, n);

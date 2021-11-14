@@ -136,11 +136,11 @@ class SplittedTrsGroup
 
     private:
         // This node branches ids
-        std::vector<size_t> branchesIds {};
+        std::vector<size_t> branchesIds_;
 
     public:
         DepthIter( SubGroup* root, size_t depth ) :
-            node_ (root), depth_ (depth), branchesIds (depth + 1, 0)
+            node_ (root), depth_ (depth), branchesIds_ (depth + 1, 0)
         {
             for (size_t i = 0; i < depth && node_ != nullptr; ++i)
                 node_ = node_->children_[0];
@@ -156,7 +156,7 @@ class SplittedTrsGroup
     };
 
     const size_t splitDepth_;
-    SubGroup* root_;
+    SubGroup* root_ = nullptr;
 
 public:
 

@@ -186,20 +186,20 @@ SplittedTrsGroup::DepthIter SplittedTrsGroup::DepthIter::operator++()
     while (true)
     {
         node_ = node_->parent_;
-        if (++branchesIds[seekDepth--] != SUB_GROUPS_NUM)
+        if (++branchesIds_[seekDepth--] != SUB_GROUPS_NUM)
             break;
-        branchesIds[seekDepth + 1] = 0;
+        branchesIds_[seekDepth + 1] = 0;
     }
 
     // All nodes on this level are passed.
-    if (branchesIds[0] != 0)
+    if (branchesIds_[0] != 0)
     {
         node_ = nullptr;
         return *this;
     }
 
     for (; seekDepth < depth_; ++seekDepth)
-        node_ = node_->children_[branchesIds[seekDepth + 1]];
+        node_ = node_->children_[branchesIds_[seekDepth + 1]];
 
     return *this;
 }

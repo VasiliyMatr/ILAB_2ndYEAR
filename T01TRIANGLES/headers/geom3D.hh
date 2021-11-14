@@ -243,8 +243,8 @@ inline fp_t det( const Vector& a, const Vector& b, const Vector& c ) noexcept
 class Line
 {
     // dir_ != Vector::zero () is a protected invariant.
-    Vector dir_ {};
-    Point P_ {};
+    Vector dir_;
+    Point P_;
 
 public:
     Vector dir() const { return dir_; }
@@ -312,8 +312,8 @@ public:
 class Segment
 {
     // sqLen_ == sqDst(P1_, P2_) is a protected invariant.
-    Point P1_ {};
-    Point P2_ {};
+    Point P1_;
+    Point P2_;
     fp_t sqLen_ = nan;
 
 public:
@@ -360,7 +360,7 @@ public:
 class Plane
 {
     // n_ != Vector::zero () is a protected invariant.
-    Vector n_ {};
+    Vector n_;
     fp_t D_ = nan;
 
 public:
@@ -417,13 +417,13 @@ constexpr size_t TR_POINT_NUM = 3;
 class Triangle
 {
     // Many invariants to protect.
-    Plane plane_ {};
+    Plane plane_;
     bool isDegen_ = true;
     // Max segment is stored in AB_ for degenerate triangles.
     // Other segments can contain any Point equal to ctor args.
-    Segment AB_ {}; // ft + sd point (in this order) - for not degen.
-    Segment BC_ {}; // sd + tr point (in this order) - for not degen.
-    Segment CA_ {}; // tr + ft point (in this order) - for not degen.
+    Segment AB_; // ft + sd point (in this order) - for not degen.
+    Segment BC_; // sd + tr point (in this order) - for not degen.
+    Segment CA_; // tr + ft point (in this order) - for not degen.
 
 public:
     Plane plane() const { return plane_; }

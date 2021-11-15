@@ -89,8 +89,8 @@ TEST( TrCrossTests, TrNTrTest )
 namespace
 {
     constexpr size_t BIG_TESTS_ITERATIONS_NUM = 100000;
-    // 0.01% of failures is acceptable.
-    constexpr size_t ACCEPTABLE_FAILURES_NUM = BIG_TESTS_ITERATIONS_NUM / 10000;
+    // 0.1% of failures is acceptable.
+    constexpr size_t ACCEPTABLE_FAILURES_NUM = BIG_TESTS_ITERATIONS_NUM / 1000;
 } // namespace
 
 TEST( TrCrossTests, SelfCrossTest )

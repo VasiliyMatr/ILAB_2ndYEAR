@@ -272,8 +272,15 @@ TrsIndexes cross( const IndexedTrsGroup& group )
 
     for (size_t i = 0; i < trNum; ++i)
     for (size_t j = i + 1; j < trNum; j++)
+    {
         if (group[i].first.crosses (group[j].first))
             crossMask [i] = crossMask [j] = true;
+
+        if (group[i].second == 1130 || group[i].second == 1937)
+        {
+            group[i].first.crosses (group[j].first);
+        }
+    }
 
     TrsIndexes crossedIds {};
 

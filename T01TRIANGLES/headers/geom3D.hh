@@ -28,7 +28,7 @@ struct fpCmpW
     fp_t val_ = 0;
 
     // Cmp precision.
-    static constexpr fp_t CMP_PRECISION = 0.01;
+    static constexpr fp_t CMP_PRECISION = 0.001;
 
     fpCmpW( const fp_t& val ) : val_ (val) {}
     fpCmpW() = default;

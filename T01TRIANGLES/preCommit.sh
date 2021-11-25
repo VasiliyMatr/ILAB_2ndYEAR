@@ -1,4 +1,6 @@
 
+./format.sh
+
 cd build
 cmake ..
 make clean

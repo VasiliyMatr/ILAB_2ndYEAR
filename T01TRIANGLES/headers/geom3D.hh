@@ -1,11 +1,11 @@
 
-#include <limits>
-#include <cmath>
-#include <vector>
 #include <array>
+#include <cassert>
+#include <cmath>
 #include <compare>
 #include <iostream>
-#include <cassert>
+#include <limits>
+#include <vector>
 
 #ifndef GEOM3D_HH_INCL
 #define GEOM3D_HH_INCL
@@ -16,12 +16,14 @@ namespace geom3D
 // Choosen floating point type for all geom3D functionallity.
 using fp_t = float;
 
-constexpr fp_t nan = std::numeric_limits<fp_t>::quiet_NaN ();
-constexpr fp_t inf = std::numeric_limits<fp_t>::infinity ();
+constexpr fp_t nan = std::numeric_limits<fp_t>::quiet_NaN();
+constexpr fp_t inf = std::numeric_limits<fp_t>::infinity();
 
 // fp_t validation function (checks for nan and inf).
-inline bool isValid( fp_t value ) noexcept
-    { return !(std::isnan (value) || std::isinf (value)); }
+inline bool isValid(fp_t value) noexcept
+{
+    return !(std::isnan(value) || std::isinf(value));
+}
 
 // Wrapper for fp_t comparsions with precision.
 struct fpCmpW
@@ -31,30 +33,42 @@ struct fpCmpW
     // Cmp precision.
     static constexpr fp_t CMP_PRECISION = 0.001;
 
-    fpCmpW( const fp_t& val ) : val_ (val) {}
+    fpCmpW(const fp_t &val) : val_(val)
+    {
+    }
     fpCmpW() = default;
 
-    bool operator==( fpCmpW sd ) const noexcept
-        { return std::abs (val_ - sd.val_) <= CMP_PRECISION; }
-
-    std::partial_ordering operator<=>( fpCmpW sd ) const noexcept
+    bool operator==(fpCmpW sd) const noexcept
     {
-        if (*this == sd) return std::partial_ordering::equivalent;
-        if (val_ > sd.val_) return std::partial_ordering::greater;
-        if (val_ < sd.val_) return std::partial_ordering::less;
+        return std::abs(val_ - sd.val_) <= CMP_PRECISION;
+    }
+
+    std::partial_ordering operator<=>(fpCmpW sd) const noexcept
+    {
+        if (*this == sd)
+            return std::partial_ordering::equivalent;
+        if (val_ > sd.val_)
+            return std::partial_ordering::greater;
+        if (val_ < sd.val_)
+            return std::partial_ordering::less;
         return std::partial_ordering::unordered;
     }
 };
 
 // Geometrical primitives validation rules:
 // 1) Primitives with nan fields are called invalid.
+
 // 2) Primitives with inf fields are called half-invalid (if they are not invalid).
-// 3) It is guaranteed that functions marked as SAFE return invalid output values
-//    for invalid inputs and half-invalid/invalid output values for half-invalid inputs.
-// 4) It is guaranteed that bool functions marked as SAFE return false for invalid and
-//    half-invalid inputs.
+
+// 3) It is guaranteed that functions marked as SAFE return invalid output values for invalid inputs and
+// half-invalid/invalid output values for half-invalid inputs.
+
+// 4) It is guaranteed that bool functions marked as SAFE return false for invalid and half-invalid inputs.
+
 // 5) It is guaranteed that functions marked as WARNED return invalid values for invalid inputs.
+
 // 6) It is guaranteed that bool functions marked as WARNED return false for invalid inputs.
+
 // 7) All methods/functions for geometrical primitives are considered SAFE unless otherwise specified.
 
 // Geometrical primitives:
@@ -70,83 +84,97 @@ constexpr size_t DNUM = 3;
 using Coordinates = std::array<fp_t, DNUM>;
 
 // Space coordinates ids for Coordinates alias.
-enum coordId_t : size_t { X, Y, Z };
+enum coordId_t : size_t
+{
+    X,
+    Y,
+    Z
+};
 
 struct Point
 {
-    Coordinates coord_ {nan, nan, nan};
+    Coordinates coord_{nan, nan, nan};
 
-    Point( fp_t x, fp_t y, fp_t z ) :
-        coord_ {x, y, z} {}
+    Point(fp_t x, fp_t y, fp_t z) : coord_{x, y, z}
+    {
+    }
 
     // Default constructed point is invalid.
     Point()
     {
-        assert (!isValid ());
+        assert(!isValid());
     }
 
-    fp_t& operator[]( size_t coordId ) noexcept
-        { return coord_[coordId % DNUM]; }
+    fp_t &operator[](size_t coordId) noexcept
+    {
+        return coord_[coordId % DNUM];
+    }
 
-    const fp_t& operator[]( size_t coordId ) const noexcept
-        { return coord_[coordId % DNUM]; }
+    const fp_t &operator[](size_t coordId) const noexcept
+    {
+        return coord_[coordId % DNUM];
+    }
 
     operator Coordinates() const
-        { return coord_; }
+    {
+        return coord_;
+    }
 
     bool isValid() const noexcept
     {
-        return geom3D::isValid (coord_[X]) &&
-               geom3D::isValid (coord_[Y]) &&
-               geom3D::isValid (coord_[Z]);
+        return geom3D::isValid(coord_[X]) && geom3D::isValid(coord_[Y]) && geom3D::isValid(coord_[Z]);
     }
 };
 
 // WARNED.
-inline bool operator==( const Point& ft, const Point& sd )
+inline bool operator==(const Point &ft, const Point &sd)
 {
-    return fpCmpW {ft[X]} == sd[X] &&
-           fpCmpW {ft[Y]} == sd[Y] &&
-           fpCmpW {ft[Z]} == sd[Z];
+    return fpCmpW{ft[X]} == sd[X] && fpCmpW{ft[Y]} == sd[Y] && fpCmpW{ft[Z]} == sd[Z];
 }
 
-Point operator+( const Point&, const Vector& );
+Point operator+(const Point &, const Vector &);
 
-fp_t sqDst( const Point&, const Point& );
+fp_t sqDst(const Point &, const Point &);
 
 struct Vector
 {
-    Coordinates coord_ {nan, nan, nan};
+    Coordinates coord_{nan, nan, nan};
 
-    Vector( fp_t x, fp_t y, fp_t z ) :
-        coord_ {x, y, z} {}
+    Vector(fp_t x, fp_t y, fp_t z) : coord_{x, y, z}
+    {
+    }
 
-    Vector( const Point& P1, const Point& P2 ) :
-        coord_ {P2[X]-P1[X], P2[Y]-P1[Y], P2[Z]-P1[Z]} {}
+    Vector(const Point &P1, const Point &P2) : coord_{P2[X] - P1[X], P2[Y] - P1[Y], P2[Z] - P1[Z]}
+    {
+    }
 
     // Default constructed vector is invalid.
     Vector()
     {
-        assert (!isValid ());
+        assert(!isValid());
     }
 
     bool isValid() const noexcept
     {
-        return geom3D::isValid (coord_[X]) &&
-               geom3D::isValid (coord_[Y]) &&
-               geom3D::isValid (coord_[Z]);
+        return geom3D::isValid(coord_[X]) && geom3D::isValid(coord_[Y]) && geom3D::isValid(coord_[Z]);
     }
 
-    fp_t& operator[]( size_t coordId ) noexcept
-        { return coord_[coordId % DNUM]; }
+    fp_t &operator[](size_t coordId) noexcept
+    {
+        return coord_[coordId % DNUM];
+    }
 
-    const fp_t& operator[]( size_t coordId ) const noexcept
-        { return coord_[coordId % DNUM]; }
+    const fp_t &operator[](size_t coordId) const noexcept
+    {
+        return coord_[coordId % DNUM];
+    }
 
     Vector operator-() const
-        { return {-coord_[X], -coord_[Y], -coord_[Z]}; }
+    {
+        return {-coord_[X], -coord_[Y], -coord_[Z]};
+    }
 
-    Vector operator+=( const Vector& sd )
+    Vector operator+=(const Vector &sd)
     {
         for (size_t i = 0; i < DNUM; ++i)
             coord_[i] += sd[i];
@@ -154,10 +182,12 @@ struct Vector
         return *this;
     }
 
-    Vector operator-=( const Vector& sd )
-        { return *this += (-sd); }
+    Vector operator-=(const Vector &sd)
+    {
+        return *this += (-sd);
+    }
 
-    Vector operator*=( fp_t num )
+    Vector operator*=(fp_t num)
     {
         for (size_t i = 0; i < DNUM; ++i)
             coord_[i] *= num;
@@ -166,86 +196,100 @@ struct Vector
     }
 
     // WARNED
-    Vector operator/=( fp_t num )
-        { return *this *= 1 / num; }
+    Vector operator/=(fp_t num)
+    {
+        return *this *= 1 / num;
+    }
 
     fp_t sqLen() const noexcept
     {
-        return coord_[X] * coord_[X] +
-               coord_[Y] * coord_[Y] +
-               coord_[Z] * coord_[Z];
+        return coord_[X] * coord_[X] + coord_[Y] * coord_[Y] + coord_[Z] * coord_[Z];
     }
 
     fp_t len() const
-        { return std::sqrt (sqLen ()); }
+    {
+        return std::sqrt(sqLen());
+    }
 
     // Cheap scaling is used to fix precision problems.
     fp_t scale()
     {
         fp_t divider = 0;
         for (size_t i = 0; i < DNUM; ++i)
-            divider = std::max (divider, std::abs (coord_[i]));
+            divider = std::max(divider, std::abs(coord_[i]));
 
         fp_t factor = 1 / divider;
         *this *= factor;
         return factor;
     }
 
-    static fp_t scalarProduct( const Vector& ft, const Vector& sd ) noexcept
+    static fp_t scalarProduct(const Vector &ft, const Vector &sd) noexcept
     {
-        return ft[X]*sd[X] + ft[Y]*sd[Y] + ft[Z]*sd[Z];
+        return ft[X] * sd[X] + ft[Y] * sd[Y] + ft[Z] * sd[Z];
     }
 
-    static Vector crossProduct( const Vector& ft, const Vector& sd )
+    static Vector crossProduct(const Vector &ft, const Vector &sd)
     {
-        return {ft[Y]*sd[Z] - ft[Z]*sd[Y],
-               -ft[X]*sd[Z] + ft[Z]*sd[X],
-                ft[X]*sd[Y] - ft[Y]*sd[X]};
+        return {ft[Y] * sd[Z] - ft[Z] * sd[Y], -ft[X] * sd[Z] + ft[Z] * sd[X], ft[X] * sd[Y] - ft[Y] * sd[X]};
     }
 
     // Few useful Vector constants.
-    static Vector e1() { return {1,0,0}; }
-    static Vector e2() { return {0,1,0}; }
-    static Vector e3() { return {0,0,1}; }
-    static Vector zero() { return {0,0,0}; }
+    static Vector e1()
+    {
+        return {1, 0, 0};
+    }
+    static Vector e2()
+    {
+        return {0, 1, 0};
+    }
+    static Vector e3()
+    {
+        return {0, 0, 1};
+    }
+    static Vector zero()
+    {
+        return {0, 0, 0};
+    }
 };
 
-inline Vector operator+( const Vector& ft, const Vector& sd )
+inline Vector operator+(const Vector &ft, const Vector &sd)
 {
-    Vector copy {ft};
+    Vector copy{ft};
     return copy += sd;
 }
 
-inline Vector operator-( const Vector& ft, const Vector& sd )
-    { return ft + (-sd); }
-
-inline Vector operator*( const Vector& vec, fp_t num )
+inline Vector operator-(const Vector &ft, const Vector &sd)
 {
-    Vector copy {vec};
+    return ft + (-sd);
+}
+
+inline Vector operator*(const Vector &vec, fp_t num)
+{
+    Vector copy{vec};
     return copy *= num;
 }
 
-inline Vector operator*( fp_t num, const Vector& vec )
-    { return vec * num; }
-
-// WARNED.
-inline Vector operator/( const Vector& vec, fp_t num )
-    { return vec * (1 / num); }
-
-// WARNED.
-inline bool operator==( const Vector& ft, const Vector& sd )
+inline Vector operator*(fp_t num, const Vector &vec)
 {
-    return fpCmpW {ft[X]} == sd[X] &&
-           fpCmpW {ft[Y]} == sd[Y] &&
-           fpCmpW {ft[Z]} == sd[Z];
+    return vec * num;
+}
+
+// WARNED.
+inline Vector operator/(const Vector &vec, fp_t num)
+{
+    return vec * (1 / num);
+}
+
+// WARNED.
+inline bool operator==(const Vector &ft, const Vector &sd)
+{
+    return fpCmpW{ft[X]} == sd[X] && fpCmpW{ft[Y]} == sd[Y] && fpCmpW{ft[Z]} == sd[Z];
 }
 
 // Calculates 3x3 determinant.
-inline fp_t det( const Vector& a, const Vector& b, const Vector& c ) noexcept
+inline fp_t det(const Vector &a, const Vector &b, const Vector &c) noexcept
 {
-    return a[X] * (b[Y]*c[Z] - b[Z]*c[Y]) -
-           a[Y] * (b[X]*c[Z] - b[Z]*c[X]) +
-           a[Z] * (b[X]*c[Y] - b[Y]*c[X]);
+    return a[X] * (b[Y] * c[Z] - b[Z] * c[Y]) - a[Y] * (b[X] * c[Z] - b[Z] * c[X]) + a[Z] * (b[X] * c[Y] - b[Y] * c[X]);
 }
 
 // Lines are stored as point + direction vector
@@ -254,77 +298,85 @@ class Line
     Vector dir_;
     Point P_;
 
-public:
-    Vector dir() const { return dir_; }
-    Point P() const { return P_; }
+  public:
+    Vector dir() const
+    {
+        return dir_;
+    }
+    Point P() const
+    {
+        return P_;
+    }
 
     bool isValid() const noexcept
     {
-        return dir_.isValid () && P_.isValid ();
+        return dir_.isValid() && P_.isValid();
     }
 
     bool isConsistent() const noexcept
     {
-        return !isValid () || dir_ != Vector::zero ();
+        return !isValid() || dir_ != Vector::zero();
     }
 
     // Line is invalid if dir == Vector::zero ()
-    Line( const Vector& dir, const Point& P ) : dir_ (dir), P_ (P)
+    Line(const Vector &dir, const Point &P) : dir_(dir), P_(P)
     {
-        if (dir_ == Vector::zero ())
-            dir_ = Vector {};
-        else dir_.scale ();
+        if (dir_ == Vector::zero())
+        {
+            dir_ = Vector{};
+        }
+        else
+        {
+            dir_.scale();
+        }
 
-        assert (isConsistent ());
+        assert(isConsistent());
     }
 
     // Line is invalid if seg.P1_ () == seg.P2_ ().
-    Line( const Segment& seg );
+    Line(const Segment &seg);
 
     // Default constructed Line is invalid.
     Line()
     {
-        assert (!isValid ());
+        assert(!isValid());
     }
 
     // Does this line contains the point?
     // WARNED.
-    bool contains( const Point& toCheck ) const
+    bool contains(const Point &toCheck) const
     {
-        return fpCmpW {(P_[X] - toCheck[X]) * dir_[Y]} ==
-                       (P_[Y] - toCheck[Y]) * dir_[X] &&
-               fpCmpW {(P_[Y] - toCheck[Y]) * dir_[Z]} ==
-                       (P_[Z] - toCheck[Z]) * dir_[Y];
+        return fpCmpW{(P_[X] - toCheck[X]) * dir_[Y]} == (P_[Y] - toCheck[Y]) * dir_[X] &&
+               fpCmpW{(P_[Y] - toCheck[Y]) * dir_[Z]} == (P_[Z] - toCheck[Z]) * dir_[Y];
     }
 
     // Is this line parallel to the second line?
-    bool parallelTo( const Line& sd ) const
+    bool parallelTo(const Line &sd) const
     {
-        assert (!isValid () || dir_ != Vector::zero ());
-        return Vector::crossProduct (dir_, sd.dir_) == Vector::zero ();
+        assert(!isValid() || dir_ != Vector::zero());
+        return Vector::crossProduct(dir_, sd.dir_) == Vector::zero();
     }
 
     // Returns lines cross.
     // If lines are equal or parallel or skew - returns invalid point.
-    Point operator|( const Line& ) const;
+    Point operator|(const Line &) const;
 
     // Returns lines and planes cross.
-    // If there is infinite number of solutions or no solutions - returns invalid point.
-    // WARNED.
-    Point operator|( const Plane& ) const;
+    // If there is infinite number of solutions or no solutions - returns invalid
+    // point. WARNED.
+    Point operator|(const Plane &) const;
 
     // Returns lines and segments cross.
     // If there is infinite number of solutions, or no solutions,
     // or Segment length is zero - returns invalid point.
     // WARNED.
-    Point operator|( const Segment& ) const;
+    Point operator|(const Segment &) const;
 
     // WARNED.
-    bool operator==( const Line& sd ) const
+    bool operator==(const Line &sd) const
     {
-        assert (!isValid () || dir_ != Vector::zero ());
-        return sd.contains (P_) &&
-               sd.contains (P_ + dir_);
+        assert(!isValid() || dir_ != Vector::zero());
+        return sd.contains(P_) && sd.contains(P_ + dir_);
     }
 };
 
@@ -337,54 +389,63 @@ class Segment
     Point P2_;
     fp_t sqLen_ = nan;
 
-public:
-    Point P1() const { return P1_; }
-    Point P2() const { return P2_; }
-    fp_t sqLen() const noexcept { return sqLen_; }
+  public:
+    Point P1() const
+    {
+        return P1_;
+    }
+    Point P2() const
+    {
+        return P2_;
+    }
+    fp_t sqLen() const noexcept
+    {
+        return sqLen_;
+    }
 
     bool isValid() const noexcept
     {
-        return P1_.isValid () && P2_.isValid () && geom3D::isValid (sqLen_);
+        return P1_.isValid() && P2_.isValid() && geom3D::isValid(sqLen_);
     }
 
     bool isConsistent() const noexcept
     {
-        return !isValid () || fpCmpW{sqLen_} == sqDst (P1_, P2_);
+        return !isValid() || fpCmpW{sqLen_} == sqDst(P1_, P2_);
     }
 
-    Segment( const Point& P1, const Point& P2 ) :
-        P1_ (P1), P2_ (P2), sqLen_ (sqDst (P1, P2))
+    Segment(const Point &P1, const Point &P2) : P1_(P1), P2_(P2), sqLen_(sqDst(P1, P2))
     {
-        assert (isConsistent ());
+        assert(isConsistent());
     }
 
     // Default constructed Segment is invalid.
     Segment()
     {
-        assert (!isValid ());
+        assert(!isValid());
     }
 
     // Does this segment contains the point?
     // Works properly only for point & segment on one line.
     // WARNED.
-    bool linearContains( const Point& P ) const
+    bool linearContains(const Point &P) const
     {
-        return (P == P1_ || P == P2_) ||
-            (sqLen_ > sqDst (P, P1_) && sqLen_ > sqDst (P, P2_));
+        return (P == P1_ || P == P2_) || (sqLen_ > sqDst(P, P1_) && sqLen_ > sqDst(P, P2_));
     }
 
     // WARNED.
-    Point operator|( const Line& line ) const
-        { return line | *this; }
+    Point operator|(const Line &line) const
+    {
+        return line | *this;
+    }
 
     // Returns segment and plane cross.
     // If there is infinite number of solutions, or no solutions,
     // or Segment length is zero - returns invalid point.
     // WARNED.
-    Point operator|( const Plane& plane ) const
+    Point operator|(const Plane &plane) const
     {
-        Point lineCross = Line {*this} | plane;
-        return linearContains (lineCross) ? lineCross : Point {};
+        Point lineCross = Line{*this} | plane;
+        return linearContains(lineCross) ? lineCross : Point{};
     }
 };
 
@@ -395,64 +456,80 @@ class Plane
     Vector n_;
     fp_t D_ = nan;
 
-public:
-    Vector n() const { return n_; }
-    fp_t D() const noexcept { return D_; }
+  public:
+    Vector n() const
+    {
+        return n_;
+    }
+    fp_t D() const noexcept
+    {
+        return D_;
+    }
 
     bool isValid() const noexcept
     {
-        return n_.isValid () && geom3D::isValid (D_);
+        return n_.isValid() && geom3D::isValid(D_);
     }
 
     bool isConsistent() const noexcept
     {
-        return !isValid () || n_ != Vector::zero ();
+        return !isValid() || n_ != Vector::zero();
     }
 
     // SAFE.
     // Plane is invalid if n_ == Vector::zero ().
-    Plane( const Vector& n, fp_t D ) : n_(n), D_(D)
+    Plane(const Vector &n, fp_t D) : n_(n), D_(D)
     {
-        if (n_ == Vector::zero ())
+        if (n_ == Vector::zero())
+        {
             n_ = Vector{};
+        }
         else
-            D_ *= n_.scale ();
+        {
+            D_ *= n_.scale();
+        }
 
-        assert (isConsistent ());
+        assert(isConsistent());
     }
 
     // Plane is invalid if points lies on one line.
-    Plane( const Point& A, const Point& B, const Point& C ) : n_(Vector::crossProduct ({A, B}, {B, C}))
+    Plane(const Point &A, const Point &B, const Point &C) : n_(Vector::crossProduct({A, B}, {B, C}))
     {
-        if (n_ == Vector::zero ())
+        if (n_ == Vector::zero())
+        {
             n_ = Vector{};
+        }
         else
         {
-            n_.scale ();
-            D_ = -n_[X]*A[X] - n_[Y]*A[Y] - n_[Z]*A[Z];
+            n_.scale();
+            D_ = -n_[X] * A[X] - n_[Y] * A[Y] - n_[Z] * A[Z];
         }
 
-        assert (isConsistent ());
+        assert(isConsistent());
     }
 
     // Default constructed Plane is invalid.
     Plane()
     {
-        assert (!isValid ());
+        assert(!isValid());
     }
 
-    bool contains( const Point& P ) const
+    bool contains(const Point &P) const
     {
-        return fpCmpW {} == n_[X]*P[X] + n_[Y]*P[Y] + n_[Z]*P[Z] + D_;
+        return fpCmpW{} == n_[X] * P[X] + n_[Y] * P[Y] + n_[Z] * P[Z] + D_;
     }
 
     // WARNED.
-    Point operator|( const Line& line ) const
-        { return line | *this; }
+    Point operator|(const Line &line) const
+    {
+        return line | *this;
+    }
 
     // WARNED.
-    Point operator|( const Segment& seg ) const
-        { return seg | *this; }
+    Point operator|(const Segment &seg) const
+    {
+        return seg | *this;
+    }
 };
 
 // Expected, right?
@@ -470,59 +547,81 @@ class Triangle
     Segment BC_; // sd + tr point (in this order) - for not degen.
     Segment CA_; // tr + ft point (in this order) - for not degen.
 
-public:
-    Plane plane() const { return plane_; }
-    bool isDegen() const { return isDegen_; }
+  public:
+    Plane plane() const
+    {
+        return plane_;
+    }
+    bool isDegen() const
+    {
+        return isDegen_;
+    }
 
-    Segment AB() const { return AB_; }
-    Segment BC() const { return BC_; }
-    Segment CA() const { return CA_; }
+    Segment AB() const
+    {
+        return AB_;
+    }
+    Segment BC() const
+    {
+        return BC_;
+    }
+    Segment CA() const
+    {
+        return CA_;
+    }
 
     bool isConsistent() const noexcept
     {
-        if (!AB_.isValid () || !BC_.isValid () || !CA_.isValid ())
+        if (!AB_.isValid() || !BC_.isValid() || !CA_.isValid())
+        {
             return true;
+        }
         if (isDegen_)
         {
-            bool ABIsTheLongest = AB_.sqLen () == std::max (AB_.sqLen (), std::max (BC_.sqLen (), CA_.sqLen ()));
-            if (plane_.isValid () || !ABIsTheLongest)
+            bool ABIsTheLongest = AB_.sqLen() == std::max(AB_.sqLen(), std::max(BC_.sqLen(), CA_.sqLen()));
+            if (plane_.isValid() || !ABIsTheLongest)
+            {
                 return false;
+            }
         }
         else
         {
-            if (!plane_.isValid ())
+            if (!plane_.isValid())
+            {
                 return false;
+            }
         }
 
         return true;
     }
 
-    Triangle( const Point&, const Point&, const Point& );
+    Triangle(const Point &, const Point &, const Point &);
     Triangle()
     {
-        assert (isConsistent ());
+        assert(isConsistent());
     }
 
     // Any return value for invalid or half-invalid points.
-    bool crosses( const Triangle& ) const;
+    bool crosses(const Triangle &) const;
 
-    Point operator[]( size_t pointId ) const
+    Point operator[](size_t pointId) const
     {
         pointId %= TR_POINT_NUM;
 
-        if (pointId == 0) return AB_.P1 ();
-        if (pointId == 1) return AB_.P2 ();
-        return BC_.P2 ();
+        if (pointId == 0)
+            return AB_.P1();
+        if (pointId == 1)
+            return AB_.P2();
+        return BC_.P2();
     }
 
     // Returns mass center coords.
     operator Coordinates() const
     {
-        Coordinates toRet {nan, nan, nan};
+        Coordinates toRet{nan, nan, nan};
 
         for (size_t i = 0; i < DNUM; ++i)
-            toRet[i] =
-            (AB_.P1 ()[i] + AB_.P2 ()[i] + BC_.P2 ()[i]) / TR_POINT_NUM;
+            toRet[i] = (AB_.P1()[i] + AB_.P2()[i] + BC_.P2()[i]) / TR_POINT_NUM;
 
         return toRet;
     }

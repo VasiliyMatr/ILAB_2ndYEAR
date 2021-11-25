@@ -5,6 +5,7 @@
 #include <array>
 #include <compare>
 #include <iostream>
+#include <cassert>
 
 #ifndef GEOM3D_HH_INCL
 #define GEOM3D_HH_INCL
@@ -79,7 +80,10 @@ struct Point
         coord_ {x, y, z} {}
 
     // Default constructed point is invalid.
-    Point() = default;
+    Point()
+    {
+        assert (!isValid ());
+    }
 
     fp_t& operator[]( size_t coordId ) noexcept
         { return coord_[coordId % DNUM]; }
@@ -101,9 +105,9 @@ struct Point
 // WARNED.
 inline bool operator==( const Point& ft, const Point& sd )
 {
-    return fpCmpW {ft[X]} ==  sd[X] &&
-           fpCmpW {ft[Y]} ==  sd[Y] &&
-           fpCmpW {ft[Z]} ==  sd[Z];
+    return fpCmpW {ft[X]} == sd[X] &&
+           fpCmpW {ft[Y]} == sd[Y] &&
+           fpCmpW {ft[Z]} == sd[Z];
 }
 
 Point operator+( const Point&, const Vector& );
@@ -121,7 +125,10 @@ struct Vector
         coord_ {P2[X]-P1[X], P2[Y]-P1[Y], P2[Z]-P1[Z]} {}
 
     // Default constructed vector is invalid.
-    Vector() = default;
+    Vector()
+    {
+        assert (!isValid ());
+    }
 
     bool isValid() const noexcept
     {
@@ -173,13 +180,15 @@ struct Vector
         { return std::sqrt (sqLen ()); }
 
     // Cheap scaling is used to fix precision problems.
-    Vector scale()
+    fp_t scale()
     {
         fp_t divider = 0;
         for (size_t i = 0; i < DNUM; ++i)
             divider = std::max (divider, std::abs (coord_[i]));
 
-        return *this *= 1 / divider;
+        fp_t factor = 1 / divider;
+        *this *= factor;
+        return factor;
     }
 
     static fp_t scalarProduct( const Vector& ft, const Vector& sd ) noexcept
@@ -242,7 +251,6 @@ inline fp_t det( const Vector& a, const Vector& b, const Vector& c ) noexcept
 // Lines are stored as point + direction vector
 class Line
 {
-    // dir_ != Vector::zero () is a protected invariant.
     Vector dir_;
     Point P_;
 
@@ -250,23 +258,34 @@ public:
     Vector dir() const { return dir_; }
     Point P() const { return P_; }
 
+    bool isValid() const noexcept
+    {
+        return dir_.isValid () && P_.isValid ();
+    }
+
+    bool isConsistent() const noexcept
+    {
+        return !isValid () || dir_ != Vector::zero ();
+    }
+
     // Line is invalid if dir == Vector::zero ()
-    Line( const Vector& dir, const Point& P ) :
-        dir_ (dir), P_ (P)
+    Line( const Vector& dir, const Point& P ) : dir_ (dir), P_ (P)
     {
         if (dir_ == Vector::zero ())
             dir_ = Vector {};
         else dir_.scale ();
+
+        assert (isConsistent ());
     }
 
     // Line is invalid if seg.P1_ () == seg.P2_ ().
     Line( const Segment& seg );
 
     // Default constructed Line is invalid.
-    Line() = default;
-
-    bool isValid() const noexcept
-        { return dir_.isValid () && P_.isValid (); }
+    Line()
+    {
+        assert (!isValid ());
+    }
 
     // Does this line contains the point?
     // WARNED.
@@ -281,6 +300,7 @@ public:
     // Is this line parallel to the second line?
     bool parallelTo( const Line& sd ) const
     {
+        assert (!isValid () || dir_ != Vector::zero ());
         return Vector::crossProduct (dir_, sd.dir_) == Vector::zero ();
     }
 
@@ -302,6 +322,7 @@ public:
     // WARNED.
     bool operator==( const Line& sd ) const
     {
+        assert (!isValid () || dir_ != Vector::zero ());
         return sd.contains (P_) &&
                sd.contains (P_ + dir_);
     }
@@ -320,16 +341,27 @@ public:
     Point P1() const { return P1_; }
     Point P2() const { return P2_; }
     fp_t sqLen() const noexcept { return sqLen_; }
-    
-    Segment( const Point& P1, const Point& P2 ) :
-        P1_ (P1), P2_ (P2), sqLen_ (sqDst (P1, P2)) {}
-
-    // Default constructed Segment is invalid.
-    Segment() = default;
 
     bool isValid() const noexcept
     {
         return P1_.isValid () && P2_.isValid () && geom3D::isValid (sqLen_);
+    }
+
+    bool isConsistent() const noexcept
+    {
+        return !isValid () || fpCmpW{sqLen_} == sqDst (P1_, P2_);
+    }
+
+    Segment( const Point& P1, const Point& P2 ) :
+        P1_ (P1), P2_ (P2), sqLen_ (sqDst (P1, P2))
+    {
+        assert (isConsistent ());
+    }
+
+    // Default constructed Segment is invalid.
+    Segment()
+    {
+        assert (!isValid ());
     }
 
     // Does this segment contains the point?
@@ -367,17 +399,30 @@ public:
     Vector n() const { return n_; }
     fp_t D() const noexcept { return D_; }
 
+    bool isValid() const noexcept
+    {
+        return n_.isValid () && geom3D::isValid (D_);
+    }
+
+    bool isConsistent() const noexcept
+    {
+        return !isValid () || n_ != Vector::zero ();
+    }
+
     // SAFE.
     // Plane is invalid if n_ == Vector::zero ().
     Plane( const Vector& n, fp_t D ) : n_(n), D_(D)
     {
         if (n_ == Vector::zero ())
             n_ = Vector{};
+        else
+            D_ *= n_.scale ();
+
+        assert (isConsistent ());
     }
 
     // Plane is invalid if points lies on one line.
-    Plane( const Point& A, const Point& B, const Point& C ) :
-        n_(Vector::crossProduct ({A, B}, {B, C}))
+    Plane( const Point& A, const Point& B, const Point& C ) : n_(Vector::crossProduct ({A, B}, {B, C}))
     {
         if (n_ == Vector::zero ())
             n_ = Vector{};
@@ -386,14 +431,14 @@ public:
             n_.scale ();
             D_ = -n_[X]*A[X] - n_[Y]*A[Y] - n_[Z]*A[Z];
         }
+
+        assert (isConsistent ());
     }
 
     // Default constructed Plane is invalid.
-    Plane() = default;
-
-    bool isValid() const noexcept
+    Plane()
     {
-        return n_.isValid () && geom3D::isValid (D_);
+        assert (!isValid ());
     }
 
     bool contains( const Point& P ) const
@@ -433,8 +478,30 @@ public:
     Segment BC() const { return BC_; }
     Segment CA() const { return CA_; }
 
+    bool isConsistent() const noexcept
+    {
+        if (!AB_.isValid () || !BC_.isValid () || !CA_.isValid ())
+            return true;
+        if (isDegen_)
+        {
+            bool ABIsTheLongest = AB_.sqLen () == std::max (AB_.sqLen (), std::max (BC_.sqLen (), CA_.sqLen ()));
+            if (plane_.isValid () || !ABIsTheLongest)
+                return false;
+        }
+        else
+        {
+            if (!plane_.isValid ())
+                return false;
+        }
+
+        return true;
+    }
+
     Triangle( const Point&, const Point&, const Point& );
-    Triangle() = default;
+    Triangle()
+    {
+        assert (isConsistent ());
+    }
 
     // Any return value for invalid or half-invalid points.
     bool crosses( const Triangle& ) const;

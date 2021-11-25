@@ -14,8 +14,10 @@ TEST( PlaneTests, VecNDCtorTest )
 
     Plane plane {norm, D};
 
-    ASSERT_TRUE (plane.n () == norm);
-    ASSERT_FLOAT_EQ (plane.D (), D);
+    Vector crossProd = Vector::crossProduct (norm, plane.n ());
+
+    ASSERT_TRUE (crossProd == Vector::zero ());
+    ASSERT_FLOAT_EQ (plane.D () / plane.n ()[0], D / norm[0]);
 }
 
 TEST( PlaneTests, ThreePtsCtorTest )

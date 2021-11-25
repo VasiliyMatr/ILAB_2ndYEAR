@@ -24,6 +24,8 @@ Triangle::Triangle( const Point& A, const Point& B, const Point& C ) :
         else if (CA_.sqLen () > AB_.sqLen ())
             AB_ = CA_;
     }
+
+    assert (isConsistent ());
 }
 
 namespace

@@ -4,8 +4,10 @@
 namespace geom3D
 {
 
-Line::Line( const Segment& seg ) :
-    Line (Vector (seg.P1 (), seg.P2 ()), seg.P1 ()) {}
+Line::Line( const Segment& seg ) : Line {Vector {seg.P1 (), seg.P2 ()}, seg.P1 ()}
+{
+    assert (isConsistent ());
+}
 
 Point Line::operator|( const Line& sd ) const
 {
@@ -14,8 +16,9 @@ Point Line::operator|( const Line& sd ) const
         fpCmpW::CMP_PRECISION * fpCmpW::CMP_PRECISION * fpCmpW::CMP_PRECISION;
     const Vector& a = dir_;
     const Vector& b = sd.dir_;
-    const Vector c = Vector::crossProduct (dir_, sd.dir_).scale ();
-    const Vector d {P_, sd.P_};
+    Vector c = Vector::crossProduct (dir_, sd.dir_);
+    c.scale ();
+    Vector d {P_, sd.P_};
 
     // Solving system: a*k1 + b*k2 + c*k3 = d
     const fp_t D = det (a, b, c); // Not zero if there are solutions.

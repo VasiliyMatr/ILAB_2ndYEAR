@@ -24,11 +24,10 @@ TEST(PlaneTests, ThreePtsCtorTest)
 {
     Point A{1, 0, 0}, B{0, 1, 0}, C{0, 0, 1};
     Plane plane{A, B, C};
-    Vector crossProd = Vector::crossProduct(plane.n(), {1, 1, 1});
-    fp_t CPLen = crossProd.len();
 
-    ASSERT_FLOAT_EQ(0, CPLen);
-    ASSERT_FLOAT_EQ(-1, plane.D());
+    ASSERT_TRUE(plane.contains(A));
+    ASSERT_TRUE(plane.contains(B));
+    ASSERT_TRUE(plane.contains(C));
 }
 
 TEST(PlaneTests, ValidationTest)

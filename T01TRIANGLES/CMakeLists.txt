@@ -35,7 +35,6 @@ set( GEOM3D_TESTS_DIR "${CMAKE_SOURCE_DIR}/source/geom3D-utests" )
 
 set( GEOM3D_SRC_FILES
     "line-impl.cc"
-    "point-impl.cc"
     "triangle-impl.cc"
     "split-impl.cc"
 )

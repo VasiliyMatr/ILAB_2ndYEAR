@@ -55,6 +55,10 @@ struct fpCmpW
     }
 };
 
+class IGeomPrimitive
+{
+};
+
 // Geometrical primitives validation rules:
 // 1) Primitives with nan fields are called invalid.
 
@@ -70,13 +74,6 @@ struct fpCmpW
 // 6) It is guaranteed that bool functions marked as WARNED return false for invalid inputs.
 
 // 7) All methods/functions for geometrical primitives are considered SAFE unless otherwise specified.
-
-// Geometrical primitives:
-struct Point;
-struct Vector;
-struct Line;
-struct Segment;
-struct Plane;
 
 // Number of dimensions.
 constexpr size_t DNUM = 3;
@@ -132,9 +129,14 @@ inline bool operator==(const Point &ft, const Point &sd)
     return fpCmpW{ft[X]} == sd[X] && fpCmpW{ft[Y]} == sd[Y] && fpCmpW{ft[Z]} == sd[Z];
 }
 
-Point operator+(const Point &, const Vector &);
+inline fp_t sqDst(const Point &ft, const Point &sd)
+{
+    fp_t dst = 0;
+    for (size_t i = 0; i < DNUM; ++i)
+        dst += (ft[i] - sd[i]) * (ft[i] - sd[i]);
 
-fp_t sqDst(const Point &, const Point &);
+    return dst;
+}
 
 struct Vector
 {
@@ -252,6 +254,14 @@ struct Vector
     }
 };
 
+inline Point operator+(const Point &P, const Vector &vec)
+{
+    Point toRet{P};
+    for (size_t i = 0; i < DNUM; ++i)
+        toRet[i] += vec[i];
+    return toRet;
+}
+
 inline Vector operator+(const Vector &ft, const Vector &sd)
 {
     Vector copy{ft};
@@ -291,6 +301,9 @@ inline fp_t det(const Vector &a, const Vector &b, const Vector &c) noexcept
 {
     return a[X] * (b[Y] * c[Z] - b[Z] * c[Y]) - a[Y] * (b[X] * c[Z] - b[Z] * c[X]) + a[Z] * (b[X] * c[Y] - b[Y] * c[X]);
 }
+
+class Segment;
+class Plane;
 
 // Lines are stored as point + direction vector
 class Line
@@ -332,9 +345,6 @@ class Line
 
         assert(isConsistent());
     }
-
-    // Line is invalid if seg.P1_ () == seg.P2_ ().
-    Line(const Segment &seg);
 
     // Default constructed Line is invalid.
     Line()
@@ -424,6 +434,13 @@ class Segment
         assert(!isValid());
     }
 
+    operator Line() const
+    {
+        Line toRet{Vector{P1_, P2_}, P1_};
+        assert(toRet.isConsistent());
+        return toRet;
+    }
+
     // Does this segment contains the point?
     // Works properly only for point & segment on one line.
     // WARNED.
@@ -476,6 +493,11 @@ class Plane
         return !isValid() || n_ != Vector::zero();
     }
 
+    fp_t sgnDst(const Point &P) const noexcept
+    {
+        return n_[X] * P[X] + n_[Y] * P[Y] + n_[Z] * P[Z] + D_;
+    }
+
     // SAFE.
     // Plane is invalid if n_ == Vector::zero ().
     Plane(const Vector &n, fp_t D) : n_(n), D_(D)
@@ -486,14 +508,16 @@ class Plane
         }
         else
         {
-            D_ *= n_.scale();
+            fp_t factor = 1 / n_.len();
+            n_ *= factor;
+            D_ *= factor;
         }
 
         assert(isConsistent());
     }
 
     // Plane is invalid if points lies on one line.
-    Plane(const Point &A, const Point &B, const Point &C) : n_(Vector::crossProduct({A, B}, {B, C}))
+    Plane(const Point &A, const Point &B, const Point &C) : n_(Vector::crossProduct({A, B}, {B, C})), D_(0)
     {
         if (n_ == Vector::zero())
         {
@@ -501,8 +525,8 @@ class Plane
         }
         else
         {
-            n_.scale();
-            D_ = -n_[X] * A[X] - n_[Y] * A[Y] - n_[Z] * A[Z];
+            n_ /= n_.len();
+            D_ = -sgnDst(A);
         }
 
         assert(isConsistent());
@@ -514,9 +538,9 @@ class Plane
         assert(!isValid());
     }
 
-    bool contains(const Point &P) const
+    bool contains(const Point &P) const noexcept
     {
-        return fpCmpW{} == n_[X] * P[X] + n_[Y] * P[Y] + n_[Z] * P[Z] + D_;
+        return fpCmpW{} == sgnDst(P);
     }
 
     // WARNED.

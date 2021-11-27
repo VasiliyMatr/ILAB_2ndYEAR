@@ -4,11 +4,6 @@
 namespace geom3D
 {
 
-Line::Line(const Segment &seg) : Line{Vector{seg.P1(), seg.P2()}, seg.P1()}
-{
-    assert(isConsistent());
-}
-
 Point Line::operator|(const Line &sd) const
 {
     // General determinant should be compared with higher accuracy.

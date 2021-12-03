@@ -12,17 +12,16 @@ namespace geom3D
 // Used to compute bounds for space domains containing grouped triangles.
 // Compare should always return false for nan values.
 // Otherwise result coords are undefined.
-template <class Compare> struct PointBound : Point
+template <class Compare> struct PointBound final : Point
 {
     PointBound() = default;
     PointBound(const Point &P) : Point{P}
     {
     }
 
-    // WARNED.
     void extend(const PointBound &sd)
     {
-        if (!sd.isValid())
+        if (!isValid() || !sd.isValid())
             *this = Point{};
 
         const Compare cmp{};
@@ -31,7 +30,6 @@ template <class Compare> struct PointBound : Point
                 coord_[i] = sd.coord_[i];
     }
 
-    // WARNED.
     PointBound(const Triangle &tr) : Point{tr[0]}
     {
         this->extend(tr[1]);
@@ -42,12 +40,12 @@ template <class Compare> struct PointBound : Point
     // Result is invalid for empty IndexedTrsGroup.
     PointBound(const IndexedTrsGroup &group) : Point{}
     {
-        size_t groupSize = group.size();
-        if (groupSize == 0)
-            return;
-        *this = PointBound{group[0].first};
-        for (size_t i = 1; i < groupSize; ++i)
-            extend(PointBound{group[i].first});
+        if (size_t groupSize = group.size(); groupSize != 0)
+        {
+            *this = PointBound{group[0].first};
+            for (size_t i = 1; i < groupSize; ++i)
+                extend(PointBound{group[i].first});
+        }
     }
 };
 
@@ -55,7 +53,7 @@ using UpperBound = PointBound<std::less<fp_t>>;
 using LowerBound = PointBound<std::greater<fp_t>>;
 
 // Represents 3D space domain.
-class SpaceDomain
+class SpaceDomain final
 {
     // (upper_[i] >= lower_[i] or upper_ and lower_ are invalid)
     // is a protected invariant.
@@ -87,22 +85,22 @@ class SpaceDomain
 // Octants are not in right geometrical order.
 enum SpaceOctant
 {
-    FIRST,
-    SECOND,
-    THIRD,
-    FOURTH,
-    FIFTH,
-    SIXTH,
-    SEVENTH,
-    EIGHTH,
+    FIRST_OCT,
+    SECOND_OCT,
+    THIRD_OCT,
+    FOURTH_OCT,
+    FIFTH_OCT,
+    SIXTH_OCT,
+    SEVENTH_OCT,
+    EIGHTH_OCT,
 
     // This object is placed in several space octants.
-    SEVERAL,
-    INVALID
+    SEVERAL_OCT,
+    INVALID_OCT
 };
 
 // Used to split triangles groups into subgroups.
-struct PointSplitter : Point
+struct PointSplitter final : Point
 {
     // Counts average grouped triangles coordinates.
     // Splitter is invalid for empty group.
@@ -113,7 +111,7 @@ struct PointSplitter : Point
             coord_[i] = (domain.lower()[i] + domain.upper()[i]) / 2;
     }
 
-    // Always returns SEVERAL for invalid PointSplitter.
+    // Always returns SEVERAL_OCT for invalid PointSplitter.
     SpaceOctant getOctant(const Point &P) const;
     SpaceOctant getOctant(const Triangle &tr) const;
 };
@@ -129,12 +127,12 @@ template <class Data> inline void concatVectors(std::vector<Data> &dest, std::ve
 }
 
 // Octo-tree is used to split triangles into smaller groups.
-class SplittedTrsGroup
+class SplittedTrsGroup final
 {
     static constexpr size_t SUB_GROUPS_NUM = 8;
 
     // Sub group encased with space domain.
-    struct SubGroup
+    struct SubGroup final
     {
         SubGroup *parent_ = nullptr;
         std::array<SubGroup *, SUB_GROUPS_NUM> children_{nullptr};
@@ -147,7 +145,7 @@ class SplittedTrsGroup
     };
 
     // Iterator used for passes on specified depth.
-    struct DepthIter
+    struct DepthIter final
     {
         SubGroup *node_ = nullptr;
         const size_t depth_;

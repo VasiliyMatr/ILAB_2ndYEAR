@@ -19,24 +19,44 @@ using fp_t = float;
 constexpr fp_t nan = std::numeric_limits<fp_t>::quiet_NaN();
 constexpr fp_t inf = std::numeric_limits<fp_t>::infinity();
 
-// fp_t validation function (checks for nan and inf).
 inline bool isValid(fp_t value) noexcept
 {
     return !(std::isnan(value) || std::isinf(value));
 }
 
-// Wrapper for fp_t comparsions with precision.
-struct fpCmpW
+// Used for comparsions with precision.
+enum class valueOrder_t : size_t
 {
-    fp_t val_ = 0;
+    FIRST = 1,
+    SECOND,
+    THIRD
+};
 
-    // Cmp precision.
-    static constexpr fp_t CMP_PRECISION = 0.001;
+/* Wrapper for fp_t comparsions with precision.
 
-    fpCmpW(const fp_t &val) : val_(val)
+   ORDER parameter is used to compare with different precision.
+   valueOrder_t::SECOND and valueOrder_t::THIRD parameter values
+   could be usefull to compare quantities with area or volume dimensions.
+*/
+template <valueOrder_t ORDER = valueOrder_t::FIRST> struct fpCmpW
+{
+    fp_t val_ = nan;
+
+    // Cmp precision stuff.
+    static constexpr fp_t pow(int power, fp_t val)
+    {
+        fp_t result = 1;
+
+        for (int i = 0; i < std::abs(power); ++i)
+            result *= val;
+        return power >= 0 ? result : 1 / result;
+    }
+    static constexpr fp_t BASE_CMP_PRECISION = 0.001;
+    static constexpr fp_t CMP_PRECISION = pow(size_t(ORDER), BASE_CMP_PRECISION);
+
+    fpCmpW(fp_t val = 0) : val_(val)
     {
     }
-    fpCmpW() = default;
 
     bool operator==(fpCmpW sd) const noexcept
     {
@@ -47,33 +67,19 @@ struct fpCmpW
     {
         if (*this == sd)
             return std::partial_ordering::equivalent;
-        if (val_ > sd.val_)
-            return std::partial_ordering::greater;
-        if (val_ < sd.val_)
-            return std::partial_ordering::less;
-        return std::partial_ordering::unordered;
+
+        return val_ <=> sd.val_;
     }
 };
 
-class IGeomPrimitive
+/* Tag rule for all functions that works with IGeomPrimitive derives:
+   If function could return valid result (or true in bool functions case)
+   for invalid input it is considered WARNED.
+*/
+// Base for all geometrical primitives.
+struct GeomPrimitive
 {
 };
-
-// Geometrical primitives validation rules:
-// 1) Primitives with nan fields are called invalid.
-
-// 2) Primitives with inf fields are called half-invalid (if they are not invalid).
-
-// 3) It is guaranteed that functions marked as SAFE return invalid output values for invalid inputs and
-// half-invalid/invalid output values for half-invalid inputs.
-
-// 4) It is guaranteed that bool functions marked as SAFE return false for invalid and half-invalid inputs.
-
-// 5) It is guaranteed that functions marked as WARNED return invalid values for invalid inputs.
-
-// 6) It is guaranteed that bool functions marked as WARNED return false for invalid inputs.
-
-// 7) All methods/functions for geometrical primitives are considered SAFE unless otherwise specified.
 
 // Number of dimensions.
 constexpr size_t DNUM = 3;
@@ -88,9 +94,19 @@ enum coordId_t : size_t
     Z
 };
 
-struct Point
+struct Point : GeomPrimitive
 {
     Coordinates coord_{nan, nan, nan};
+
+    bool isValid() const noexcept
+    {
+        return geom3D::isValid(coord_[X]) && geom3D::isValid(coord_[Y]) && geom3D::isValid(coord_[Z]);
+    }
+
+    bool isConsistent() const noexcept
+    {
+        return true;
+    }
 
     Point(fp_t x, fp_t y, fp_t z) : coord_{x, y, z}
     {
@@ -100,6 +116,10 @@ struct Point
     Point()
     {
         assert(!isValid());
+    }
+
+    virtual ~Point()
+    {
     }
 
     fp_t &operator[](size_t coordId) noexcept
@@ -115,11 +135,6 @@ struct Point
     operator Coordinates() const
     {
         return coord_;
-    }
-
-    bool isValid() const noexcept
-    {
-        return geom3D::isValid(coord_[X]) && geom3D::isValid(coord_[Y]) && geom3D::isValid(coord_[Z]);
     }
 };
 
@@ -138,9 +153,19 @@ inline fp_t sqDst(const Point &ft, const Point &sd)
     return dst;
 }
 
-struct Vector
+struct Vector final : GeomPrimitive
 {
     Coordinates coord_{nan, nan, nan};
+
+    bool isValid() const noexcept
+    {
+        return geom3D::isValid(coord_[X]) && geom3D::isValid(coord_[Y]) && geom3D::isValid(coord_[Z]);
+    }
+
+    bool isConsistent() const noexcept
+    {
+        return true;
+    }
 
     Vector(fp_t x, fp_t y, fp_t z) : coord_{x, y, z}
     {
@@ -154,11 +179,6 @@ struct Vector
     Vector()
     {
         assert(!isValid());
-    }
-
-    bool isValid() const noexcept
-    {
-        return geom3D::isValid(coord_[X]) && geom3D::isValid(coord_[Y]) && geom3D::isValid(coord_[Z]);
     }
 
     fp_t &operator[](size_t coordId) noexcept
@@ -306,21 +326,12 @@ class Segment;
 class Plane;
 
 // Lines are stored as point + direction vector
-class Line
+class Line final : public GeomPrimitive
 {
     Vector dir_;
     Point P_;
 
   public:
-    Vector dir() const
-    {
-        return dir_;
-    }
-    Point P() const
-    {
-        return P_;
-    }
-
     bool isValid() const noexcept
     {
         return dir_.isValid() && P_.isValid();
@@ -329,6 +340,16 @@ class Line
     bool isConsistent() const noexcept
     {
         return !isValid() || dir_ != Vector::zero();
+    }
+
+    Vector dir() const
+    {
+        return dir_;
+    }
+
+    Point P() const
+    {
+        return P_;
     }
 
     // Line is invalid if dir == Vector::zero ()
@@ -392,7 +413,7 @@ class Line
 
 // Segments are stored as 2 Points + segment stores
 // self square length (square length is used frequently).
-class Segment
+class Segment final : public GeomPrimitive
 {
     // sqLen_ == sqDst(P1_, P2_) is a protected invariant.
     Point P1_;
@@ -400,19 +421,6 @@ class Segment
     fp_t sqLen_ = nan;
 
   public:
-    Point P1() const
-    {
-        return P1_;
-    }
-    Point P2() const
-    {
-        return P2_;
-    }
-    fp_t sqLen() const noexcept
-    {
-        return sqLen_;
-    }
-
     bool isValid() const noexcept
     {
         return P1_.isValid() && P2_.isValid() && geom3D::isValid(sqLen_);
@@ -420,7 +428,22 @@ class Segment
 
     bool isConsistent() const noexcept
     {
-        return !isValid() || fpCmpW{sqLen_} == sqDst(P1_, P2_);
+        return !isValid() || fpCmpW<valueOrder_t::SECOND>{sqLen_} == sqDst(P1_, P2_);
+    }
+
+    Point P1() const
+    {
+        return P1_;
+    }
+
+    Point P2() const
+    {
+        return P2_;
+    }
+
+    fp_t sqLen() const noexcept
+    {
+        return sqLen_;
     }
 
     Segment(const Point &P1, const Point &P2) : P1_(P1), P2_(P2), sqLen_(sqDst(P1, P2))
@@ -454,35 +477,16 @@ class Segment
     {
         return line | *this;
     }
-
-    // Returns segment and plane cross.
-    // If there is infinite number of solutions, or no solutions,
-    // or Segment length is zero - returns invalid point.
-    // WARNED.
-    Point operator|(const Plane &plane) const
-    {
-        Point lineCross = Line{*this} | plane;
-        return linearContains(lineCross) ? lineCross : Point{};
-    }
 };
 
 // n_[X]*x + n_[Y]*y + n_[Z]*z + D = 0
-class Plane
+class Plane final : public GeomPrimitive
 {
     // n_ != Vector::zero () is a protected invariant.
     Vector n_;
     fp_t D_ = nan;
 
   public:
-    Vector n() const
-    {
-        return n_;
-    }
-    fp_t D() const noexcept
-    {
-        return D_;
-    }
-
     bool isValid() const noexcept
     {
         return n_.isValid() && geom3D::isValid(D_);
@@ -493,7 +497,17 @@ class Plane
         return !isValid() || n_ != Vector::zero();
     }
 
-    fp_t sgnDst(const Point &P) const noexcept
+    Vector n() const
+    {
+        return n_;
+    }
+
+    fp_t D() const noexcept
+    {
+        return D_;
+    }
+
+    fp_t eVal(const Point &P) const noexcept
     {
         return n_[X] * P[X] + n_[Y] * P[Y] + n_[Z] * P[Z] + D_;
     }
@@ -508,8 +522,7 @@ class Plane
         }
         else
         {
-            fp_t factor = 1 / n_.len();
-            n_ *= factor;
+            fp_t factor = n_.scale();
             D_ *= factor;
         }
 
@@ -525,8 +538,8 @@ class Plane
         }
         else
         {
-            n_ /= n_.len();
-            D_ = -sgnDst(A);
+            n_.scale();
+            D_ = -eVal(A);
         }
 
         assert(isConsistent());
@@ -540,7 +553,7 @@ class Plane
 
     bool contains(const Point &P) const noexcept
     {
-        return fpCmpW{} == sgnDst(P);
+        return fpCmpW{} == eVal(P);
     }
 
     // WARNED.
@@ -548,19 +561,46 @@ class Plane
     {
         return line | *this;
     }
-
-    // WARNED.
-    Point operator|(const Segment &seg) const
-    {
-        return seg | *this;
-    }
 };
+
+// Returns segment and plane cross.
+// If there is infinite number of solutions, or no solutions,
+// or Segment length is zero - returns invalid point.
+// WARNED.
+inline Point operator|(const Plane &plane, const Segment &seg)
+{
+    Point P1 = seg.P1();
+    Point P2 = seg.P2();
+    fp_t P1EVal = plane.eVal(P1);
+    fp_t P2EVal = plane.eVal(P2);
+
+    if (fpCmpW{} == P1EVal)
+    {
+        if (fpCmpW{} == P2EVal && P1 != P2)
+            return Point{};
+        return P1;
+    }
+
+    if (fpCmpW{} == P2EVal)
+        return P2;
+
+    if (P1EVal * P2EVal > 0)
+        return Point{};
+
+    fp_t dstSum = std::abs(P1EVal) + std::abs(P2EVal);
+    return P1 + Vector{P1, P2} * std::abs(P1EVal) / dstSum;
+}
+
+inline Point operator|(const Segment &seg, const Plane &plane)
+{
+    return plane | seg;
+}
 
 // Expected, right?
 constexpr size_t TR_POINT_NUM = 3;
 
 // Stored triangle info - not a geometrical primitive.
-class Triangle
+class Triangle final : public GeomPrimitive
 {
     // Many invariants to protect.
     Plane plane_;
@@ -572,10 +612,18 @@ class Triangle
     Segment CA_; // tr + ft point (in this order) - for not degen.
 
   public:
+    bool isValid() const noexcept
+    {
+        return AB_.isValid() && BC_.isValid() && CA_.isValid();
+    }
+
+    bool isConsistent() const noexcept;
+
     Plane plane() const
     {
         return plane_;
     }
+
     bool isDegen() const
     {
         return isDegen_;
@@ -585,41 +633,19 @@ class Triangle
     {
         return AB_;
     }
+
     Segment BC() const
     {
         return BC_;
     }
+
     Segment CA() const
     {
         return CA_;
     }
 
-    bool isConsistent() const noexcept
-    {
-        if (!AB_.isValid() || !BC_.isValid() || !CA_.isValid())
-        {
-            return true;
-        }
-        if (isDegen_)
-        {
-            bool ABIsTheLongest = AB_.sqLen() == std::max(AB_.sqLen(), std::max(BC_.sqLen(), CA_.sqLen()));
-            if (plane_.isValid() || !ABIsTheLongest)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (!plane_.isValid())
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     Triangle(const Point &, const Point &, const Point &);
+
     Triangle()
     {
         assert(isConsistent());

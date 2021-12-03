@@ -28,7 +28,7 @@ TEST(PointTests, ValidationTest)
 TEST(PointTests, CmpTest)
 {
     fp_t x = genFP(), y = genFP(), z = genFP();
-    Point A = {x, y, z}, B = {x, y, z}, C = {x, y, z + fpCmpW::CMP_PRECISION * 2};
+    Point A = {x, y, z}, B = {x, y, z}, C = {x, y, z + fpCmpW<valueOrder_t::FIRST>::CMP_PRECISION * 2};
 
     ASSERT_TRUE(A == B);
     ASSERT_FALSE(A == C);

@@ -4,5 +4,5 @@
 cd build
 cmake ..
 make clean
-make -j8
-ctest -j8
+make -j12
+ctest -j12

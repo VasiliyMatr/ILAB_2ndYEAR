@@ -6,9 +6,6 @@ namespace geom3D
 
 Point Line::operator|(const Line &sd) const
 {
-    // General determinant should be compared with higher accuracy.
-    static constexpr fp_t DET_CMP_PRECISION = // std::pow (fpCmpW::CMP_PRECISION, 3);
-        fpCmpW::CMP_PRECISION * fpCmpW::CMP_PRECISION * fpCmpW::CMP_PRECISION;
     const Vector &a = dir_;
     const Vector &b = sd.dir_;
     Vector c = Vector::crossProduct(dir_, sd.dir_);
@@ -18,7 +15,7 @@ Point Line::operator|(const Line &sd) const
     // Solving system: a*k1 + b*k2 + c*k3 = d
     const fp_t D = det(a, b, c);  // Not zero if there are solutions.
     const fp_t D3 = det(a, b, d); // Should be zero.
-    if (std::abs(D) < DET_CMP_PRECISION || fpCmpW{} != D3)
+    if (fpCmpW<valueOrder_t::THIRD>{} == std::abs(D) || fpCmpW{} != D3)
         return Point{};
 
     const fp_t k = det(d, b, c) / D; // k1
@@ -28,17 +25,13 @@ Point Line::operator|(const Line &sd) const
 
 Point Line::operator|(const Plane &plane) const
 {
-    // Scalar product should be compared with higher accuracy.
-    static constexpr fp_t SCAL_PROD_CMP_PRECISION = // std::pow (fpCmpW::CMP_PRECISION, 2);
-        fpCmpW::CMP_PRECISION * fpCmpW::CMP_PRECISION;
     const Vector &n = plane.n();
 
     fp_t dirNormScal = Vector::scalarProduct(dir_, n);
-    if (std::abs(dirNormScal) < SCAL_PROD_CMP_PRECISION)
+    if (fpCmpW<valueOrder_t::SECOND>{} == std::abs(dirNormScal))
         return Point{};
-    fp_t planeEVal = P_[X] * n[X] + P_[Y] * n[Y] + P_[Z] * n[Z] + plane.D();
 
-    fp_t k = -planeEVal / dirNormScal;
+    fp_t k = -plane.eVal(P_) / dirNormScal;
     return P_ + k * dir_;
 }
 

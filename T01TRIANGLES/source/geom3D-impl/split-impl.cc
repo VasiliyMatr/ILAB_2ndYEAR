@@ -57,11 +57,11 @@ PointSplitter::PointSplitter(const IndexedTrsGroup &group) : Point{0, 0, 0}
 SpaceOctant PointSplitter::getOctant(const Point &P) const
 {
     if (!isValid())
-        return SpaceOctant::SEVERAL;
+        return SpaceOctant::SEVERAL_OCT;
 
     for (size_t i = 0; i < DNUM; ++i)
         if (fpCmpW{P[i]} == coord_[i])
-            return SpaceOctant::SEVERAL;
+            return SpaceOctant::SEVERAL_OCT;
 
     char octant = 0;
     for (size_t i = 0; i < DNUM; ++i)
@@ -78,7 +78,7 @@ SpaceOctant PointSplitter::getOctant(const Triangle &tr) const
         eighths[i] = getOctant(tr[i]);
 
     if (eighths[0] != eighths[1] || eighths[1] != eighths[2])
-        return SpaceOctant::SEVERAL;
+        return SpaceOctant::SEVERAL_OCT;
 
     return eighths[0];
 }
@@ -131,7 +131,7 @@ TrsIndexes SplittedTrsGroup::cross() const
     TrsIndexes ids{};
 
 // Removed in debug build for representative unit tests.
-#if !DEBUG
+#ifdef NDEBUG
     if (calcСomplexityRatio() < 1)
 #endif
         for (DepthIter dIt{root_, splitDepth_}, end = DepthIter::end(); dIt != end; ++dIt)
@@ -143,9 +143,8 @@ TrsIndexes SplittedTrsGroup::cross() const
             concatVectors(ids, geom3D::cross(bord));
             concatVectors(ids, geom3D::cross(intr, bord));
         }
-#if !DEBUG
-    else
-        ids = geom3D::cross(root_->internalTrs_);
+#ifdef NDEBUG
+    ids = geom3D::cross(root_->internalTrs_);
 #endif
 
     removeRepeatsNSort(ids);
@@ -230,7 +229,7 @@ void SplittedTrsGroup::splitGroup(SubGroup *group)
     {
         auto currTrInfo = group->internalTrs_[i];
         auto eighth = splitter.getOctant(currTrInfo.first);
-        if (eighth == SpaceOctant::SEVERAL)
+        if (eighth == SpaceOctant::SEVERAL_OCT)
             group->borderTrs_.emplace_back(currTrInfo);
         else
             group->children_[eighth]->internalTrs_.emplace_back(currTrInfo);

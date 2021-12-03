@@ -20,9 +20,9 @@ TEST(UtilsTests, ComparisonTest)
     fp_t a = genFP();
 
     ASSERT_TRUE(fpCmpW{a} == a);
-    ASSERT_TRUE(fpCmpW{a} != a + fpCmpW::CMP_PRECISION * 2);
-    ASSERT_TRUE(fpCmpW{a} < a + fpCmpW::CMP_PRECISION * 2);
-    ASSERT_TRUE(fpCmpW{a} > a - fpCmpW::CMP_PRECISION * 2);
+    ASSERT_TRUE(fpCmpW{a} != a + fpCmpW<valueOrder_t::FIRST>::CMP_PRECISION * 2);
+    ASSERT_TRUE(fpCmpW{a} < a + fpCmpW<valueOrder_t::FIRST>::CMP_PRECISION * 2);
+    ASSERT_TRUE(fpCmpW{a} > a - fpCmpW<valueOrder_t::FIRST>::CMP_PRECISION * 2);
 }
 
 TEST(UtilsTests, DeterminantTest)

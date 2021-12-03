@@ -138,9 +138,9 @@ TEST(VectorTests, equalCmpOperatorTest)
     Vector a = genVec();
 
     ASSERT_TRUE(a == a);
-    ASSERT_FALSE(a + Vector::e1() * fpCmpW::CMP_PRECISION * 2 == a);
-    ASSERT_FALSE(a + Vector::e2() * fpCmpW::CMP_PRECISION * 2 == a);
-    ASSERT_FALSE(a + Vector::e3() * fpCmpW::CMP_PRECISION * 2 == a);
+    ASSERT_FALSE(a + Vector::e1() * fpCmpW<valueOrder_t::FIRST>::CMP_PRECISION * 2 == a);
+    ASSERT_FALSE(a + Vector::e2() * fpCmpW<valueOrder_t::FIRST>::CMP_PRECISION * 2 == a);
+    ASSERT_FALSE(a + Vector::e3() * fpCmpW<valueOrder_t::FIRST>::CMP_PRECISION * 2 == a);
 }
 
 TEST(VectorTests, LenTest)

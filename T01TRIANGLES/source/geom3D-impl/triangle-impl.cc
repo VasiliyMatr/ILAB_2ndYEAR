@@ -26,6 +26,31 @@ Triangle::Triangle(const Point &A, const Point &B, const Point &C)
     assert(isConsistent());
 }
 
+bool Triangle::isConsistent() const noexcept
+{
+    if (!isValid())
+    {
+        return true;
+    }
+    if (isDegen_)
+    {
+        bool ABIsTheLongest = AB_.sqLen() == std::max(AB_.sqLen(), std::max(BC_.sqLen(), CA_.sqLen()));
+        if (plane_.isValid() || !ABIsTheLongest)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if (!plane_.isValid())
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 namespace
 {
 

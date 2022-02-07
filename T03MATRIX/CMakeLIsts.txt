@@ -2,16 +2,23 @@
 cmake_minimum_required( VERSION 3.11 )
 
 project( Matrix VERSION 0.1 LANGUAGES CXX )
+find_package( GTest REQUIRED )
 
-set( EXEC_NAME matrix )
-add_executable( ${EXEC_NAME} )
+set( TESTS_NAME linear-tests )
+add_executable( ${TESTS_NAME} )
 
-target_include_directories( ${EXEC_NAME} PRIVATE
+target_link_libraries( ${TESTS_NAME} PRIVATE
+    "${GTEST_LIBRARIES}"
+    "pthread"
+)
+
+target_include_directories( ${TESTS_NAME} PRIVATE
     "${CMAKE_SOURCE_DIR}/headers"
 )
 
-target_sources( ${EXEC_NAME} PRIVATE
-    "${CMAKE_SOURCE_DIR}/sources/main.cc"
+target_sources( ${TESTS_NAME} PRIVATE
+    "${CMAKE_SOURCE_DIR}/sources/linear-utests/tests-main.cc"
+    "${CMAKE_SOURCE_DIR}/sources/linear-utests/mathvec-tests.cc"
 )
 
-target_compile_features( ${EXEC_NAME} PRIVATE cxx_std_20 )
+target_compile_features( ${TESTS_NAME} PRIVATE cxx_std_20 )

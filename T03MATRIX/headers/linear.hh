@@ -91,7 +91,7 @@ template <class T> class Vector final : private VectorStorage<T>
 };
 
 // Math vector with linear properties.
-template <size_t SIZE, class T> class MathVector final
+template <class T, size_t SIZE> class MathVector final
 {
     Vector<T> data_{SIZE};
 
@@ -129,36 +129,36 @@ template <size_t SIZE, class T> class MathVector final
     }
 };
 
-template <size_t SIZE, class T, class Convertable>
-MathVector<SIZE, T> operator+(const MathVector<SIZE, T> &ft, const Convertable &sd)
+template <class T, size_t SIZE, class Convertable>
+MathVector<T, SIZE> operator+(const MathVector<T, SIZE> &ft, const Convertable &sd)
 {
-    MathVector<SIZE, T> copy{ft};
+    MathVector<T, SIZE> copy{ft};
 
     return copy += sd;
 }
-template <size_t SIZE, class T, class Convertable>
-MathVector<SIZE, T> operator+(const Convertable &ft, const MathVector<SIZE, T> &sd)
+template <class T, size_t SIZE, class Convertable>
+MathVector<T, SIZE> operator+(const Convertable &ft, const MathVector<T, SIZE> &sd)
 {
     return sd + ft;
 }
 
-template <size_t SIZE, class T, class Convertable>
-MathVector<SIZE, T> operator-(const MathVector<SIZE, T> &ft, const Convertable &sd)
+template <class T, size_t SIZE, class Convertable>
+MathVector<T, SIZE> operator-(const MathVector<T, SIZE> &ft, const Convertable &sd)
 {
-    MathVector<SIZE, T> copy{sd};
+    MathVector<T, SIZE> copy{sd};
     return copy -= ft;
 }
-template <size_t SIZE, class T, class Convertable>
-MathVector<SIZE, T> operator-(const Convertable &ft, const MathVector<SIZE, T> &sd)
+template <class T, size_t SIZE, class Convertable>
+MathVector<T, SIZE> operator-(const Convertable &ft, const MathVector<T, SIZE> &sd)
 {
     return sd - ft;
 }
 
-template <size_t SIZE, class T> class SquareMatrix
+template <class T, size_t SIZE> class SquareMatrix
 {
-    using row = MathVector<SIZE, T>;
+    using row = MathVector<T, SIZE>;
 
-    MathVector<SIZE, row> data_{};
+    MathVector<row, SIZE> data_{};
 
     struct ProxyRow
     {

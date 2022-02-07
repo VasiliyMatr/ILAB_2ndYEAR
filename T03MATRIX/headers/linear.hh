@@ -1,6 +1,8 @@
 
 #include <cstdlib>
 #include <utility>
+#include <algorithm>
+#include <initializer_list>
 
 #ifndef LINEAR_HH_INCL
 #define LINEAR_HH_INCL
@@ -96,6 +98,13 @@ template <class T, size_t SIZE> class MathVector final
     Vector<T> data_{SIZE};
 
   public:
+    MathVector(std::initializer_list<T> l) data_(SIZE)
+    {
+        for (size_t i = 0, auto it = l.begin(), end = l.end();
+            i < bound && it != end; ++i, ++it)
+            data_[i] = *it;
+    }
+
     T &operator[](size_t id)
     {
         return data_[id];
@@ -159,6 +168,14 @@ template <class T, size_t SIZE> class SquareMatrix
     using row = MathVector<T, SIZE>;
 
     MathVector<row, SIZE> data_{};
+
+    MathVector(std::initializer_list<T> l)
+    {
+        for (size_t i = 0, auto it = l.begin(), end = l.end();
+            i < SIZE && it != end; ++i, ++it)
+        for (size_t j = 0; j < SIZE && it != end; ++j, ++it)
+            data_[i][j] = *it;
+    }
 
     struct ProxyRow
     {

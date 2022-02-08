@@ -1,8 +1,5 @@
 
-#include <cstdlib>
-#include <utility>
-#include <algorithm>
-#include <initializer_list>
+#include "containers.hh"
 
 #ifndef LINEAR_HH_INCL
 #define LINEAR_HH_INCL
@@ -10,172 +7,113 @@
 namespace linear
 {
 
-// Exceptions safe dynamical allocated block storage.
-template <class T> class VectorStorage
+// Interface for mathematical vector with size fixed on obj creation.
+template<class T>
+struct IMathVector
 {
-  protected:
-    size_t initialized_ = 0;
-    T *data_ = nullptr;
+    virtual ~IMathVector() {}
 
-    VectorStorage(size_t size) : data_{static_cast<T *>(::operator new(sizeof(T) * size))}
+    virtual size_t size() noexcept;
+
+    // Access to vector elements:
+    virtual T &getComponent(size_t) noexcept;
+    virtual const T &getComponent(size_t) const noexcept;
+
+    // Operations should be linear:
+    virtual IMathVector &operator-() &;
+    virtual IMathVector &operator+=(const IMathVector&) &;
+    virtual IMathVector &operator-=(const IMathVector&) &;
+    virtual IMathVector &operator*=(const T&) &;
+    virtual IMathVector &operator/=(const T& num) &
     {
-    }
-
-    VectorStorage(VectorStorage &&toMove) noexcept
-    {
-        std::swap(initialized_, toMove.initialized_);
-        std::swap(data_, toMove.data_);
-    }
-
-    VectorStorage &operator=(VectorStorage &&toMove) noexcept
-    {
-        std::swap(initialized_, toMove.initialized_);
-        std::swap(data_, toMove.data_);
-        return *this;
-    }
-
-    VectorStorage(const VectorStorage &) = delete;
-    VectorStorage &operator=(const VectorStorage &) = delete;
-
-    ~VectorStorage()
-    {
-        for (size_t i = 0; i < initialized_; ++i)
-            (data_ + i)->~T();
-        ::operator delete(data_);
+        return (*this) *= (1. / num);
     }
 };
 
-// Dynamical array with elements access.
-template <class T> class Vector final : private VectorStorage<T>
+// Common realization of math vector
+template <class T> class MathVector final : public IMathVector<T>
 {
-    using VectorStorage<T>::initialized_;
-    using VectorStorage<T>::data_;
-    using VectorStorage<T>::VectorStorage;
-
-    size_t size_ = 0;
+    containers::Vector<T> data_;
+    const size_t size_;
 
   public:
-    Vector(Vector &&) = default;
-    Vector &operator=(Vector &&) = default;
+    MathVector(size_t size) : data_(size), size_(size) {}
 
-    Vector(size_t size, const T &initVal = T{}) : VectorStorage<T>{size}, size_(size)
+    MathVector(std::initializer_list<T> l) : data_(l.size()), size_(l.size())
     {
-        for (; initialized_ < size_; ++initialized_)
-            new (data_ + initialized_) T{initVal};
-    }
-
-    Vector(const Vector &toCopy) : VectorStorage<T>{toCopy.size_}
-    {
-        for (; initialized_ < size_; ++initialized_)
-            new (data_ + initialized_) T{toCopy.data_[initialized_]};
-    }
-
-    Vector &operator=(const Vector &toCopy)
-    {
-        if (&toCopy == this)
-            return *this;
-
-        Vector tmp{toCopy};
-        return *this = std::move(tmp);
-    }
-
-    ~Vector() = default;
-
-    T &operator[](size_t id) noexcept
-    {
-        return data_[id];
-    }
-
-    const T &operator[](size_t id) const noexcept
-    {
-        return data_[id];
-    }
-};
-
-// Math vector with linear properties.
-template <class T, size_t SIZE> class MathVector final
-{
-    Vector<T> data_{SIZE};
-
-  public:
-    MathVector(std::initializer_list<T> l) data_(SIZE)
-    {
-        for (size_t i = 0, auto it = l.begin(), end = l.end();
-            i < bound && it != end; ++i, ++it)
+        for (auto it = l.begin(), end = l.end(); it != end; ++it)
             data_[i] = *it;
     }
 
-    T &operator[](size_t id)
+    static std::unique_ptr<MathVector> create(size_t size)
     {
-        return data_[id];
-    }
-    const T &operator[](size_t id) const
-    {
-        return data_[id];
+        return new MathVector(size);
     }
 
-    MathVector &operator-() &
+    static std::unique_ptr<MathVector> create(std::initializer_list<T> l)
     {
-        for (size_t i = 0; i < SIZE; ++i)
+        return new MathVector(l);
+    }
+
+    size_t size() override noexcept
+    {
+        return size_;
+    }
+
+    T &getComponent(size_t id) override noexcept
+    {
+        return data_[id % size_];
+    }
+    const T &getComponent(size_t id) const override noexcept
+    {
+        return data_[id % size_];
+    }
+
+    MathVector &operator-() & override
+    {
+        for (size_t i = 0; i < size_; ++i)
             data_[i] = -data_[i];
     }
-    MathVector operator-() const &
+
+    MathVector &operator+=(const IMathVector<T> &sd) & override
     {
-        MathVector copy{*this};
-        -copy;
-        return copy;
+        if (typeid(sd) == typeid(const MathVector))
+        {
+            const MathVector &second = dynamic_cast<const MathVector>(sd);
+            for (size_t i = 0; i < size_; ++i)
+                data_[i] += second.data_[i];
+            return *this;
+        }
+
+        for (size_t i = 0; i < size_; ++i)
+            data_[i] += sd.getComponent(i);
+        return *this;
+    }
+    MathVector &operator-=(const IMathVector<T> &sd) & override
+    {
+        if (typeid(sd) == typeid(const MathVector))
+        {
+            const MathVector &second = dynamic_cast<const MathVector>(sd);
+            for (size_t i = 0; i < size_; ++i)
+                data_[i] -= second.data_[i];
+            return *this;
+        }
+
+        for (size_t i = 0; i < size_; ++i)
+            data_[i] += sd.getComponent(i);
+        return *this;
     }
 
-    MathVector &operator+=(const MathVector &sd) &
+    MathVector &operator*=(const T& num) override
     {
-        for (size_t i = 0; i < SIZE; ++i)
-            data_[i] += sd.data_[i];
-    }
-    MathVector &operator-=(const MathVector &sd) &
-    {
-        for (size_t i = 0; i < SIZE; ++i)
-            data_[i] -= sd.data_[i];
+        for (size_t i = 0; i < size_; ++i)
+            data_[i] *= num;
     }
 };
 
-template <class T, size_t SIZE, class Convertable>
-MathVector<T, SIZE> operator+(const MathVector<T, SIZE> &ft, const Convertable &sd)
+template <class T> class IMatrix : public IMathVector
 {
-    MathVector<T, SIZE> copy{ft};
-
-    return copy += sd;
-}
-template <class T, size_t SIZE, class Convertable>
-MathVector<T, SIZE> operator+(const Convertable &ft, const MathVector<T, SIZE> &sd)
-{
-    return sd + ft;
-}
-
-template <class T, size_t SIZE, class Convertable>
-MathVector<T, SIZE> operator-(const MathVector<T, SIZE> &ft, const Convertable &sd)
-{
-    MathVector<T, SIZE> copy{sd};
-    return copy -= ft;
-}
-template <class T, size_t SIZE, class Convertable>
-MathVector<T, SIZE> operator-(const Convertable &ft, const MathVector<T, SIZE> &sd)
-{
-    return sd - ft;
-}
-
-template <class T, size_t SIZE> class SquareMatrix
-{
-    using row = MathVector<T, SIZE>;
-
-    MathVector<row, SIZE> data_{};
-
-    MathVector(std::initializer_list<T> l)
-    {
-        for (size_t i = 0, auto it = l.begin(), end = l.end();
-            i < SIZE && it != end; ++i, ++it)
-        for (size_t j = 0; j < SIZE && it != end; ++j, ++it)
-            data_[i][j] = *it;
-    }
+    using row = IMathVector<T>;
 
     struct ProxyRow
     {
@@ -187,25 +125,38 @@ template <class T, size_t SIZE> class SquareMatrix
 
         T &operator[](size_t id)
         {
-            return row_[id];
+            return row_.getComponent(id);
         }
 
         const T &operator[](size_t id) const
         {
-            return row_[id];
+            return row_.getComponent(id);
         }
     };
 
   public:
-    ProxyRow operator[](size_t id)
-    {
-        return ProxyRow{data_[id]};
-    }
-    const ProxyRow operator[](size_t id) const
-    {
-        return ProxyRow{data_[id]};
-    }
+    virtual ProxyRow operator[](size_t) noexcept;
+    virtual const ProxyRow operator[](size_t) const noexcept;
+
+    virtual xSize() const noexcept;
+    virtual ySize() const noexcept;
 };
+
+template <class T> struct ISquareMatrix : public IMatrix
+{
+    virtual T det() const;
+};
+
+template <class T> class SquareMatrix : public ISquareMatrix
+{
+    std::unique_ptr<IMathVector> data_;
+    const size_t size_;
+
+  public:
+    SquareMatrix(size_t size) : data_(MathVector::create(size * size)) {}
+
+    ProxyRow operator[](size_t id)
+}
 
 } // namespace linear
 

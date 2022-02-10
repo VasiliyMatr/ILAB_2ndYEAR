@@ -8,12 +8,12 @@ namespace linear
 {
 
 template <size_t SIZE>
-MathVector<float, SIZE> genFPMathVec()
+MathVector<float> genFPMathVec()
 {
-    MathVector<float, SIZE> toRet{};
+    MathVector<float> toRet{SIZE};
 
     for (size_t i = 0; i < SIZE; ++i)
-        toRet[i] = (std::rand() * 2.0 / RAND_MAX - 1) * 100;
+        toRet.component(i) = (std::rand() * 2.0 / RAND_MAX - 1) * 100;
 
     return toRet;
 }

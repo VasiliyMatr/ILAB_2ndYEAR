@@ -4,7 +4,7 @@
 
 int main()
 {
-    linear::SquareMatrix<int, 2> mat;
+    linear::SquareMatrix<int> mat{2};
 
     for (size_t i = 0; i < 2; ++i)
         for (size_t j = 0; j < 2; ++j)

@@ -11,6 +11,9 @@ namespace containers
 // Exceptions safe dynamical allocated block storage.
 template <class T> class VectorStorage
 {
+    static_assert(std::is_nothrow_move_constructible<T>::value ||
+                  std::is_copy_constructible<T>::value);
+
   protected:
     size_t used_ = 0;
     T *data_ = nullptr;
@@ -45,12 +48,22 @@ template <class T> class VectorStorage
         ::operator delete(data_);
     }
 
+    void moveOrCopyT(T *dest, T&src)
+    {
+        if (std::is_nothrow_move_constructible<T>::value)
+            new (dest) T(std::move(src));
+        else
+            new (dest) T(src);
+    }
+
     void realloc(size_t newSize)
     {
         VectorStorage<T> newStorage(newSize);
 
-        for (size_t i = 0, last = max(newSize, size_); i < last; ++i)
-            new (newStorage.data_ + i) T(data_[i]);
+        used_ = std::min(newSize, used_);
+
+        for (size_t i = 0, last = used_; i < last; ++i)
+            moveOrCopyT(newStorage.data_ + i, data_[i]);
 
         *this = std::move(newStorage);
     }
@@ -62,7 +75,7 @@ template <class T> class Vector final : private VectorStorage<T>
     using VectorStorage<T>::used_;
     using VectorStorage<T>::data_;
     using VectorStorage<T>::VectorStorage;
-    using VectorStorage<T>::realloc(size_t);
+    using VectorStorage<T>::realloc;
 
     size_t allocated_ = 0;
 

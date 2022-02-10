@@ -113,13 +113,13 @@ template <class T> class MathVector final : public IMathVector<T>
 
 template <class T> class IMatrix : public IMathVector
 {
-    using row = IMathVector<T>;
+    using Row = IMathVector<T>;
 
     struct ProxyRow
     {
-        row &row_;
+        Row &row_;
 
-        ProxyRow(row &row) : row_{row}
+        ProxyRow(Row &row) : row_{row}
         {
         }
 
@@ -147,16 +147,15 @@ template <class T> struct ISquareMatrix : public IMatrix
     virtual T det() const;
 };
 
-template <class T> class SquareMatrix : public ISquareMatrix
+template <class T> class SquareMatrix final : public ISquareMatrix
 {
-    std::unique_ptr<IMathVector> data_;
-    const size_t size_;
+    using IMatrix::Row;
+    using IMatrix::ProxyRow;
 
-  public:
-    SquareMatrix(size_t size) : data_(MathVector::create(size * size)) {}
+    containers::Vector<std::unique_ptr<Row>> data_{};
 
-    ProxyRow operator[](size_t id)
-}
+    const size_t rowSize_;
+};
 
 } // namespace linear
 

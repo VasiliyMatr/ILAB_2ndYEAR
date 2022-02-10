@@ -12,22 +12,25 @@ namespace containers
 template <class T> class VectorStorage
 {
   protected:
-    size_t initialized_ = 0;
+    size_t used_ = 0;
     T *data_ = nullptr;
 
-    VectorStorage(size_t size) : data_{static_cast<T *>(::operator new(sizeof(T) * size))}
+    VectorStorage() = default;
+
+    VectorStorage(size_t allocSize) :
+        data_{static_cast<T *>(::operator new(sizeof(T) * allocSize))}
     {
     }
 
     VectorStorage(VectorStorage &&toMove) noexcept
     {
-        std::swap(initialized_, toMove.initialized_);
+        std::swap(used_, toMove.used_);
         std::swap(data_, toMove.data_);
     }
 
     VectorStorage &operator=(VectorStorage &&toMove) noexcept
     {
-        std::swap(initialized_, toMove.initialized_);
+        std::swap(used_, toMove.used_);
         std::swap(data_, toMove.data_);
         return *this;
     }
@@ -37,35 +40,50 @@ template <class T> class VectorStorage
 
     ~VectorStorage()
     {
-        for (size_t i = 0; i < initialized_; ++i)
+        for (size_t i = 0; i < used_; ++i)
             (data_ + i)->~T();
         ::operator delete(data_);
+    }
+
+    void realloc(size_t newSize)
+    {
+        VectorStorage<T> newStorage(newSize);
+
+        for (size_t i = 0, last = max(newSize, size_); i < last; ++i)
+            new (newStorage.data_ + i) T(data_[i]);
+
+        *this = std::move(newStorage);
     }
 };
 
 // Dynamical array with elements access.
 template <class T> class Vector final : private VectorStorage<T>
 {
-    using VectorStorage<T>::initialized_;
+    using VectorStorage<T>::used_;
     using VectorStorage<T>::data_;
     using VectorStorage<T>::VectorStorage;
+    using VectorStorage<T>::realloc(size_t);
 
-    size_t size_ = 0;
+    size_t allocated_ = 0;
 
   public:
     Vector(Vector &&) = default;
     Vector &operator=(Vector &&) = default;
 
-    Vector(size_t size, const T &initVal = T{}) : VectorStorage<T>{size}, size_(size)
+    Vector() = default;
+
+    Vector(size_t initSize, const T &initVal = T{}) :
+        VectorStorage<T>{initSize}, allocated_(initSize)
     {
-        for (; initialized_ < size_; ++initialized_)
-            new (data_ + initialized_) T{initVal};
+        for (; used_ < allocated_; ++used_)
+            new (data_ + used_) T{initVal};
     }
 
-    Vector(const Vector &toCopy) : VectorStorage<T>{toCopy.size_}
+    Vector(const Vector &toCopy) :
+        VectorStorage<T>{toCopy.used_}, allocated_{toCopy.used_}
     {
-        for (; initialized_ < size_; ++initialized_)
-            new (data_ + initialized_) T{toCopy.data_[initialized_]};
+        for (; used_ < allocated_; ++used_)
+            new (data_ + used_) T{toCopy.data_[used_]};
     }
 
     Vector &operator=(const Vector &toCopy)
@@ -79,6 +97,15 @@ template <class T> class Vector final : private VectorStorage<T>
 
     ~Vector() = default;
 
+    void pushBack(const T &value)
+    {
+        if (used_ == allocated_)
+            realloc(allocated_ = 2 * allocated_ + 1);
+
+        new(data_ + used_) T{value};
+        used_++;
+    }
+
     T &operator[](size_t id) noexcept
     {
         return data_[id];
@@ -91,7 +118,7 @@ template <class T> class Vector final : private VectorStorage<T>
 
     size_t size() const noexcept
     {
-        return size_;
+        return used_;
     }
 };
 

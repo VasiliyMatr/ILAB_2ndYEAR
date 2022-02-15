@@ -1,19 +1,35 @@
 
-
 #include <type_traits>
 #include <stdexcept>
-
-#include "containers.hh"
 
 #ifndef LINEAR_HH_INCL
 #define LINEAR_HH_INCL
 
+#include "containers.hh"
+
 namespace linear
 {
 
+// Exceptions for linear namespace classes
+class IMV_dim_misalign : public std::invalid_argument
+{
+    static constexpr char* DEF_WHAT_ =
+    "Tried to perform operation on IMathVector objects with different dimensionality";
+
+    IMV_dim_misalign(const char* whatArg = DEF_WHAT_) : invalid_argument{whatArg} {}
+};
+
+class IMV_out_of_range : public std::out_of_range
+{
+    static constexpr char* DEF_WHAT_ =
+    "Tried to access IMathVector component by out of range id";
+
+    IMV_out_of_range(const char* whatArg = DEF_WHAT_) : out_of_range{whatArg} {}
+};
+
 // Interface for mathematical vector with fixed dimensionality
 // and elements of arithmetic type T. Objects of this class should
-// be linear over field of numbers of type T. 
+// be linear over field of numbers of type T.
 template<class T>
 struct IMathVector
 {
@@ -21,7 +37,7 @@ struct IMathVector
 
     virtual ~IMathVector() {}
 
-    virtual size_t dim() noexcept;
+    virtual size_t dim() noexcept = 0;
 
     bool dimsAreEqual(const IMathVector& second) noexcept
     {
@@ -29,8 +45,8 @@ struct IMathVector
     }
 
     // Access to vector components:
-    virtual T &component(size_t);
-    virtual const T &component(size_t) const;
+    virtual T &component(size_t) = 0;
+    virtual const T &component(size_t) const = 0;
 
     virtual IMathVector &operator-() &
     {
@@ -46,7 +62,7 @@ struct IMathVector
     virtual IMathVector &operator+=(const IMathVector& second) &
     {
         if (!dimsAreEqual(second))
-            throw std::out_of_range("Tried to use operator+= for objects of type linear::IMathVector with different dimensionality");
+            throw IMV_dim_misalign();
         for (size_t i = 0, end = dim(); i < end; ++i)
             component(i) += second.component(i);
 
@@ -55,7 +71,7 @@ struct IMathVector
     virtual IMathVector &operator-=(const IMathVector& second) &
     {
         if (!dimsAreEqual(second))
-            throw std::out_of_range("Tried to use operator-= for objects of type linear::IMathVector with different dimensionality");
+            throw IMV_dim_misalign();
         for (size_t i = 0, end = dim(); i < end; ++i)
             component(i) -= second.component(i);
 
@@ -97,14 +113,14 @@ template <class T> class MathVector final : public IMathVector<T>
     T &component(size_t id) override
     {
         if (id >= size_)
-            throw std::out_of_range("Tried to access out of range component of linear::MathVector");
+            throw IMV_out_of_range();
 
         return data_[id % size_];
     }
     const T &component(size_t id) const noexcept override
     {
         if (id >= size_)
-            throw std::out_of_range("Tried to access out of range component of linear::MathVector");
+            throw IMV_out_of_range();
 
         return data_[id % size_];
     }
@@ -157,7 +173,8 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
     const size_t size_;
 
   public:
-    SquareMatrix(size_t size) : data_(size, std::unique_ptr<typename IMatrix<T>::Row>(nullptr)), size_(size)
+    SquareMatrix(size_t size) :
+        data_(size, std::unique_ptr<typename IMatrix<T>::Row>(nullptr)), size_(size)
     {
         for (size_t i = 0; i < size; ++i)
             data_[i] = new MathVector<T>(size_);
@@ -171,27 +188,27 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
     IMatrix<T>::ProxyRow operator[](size_t id) override
     {
         if (id >= size_)
-            throw std::out_of_range("Tried to access out of range component of linear::SquareMatrix");
+            throw IMV_out_of_range();
         return *(data_[id]);
     }
     const IMatrix<T>::ProxyRow operator[](size_t id) const override
     {
         if (id >= size_)
-            throw std::out_of_range("Tried to access out of range component of linear::SquareMatrix");
+            throw IMV_out_of_range();
         return *(data_[id]);
     }
 
     T &component(size_t id) override
     {
         if (id >= dim())
-            throw std::out_of_range("Tried to access out of range component of linear::SquareMatrix");
+            throw IMV_out_of_range();
 
         return (*this)[id / size_][id % size_];
     }
     const T &component(size_t id) const override
     {
         if (id >= dim())
-            throw std::out_of_range("Tried to access out of range component of linear::SquareMatrix");
+            throw IMV_out_of_range();
 
         return (*this)[id / size_][id % size_];
     }

@@ -1,6 +1,7 @@
 
 #include <type_traits>
 #include <stdexcept>
+#include <iostream>
 
 #ifndef LINEAR_HH_INCL
 #define LINEAR_HH_INCL
@@ -11,17 +12,17 @@ namespace linear
 {
 
 // Exceptions for linear namespace classes
-class IMV_dim_misalign : public std::invalid_argument
+struct IMV_dim_misalign final : public std::invalid_argument
 {
-    static constexpr char* DEF_WHAT_ =
+    static constexpr const char* DEF_WHAT_ =
     "Tried to perform operation on IMathVector objects with different dimensionality";
 
     IMV_dim_misalign(const char* whatArg = DEF_WHAT_) : invalid_argument{whatArg} {}
 };
 
-class IMV_out_of_range : public std::out_of_range
+struct IMV_out_of_range final : public std::out_of_range
 {
-    static constexpr char* DEF_WHAT_ =
+    static constexpr const char* DEF_WHAT_ =
     "Tried to access IMathVector component by out of range id";
 
     IMV_out_of_range(const char* whatArg = DEF_WHAT_) : out_of_range{whatArg} {}
@@ -37,7 +38,7 @@ struct IMathVector
 
     virtual ~IMathVector() {}
 
-    virtual size_t dim() noexcept = 0;
+    virtual size_t dim() const noexcept = 0;
 
     bool dimsAreEqual(const IMathVector& second) noexcept
     {
@@ -52,7 +53,7 @@ struct IMathVector
     {
         for (size_t i = 0, end = dim(); i < end; ++i)
         {
-            auto val = component(i);
+            T val = component(i);
             val = -val;
         }
 
@@ -82,47 +83,54 @@ struct IMathVector
     {
         for (size_t i = 0, end = dim(); i < end; ++i)
             component(i) *= num;
+
+        return *this;
     }
     virtual IMathVector &operator/=(const T& num) &
     {
-        return (*this) *= (1. / num);
+        for (size_t i = 0, end = dim(); i < end; ++i)
+            component(i) /= num;
+
+        return *this;
     }
 };
 
-// Common realization of math vector
+// Common implementation of IMathVector
 template <class T> class MathVector final : public IMathVector<T>
 {
-    containers::Vector<T> data_;
-    const size_t size_;
+    containers::Vector<T> data_ {};
 
   public:
-    MathVector(size_t size) : data_(size), size_(size) {}
-
-    MathVector(std::initializer_list<T> l) : data_(l.size()), size_(l.size())
+    MathVector(size_t size) : data_{}
     {
-        int i = 0;
-        for (auto it = l.begin(), end = l.end(); it != end; ++it, ++i)
-            data_[i] = *it;
+        for (size_t i = 0; i < size; ++i)
+            data_.push(T{});
     }
 
-    size_t dim() noexcept override
+    MathVector(std::initializer_list<T> l)
     {
-        return size_;
+        for (auto it = l.begin(), end = l.end(); it != end; ++it)
+            data_.push(*it);
+    }
+
+    size_t dim() const noexcept override
+    {
+        return data_.size();
     }
 
     T &component(size_t id) override
     {
-        if (id >= size_)
+        if (id >= data_.size())
             throw IMV_out_of_range();
 
-        return data_[id % size_];
+        return data_[id];
     }
-    const T &component(size_t id) const noexcept override
+    const T &component(size_t id) const override
     {
-        if (id >= size_)
+        if (id >= data_.size())
             throw IMV_out_of_range();
 
-        return data_[id % size_];
+        return data_[id];
     }
 };
 
@@ -141,26 +149,26 @@ template <class T> struct IMatrix : public IMathVector<T>
 
         T &operator[](size_t id)
         {
-            return row_.getComponent(id);
+            return row_.component(id);
         }
 
         const T &operator[](size_t id) const
         {
-            return row_.getComponent(id);
+            return row_.component(id);
         }
     };
 
   public:
-    virtual ProxyRow operator[](size_t);
-    virtual const ProxyRow operator[](size_t) const;
+    virtual ProxyRow operator[](size_t) = 0;
+    virtual const ProxyRow operator[](size_t) const = 0;
 
-    virtual size_t rowNum() const noexcept;
-    virtual size_t colNum() const noexcept;
+    virtual size_t rowNum() const noexcept = 0;
+    virtual size_t colNum() const noexcept = 0;
 };
 
 template <class T> struct ISquareMatrix : public IMatrix<T>
 {
-    virtual T det() const;
+    virtual T det() const = 0;
 };
 
 template <class T> class SquareMatrix final : public ISquareMatrix<T>
@@ -168,19 +176,22 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
     using IMatrix<T>::Row;
     using IMatrix<T>::ProxyRow;
 
-    containers::Vector<std::unique_ptr<typename IMatrix<T>::Row>> data_{};
+    using RowPtr = std::unique_ptr<typename IMatrix<T>::Row>;
+
+    containers::Vector<RowPtr> data_{};
 
     const size_t size_;
 
   public:
-    SquareMatrix(size_t size) :
-        data_(size, std::unique_ptr<typename IMatrix<T>::Row>(nullptr)), size_(size)
+    SquareMatrix(size_t size) : size_(size)
     {
         for (size_t i = 0; i < size; ++i)
-            data_[i] = new MathVector<T>(size_);
+        {
+            data_.push (RowPtr {new MathVector<T>(size_)});
+        }
     }
 
-    size_t dim() noexcept override
+    size_t dim() const noexcept override
     {
         return size_ * size_;
     }
@@ -203,14 +214,14 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
         if (id >= dim())
             throw IMV_out_of_range();
 
-        return (*this)[id / size_][id % size_];
+        return data_[id / size_]->component(id % size_);
     }
     const T &component(size_t id) const override
     {
         if (id >= dim())
             throw IMV_out_of_range();
 
-        return (*this)[id / size_][id % size_];
+        return data_[id / size_]->component(id % size_);
     }
 
     size_t rowNum() const noexcept override

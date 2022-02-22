@@ -187,7 +187,8 @@ template <class T> class Vector final : private VectorStorage<T>
     class iterator final
     {
         friend Vector;
-        T const *ptr_;
+
+        mutable T *ptr_;
 
         iterator(T *ptr) noexcept : ptr_(ptr) {}
 
@@ -223,10 +224,7 @@ template <class T> class Vector final : private VectorStorage<T>
             return copy;
         }
 
-        bool operator==(const iterator& second) const noexcept
-        {
-            return ptr_ == second.ptr_;
-        }
+        bool operator==(const iterator& second) const noexcept = default;
     };
 
     class const_iterator final
@@ -261,6 +259,8 @@ template <class T> class Vector final : private VectorStorage<T>
         {
             return it_--;
         }
+
+        bool operator==(const const_iterator& sd) const noexcept = default;
     };
 
     iterator begin() noexcept

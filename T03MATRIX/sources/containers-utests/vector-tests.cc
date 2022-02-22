@@ -5,148 +5,161 @@
 namespace containers
 {
 
-// namespace
-// {
+namespace
+{
 
 // Throws std::bad_alloc in every N_ constructor.
-// And allows to check if all created objects were destructed.
-class ExceptsSafetyChecker final
+// And allows to check number of created objects.
+class TestT final
 {
-    // Counts number of existent objects of class CountedObject.
-    class CountedObject final
-    {
-        static size_t objsCounter_;
-
-      public:
-        CountedObject()
-        {
-            ++objsCounter_;
-        }
-        ~CountedObject()
-        {
-            --objsCounter_;
-        }
-
-        static size_t numOfObjects() noexcept
-        {
-            return objsCounter_;
-        }
-    };
-
     // Excepts throw period.
     static size_t N_;
-
-    CountedObject obj_;
+    static size_t objsCounter_;
 
   public:
-    void ctorAction()
+    TestT()
     {
-        if (CountedObject::numOfObjects() % N_ == 0)
+        if ((objsCounter_ + 1) % N_ == 0)
             throw std::bad_alloc();
+        ++objsCounter_;
+    }
+    TestT(const TestT&) : TestT()
+    {
+    }
+    ~TestT()
+    {
+        --objsCounter_;
     }
 
-    ExceptsSafetyChecker() : obj_{}
+    static size_t numOfObjects()
     {
-        ctorAction();
-    }
-    ExceptsSafetyChecker(const ExceptsSafetyChecker&) : obj_{}
-    {
-        ctorAction();
+        return objsCounter_;
     }
 
-    static bool areAllDestructed() noexcept
-    {
-        return CountedObject::numOfObjects() == 0;
-    }
     static void setN(size_t N) noexcept
     {
         N_ = N;
     }
 };
 
-size_t ExceptsSafetyChecker::CountedObject::objsCounter_ = 0;
-size_t ExceptsSafetyChecker::N_ = 1;
+size_t TestT::N_ = 1;
+size_t TestT::objsCounter_ = 0;
 
-using TestVec = Vector<ExceptsSafetyChecker>;
+using TestVec = Vector<TestT>;
 
+// Function to check exceptions safety.
 // Returns false for succeed check.
 template<class Callable>
 bool checkExceptSafety(Callable callable)
 {
-    std::cout << "Callable " << typeid(Callable).name() << ":" << std::endl;
+    // std::cout << "Callable " << typeid(Callable).name() << ":" << std::endl;
     try {
         callable();
     }
     catch(const std::bad_alloc&) {
-        std::cout << "Caught exception!" << std::endl;
-        return !ExceptsSafetyChecker::areAllDestructed();
+        // std::cout << "Caught exception!" << std::endl;
+        return !callable.isOk();
     }
 
-    std::cout << "No exceptions here!" << std::endl;
+    // std::cout << "No exceptions here!" << std::endl;
     return true;
 }
 
-class CheckCallable
+// Interface for all exception safety tests callables.
+struct IExceptSafetyTestCallable
 {
-    const size_t N_;
+    virtual ~IExceptSafetyTestCallable() {}
+    
+    virtual void operator()() = 0;
+    virtual bool isOk() const
+    {
+        return !TestT::numOfObjects();
+    }
+};
+
+class CallInitializerListCtor final : public IExceptSafetyTestCallable
+{
+    static constexpr size_t N_VAL_ = 5;
 
   public:
-    CheckCallable(size_t N) : N_{N} {}
-    size_t getN() const
+    void operator()() override
     {
-        return N_;
+        TestT::setN(N_VAL_);
+        TestVec v = {TestT(), TestT(), TestT()};
     }
-    virtual ~CheckCallable() {}
-    virtual void operator()() const = 0;
 };
 
-struct CallCtorFromSize final : public CheckCallable
+class ExceptSafetyTestCallableWithCustomN: public IExceptSafetyTestCallable
 {
-    CallCtorFromSize(size_t N) : CheckCallable{N} {}
-    void operator()() const override
-    {
-        TestVec v(getN());
-    }
+  protected:
+    const size_t N_;
+    ExceptSafetyTestCallableWithCustomN(size_t N) : N_{N} {}
 };
 
-struct CallCtorFromSizeAndT final : public CheckCallable
+struct CallCtorFromSize final : public ExceptSafetyTestCallableWithCustomN
 {
-    CallCtorFromSizeAndT(size_t N) : CheckCallable{N} {}
-    void operator()() const override
+    CallCtorFromSize(size_t N) : ExceptSafetyTestCallableWithCustomN{N} {}
+    void operator()() override
     {
-        TestVec(getN() - 1, ExceptsSafetyChecker());
+        TestT::setN(N_);
+        TestVec v(N_);
     }
 };
 
-struct CallPushNPop final : public CheckCallable
+struct CallCtorFromSizeAndT final : public ExceptSafetyTestCallableWithCustomN
 {
-    CallPushNPop(size_t N) : CheckCallable{N} {}
-    void operator()() const override
+    CallCtorFromSizeAndT(size_t N) : ExceptSafetyTestCallableWithCustomN{N} {}
+    void operator()() override
     {
-        TestVec t{};
-
-        for (size_t i = 0, N = getN() / 2; i < N; ++i)
-            t.push(ExceptsSafetyChecker());
-        for (size_t i = 0, N = getN() / 3; i < N; ++i)
-            t.pop();
-        for (size_t i = 0, N = getN(); i < N; ++i)
-            t.push(ExceptsSafetyChecker());
+        TestT::setN(N_);
+        TestVec(N_ - 1, TestT());
     }
 };
 
-// } // namespace
+class CallPushNPop final : public ExceptSafetyTestCallableWithCustomN
+{
+    TestVec v_{};
+    size_t sizeBeforeThrow_ = 0;
+
+  public:
+    CallPushNPop(size_t N) : ExceptSafetyTestCallableWithCustomN{N} {}
+    void operator()() override
+    {
+        TestT::setN(N_);
+
+        for (size_t i = 0, N = N_ / 2; i < N; ++i)
+        {
+            sizeBeforeThrow_ = v_.size();
+            v_.push(TestT());
+        }
+        for (size_t i = 0, N = N_ / 3; i < N; ++i)
+            v_.pop();
+        for (size_t i = 0, N = N_; i < N; ++i)
+        {
+            sizeBeforeThrow_ = v_.size();
+            v_.push(TestT());
+        }
+    }
+    bool isOk() const override
+    {
+        // TestVec should be in the same state as it was before throw.
+        return v_.size() == sizeBeforeThrow_;
+    }
+};
+
+} // namespace
 
 TEST(VectorTests, ExceptsSafetyTests)
 {
-    std::vector<size_t> testValues = {7, 188, 256, 993};
-
-    for (auto N : testValues)
+    ASSERT_FALSE (checkExceptSafety(CallInitializerListCtor()));
+    
+    for (auto N : {7, 188, 256, 993, 182948})
     {
-        ExceptsSafetyChecker::setN(N);
+        // std::cout << N << std::endl;
 
-        ASSERT_FALSE (checkExceptSafety<CallCtorFromSize>(CallCtorFromSize(N)));
-        ASSERT_FALSE (checkExceptSafety<CallCtorFromSizeAndT>(CallCtorFromSizeAndT(N)));
-        ASSERT_FALSE (checkExceptSafety<CallPushNPop>(CallPushNPop(N)));
+        ASSERT_FALSE (checkExceptSafety(CallCtorFromSize(N)));
+        ASSERT_FALSE (checkExceptSafety(CallCtorFromSizeAndT(N)));
+        ASSERT_FALSE (checkExceptSafety(CallPushNPop(N)));
     }
 }
 

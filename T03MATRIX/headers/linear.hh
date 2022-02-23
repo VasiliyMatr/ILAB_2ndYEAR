@@ -2,6 +2,8 @@
 #include <type_traits>
 #include <stdexcept>
 #include <iostream>
+#include <unordered_map>
+#include <cmath>
 
 #ifndef LINEAR_HH_INCL
 #define LINEAR_HH_INCL
@@ -34,26 +36,25 @@ struct IMV_out_of_range final : public std::out_of_range
 template<class T, class N = T>
 struct IMathVector
 {
-    static_assert(std::is_arithmetic_v<T>);
-
     virtual ~IMathVector() {}
 
     virtual size_t dim() const noexcept = 0;
 
-    bool dimsAreEqual(const IMathVector& second) noexcept
+    bool dimsAreEqual(const IMathVector& second) const noexcept
     {
         return dim() == second.dim();
     }
 
     // Access to vector components:
-    virtual T &component(size_t) = 0;
-    virtual const T &component(size_t) const = 0;
+    virtual T &at(size_t) = 0;
+    virtual const T &at(size_t) const = 0;
 
+  public:
     virtual IMathVector &operator-() &
     {
         for (size_t i = 0, end = dim(); i < end; ++i)
         {
-            T val = component(i);
+            T &val = at(i);
             val = -val;
         }
 
@@ -65,7 +66,7 @@ struct IMathVector
         if (!dimsAreEqual(second))
             throw IMV_dim_misalign();
         for (size_t i = 0, end = dim(); i < end; ++i)
-            component(i) += second.component(i);
+            at(i) += second.at(i);
 
         return *this;
     }
@@ -74,7 +75,7 @@ struct IMathVector
         if (!dimsAreEqual(second))
             throw IMV_dim_misalign();
         for (size_t i = 0, end = dim(); i < end; ++i)
-            component(i) -= second.component(i);
+            at(i) -= second.at(i);
 
         return *this;
     }
@@ -82,16 +83,25 @@ struct IMathVector
     virtual IMathVector &operator*=(const N& num) &
     {
         for (size_t i = 0, end = dim(); i < end; ++i)
-            component(i) *= num;
+            at(i) *= num;
 
         return *this;
     }
     virtual IMathVector &operator/=(const N& num) &
     {
         for (size_t i = 0, end = dim(); i < end; ++i)
-            component(i) /= num;
+            at(i) /= num;
 
         return *this;
+    }
+
+    virtual void MAdd(const IMathVector &toMul, N num) &
+    {
+        if (!dimsAreEqual(toMul))
+            throw IMV_dim_misalign();
+
+        for (size_t i = 0, end = dim(); i < end; ++i)
+            at(i) += toMul.at(i) * num;
     }
 };
 
@@ -102,6 +112,10 @@ template <class T, class N = T> class MathVector final : public IMathVector<T, N
 
   public:
     MathVector() = default;
+    MathVector(const MathVector&) = default;
+    MathVector(MathVector&&) = default;
+    MathVector& operator=(const MathVector&) = default;
+    MathVector& operator=(MathVector&&) = default;
 
     MathVector(size_t size) : data_(size)
     {
@@ -109,20 +123,28 @@ template <class T, class N = T> class MathVector final : public IMathVector<T, N
     MathVector(std::initializer_list<T> l) : data_(l)
     {
     }
+    template<class CopyT, class CopyN = CopyT>
+    MathVector<CopyT, CopyN> copy() const
+    {
+        MathVector<CopyT, CopyN> toRet(data_.size());
+        for (size_t i = 0, end = data_.size(); i < end; ++i)
+            toRet.at(i) = at(i);
+        return toRet;
+    }
 
     size_t dim() const noexcept override
     {
         return data_.size();
     }
 
-    T &component(size_t id) override
+    T &at(size_t id) override
     {
         if (id >= data_.size())
             throw IMV_out_of_range();
 
         return data_[id];
     }
-    const T &component(size_t id) const override
+    const T &at(size_t id) const override
     {
         if (id >= data_.size())
             throw IMV_out_of_range();
@@ -130,21 +152,16 @@ template <class T, class N = T> class MathVector final : public IMathVector<T, N
         return data_[id];
     }
 
-    // Non virtual fast data access:
-    T &operator[](size_t id)
+    static void swap(MathVector &ft, MathVector &sd) noexcept
     {
-        return data_[id];
-    }
-    const T &operator[](size_t id) const
-    {
-        return data_[id];
+        containers::Vector<T>::swap(ft.data_, sd.data_);
     }
 };
 
-// Matrix is a vector of size rowNum x colNum
+// Matrix is a vector of size lineNum x colNum
 template <class T> struct IMatrix : public IMathVector<T>
 {
-    virtual size_t rowNum() const noexcept = 0;
+    virtual size_t lineNum() const noexcept = 0;
     virtual size_t colNum() const noexcept = 0;
 };
 
@@ -156,15 +173,30 @@ template <class T> struct ISquareMatrix : public IMatrix<T>
 // Common implementation of ISquareMatrix
 template <class T> class SquareMatrix final : public ISquareMatrix<T>
 {
-    using Row = MathVector<T>;
-
-    containers::Vector<Row> data_;
+    using Line = MathVector<T>;
 
     const size_t size_;
 
+    containers::Vector<Line> data_;
+
   public:
-    SquareMatrix(size_t size) : data_(size, Row(size)), size_(size)
+    SquareMatrix(size_t size) : size_{size}, data_(size_, Line(size_))
     {
+    }
+    SquareMatrix(std::initializer_list<T> l) :
+        size_(std::sqrt(l.size())), data_(size_, Line(size_))
+    {
+        size_t i = 0;
+        for (auto it = l.begin(), end = l.end(); it != end; ++it, ++i)
+            at(i) = *it;
+    }
+    template<class CopyT>
+    SquareMatrix<CopyT> copy() const
+    {
+        SquareMatrix<CopyT> copy (size_);
+        for (size_t i = 0, end = size_ * size_; i < end; ++i)
+            copy.at(i) = at(i);
+        return copy;
     }
 
     size_t dim() const noexcept override
@@ -172,22 +204,22 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
         return size_ * size_;
     }
 
-    T &component(size_t id) override
+    T &at(size_t id) override
     {
         if (id >= dim())
             throw IMV_out_of_range();
 
-        return data_[id / size_][id % size_];
+        return data_[id / size_].at(id % size_);
     }
-    const T &component(size_t id) const override
+    const T &at(size_t id) const override
     {
         if (id >= dim())
             throw IMV_out_of_range();
 
-        return data_[id / size_][id % size_];
+        return data_[id / size_].at(id % size_);
     }
 
-    size_t rowNum() const noexcept override
+    size_t lineNum() const noexcept override
     {
         return size_;
     }
@@ -196,40 +228,89 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
         return size_;
     }
 
+    // Lazy Gauss algo for det method.
+    // Works properly only for floating point numbers.
+    void lazyGauss();
+
+    using fp_t = double;
+
     T det() const override
     {
-        return T{};
+        SquareMatrix<fp_t> mat = copy<fp_t>();
+        mat.lazyGauss();
+
+        fp_t result = 1;
+        for (size_t i = 0; i < size_; ++i)
+            result *= mat.at(i * size_ + i);
+
+        if (std::is_integral_v<T>)
+            result = std::round(result);
+        return result;
     }
 
   private:
-    // Non virtual fast data access:
-    struct ProxyRow
+    // lazyGauss subfunc. Seeks for first line with not zero leading value.
+    size_t seekNextLine(size_t lineIndex)
     {
-        Row &row_;
-        ProxyRow(Row &row) : row_{row}
+        for (size_t i = lineIndex; i < size_; ++i)
+            if (data_[i].at(lineIndex) != 0)
+                return i;
+        return size_;
+    }
+
+    // Handy data access stuff.
+    struct ProxyLine
+    {
+        Line &line_;
+        ProxyLine(Line &line) : line_{line}
         {
         }
 
         T &operator[](size_t id)
         {
-            return row_[id];
+            return line_.at(id);
         }
         const T &operator[](size_t id) const
         {
-            return row_[id];
+            return line_.at(id);
         }
     };
 
   public:
-    ProxyRow operator[](size_t id)
+    ProxyLine operator[](size_t id)
     {
         return data_[id];
     }
-    const ProxyRow operator[](size_t id) const
+    const ProxyLine operator[](size_t id) const
     {
         return data_[id];
     }
 };
+
+template<class T>
+void SquareMatrix<T>::lazyGauss()
+{
+    for (size_t col = 0; col < size_; ++col)
+    {
+        // Next line index is equal to col.
+        size_t nextLineIndex = seekNextLine(col);
+        if (nextLineIndex == size_)
+            return;
+        Line::swap(data_[col], data_[nextLineIndex]);
+        T leadingValue = data_[col].at(col);
+
+        for (size_t line = col + 1; line < size_; ++line)
+        {
+            fp_t curLineLeadingValue = data_[line].at(col);
+
+            if (curLineLeadingValue != 0)
+            {
+                double ratio = -curLineLeadingValue / leadingValue;
+                data_[line].MAdd(data_[col], ratio);
+            }
+        }
+    }
+}
 
 } // namespace linear
 

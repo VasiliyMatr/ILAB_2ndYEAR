@@ -83,8 +83,8 @@ template <class T> class Vector final : private VectorStorage<T>
   public:
     Vector(CopyArg sd) : VectorStorage<T> {sd.size_}
     {
-        for (size_t i = 0; i < size_; ++i)
-            new (data_ + i) T(sd.data_[i]);
+        for (; size_ < sd.size_; ++size_)
+            new (data_ + size_) T(sd.data_[size_]);
     }
     Vector &operator=(CopyArg sd)
     {
@@ -115,6 +115,13 @@ template <class T> class Vector final : private VectorStorage<T>
     }
 
     ~Vector() = default;
+
+    static void swap(Vector &ft, Vector &sd) noexcept
+    {
+        std::swap(ft.data_, sd.data_);
+        std::swap(ft.size_, sd.size_);
+        std::swap(ft.allocated_, sd.allocated_);
+    }
 
   private:
     template<class Arg> using ChooseCopy =

@@ -165,9 +165,35 @@ template <class T> struct IMatrix : public IMathVector<T>
     virtual size_t colNum() const noexcept = 0;
 };
 
-template <class T> struct ISquareMatrix : public IMatrix<T>
+template <class T, bool ENABLE_UNSIGNED_ = false> struct ISquareMatrix : public IMatrix<T>
 {
-    virtual T det() const = 0;
+    static_assert(ENABLE_UNSIGNED_ || !std::is_unsigned_v<T>,
+        "SquareMatrix can't store unsigned values by default due to determinant calc issues." "\n"
+        "You can enable unsigned values by changing template bool parameter value, "
+        "but det function could return wrong values." "\n"
+    );
+
+  protected:
+    virtual T constDetImpl() const = 0;
+    virtual T detImpl() = 0;
+
+  public:
+    virtual T trace() const
+    {
+        T trace = 1;
+        for (size_t i = 0, size = this->lineNum(); i < size; ++i)
+            trace *= this->at(i * size + i);
+        return trace;
+    }
+
+    T det() const
+    {
+        return constDetImpl();
+    }
+    T det(bool canModify = false)
+    {
+        return canModify ? detImpl() : constDetImpl();
+    }
 };
 
 // Common implementation of ISquareMatrix
@@ -228,32 +254,26 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
         return size_;
     }
 
-    // Lazy Gauss algo for det method.
+  private:
+    T detImpl() override;
+    T constDetImpl() const override;
+
+    // Lazy Gauss algo for detImpl method.
     // Works properly only for floating point numbers.
     void lazyGauss();
 
-    using fp_t = double;
-
-    T det() const override
+    template<class NumT = T, std::enable_if_t<std::is_arithmetic_v<NumT>, int> = 0>
+    bool isZero(T &value)
     {
-        SquareMatrix<fp_t> mat = copy<fp_t>();
-        mat.lazyGauss();
-
-        fp_t result = 1;
-        for (size_t i = 0; i < size_; ++i)
-            result *= mat.at(i * size_ + i);
-
-        if (std::is_integral_v<T>)
-            result = std::round(result);
-        return result;
+        static const double FP_CMP_PREC_ = 1E-6;
+        return std::abs(value) < FP_CMP_PREC_;
     }
 
-  private:
     // lazyGauss subfunc. Seeks for first line with not zero leading value.
     size_t seekNextLine(size_t lineIndex)
     {
         for (size_t i = lineIndex; i < size_; ++i)
-            if (data_[i].at(lineIndex) != 0)
+            if (!isZero(data_[i].at(lineIndex)))
                 return i;
         return size_;
     }
@@ -285,31 +305,72 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
     {
         return data_[id];
     }
+
+    void swapCols(size_t ftIndx, size_t sdIndx) noexcept
+    {
+        MathVector<T>::swap(data_[ftIndx], data_[sdIndx]);
+    }
+
+    void MAddCols(size_t ftIndx, size_t sdIndx, T num) noexcept
+    {
+        data_[ftIndx].MAdd(data_[sdIndx], num);
+    }
 };
+
+using fp_t = double;
+
+template<class T>
+T SquareMatrix<T>::constDetImpl() const
+{
+    SquareMatrix<fp_t> mat = copy<fp_t>();
+    fp_t result = mat.det(true); // canModify = true
+
+    if (!std::is_floating_point_v<T>)
+        return std::round(result);
+    return result;
+}
+
+template<class T>
+T SquareMatrix<T>::detImpl()
+{
+    if (!std::is_floating_point_v<T>)
+    {
+        SquareMatrix<fp_t> mat = copy<fp_t>();
+        return std::round(mat.det(true));
+    }
+    lazyGauss();
+    return this->trace();
+}
 
 template<class T>
 void SquareMatrix<T>::lazyGauss()
 {
+    size_t swapsCount = 0;
+
     for (size_t col = 0; col < size_; ++col)
     {
         // Next line index is equal to col.
         size_t nextLineIndex = seekNextLine(col);
         if (nextLineIndex == size_)
             return;
-        Line::swap(data_[col], data_[nextLineIndex]);
+        if (nextLineIndex != col)
+        {
+            Line::swap(data_[col], data_[nextLineIndex]);
+            ++swapsCount;
+        }
         T leadingValue = data_[col].at(col);
 
         for (size_t line = col + 1; line < size_; ++line)
         {
             fp_t curLineLeadingValue = data_[line].at(col);
 
-            if (curLineLeadingValue != 0)
-            {
-                double ratio = -curLineLeadingValue / leadingValue;
-                data_[line].MAdd(data_[col], ratio);
-            }
+            double ratio = -curLineLeadingValue / leadingValue;
+            data_[line].MAdd(data_[col], ratio);
         }
     }
+
+    if (swapsCount % 2)
+        at(0) = -at(0);
 }
 
 } // namespace linear

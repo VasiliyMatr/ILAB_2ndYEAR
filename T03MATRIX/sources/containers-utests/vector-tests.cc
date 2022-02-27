@@ -1,6 +1,6 @@
 
-#include <gtest/gtest.h>
 #include "containers.hh"
+#include <gtest/gtest.h>
 
 namespace containers
 {
@@ -23,7 +23,7 @@ class TestT final
             throw std::bad_alloc();
         ++objsCounter_;
     }
-    TestT(const TestT&) : TestT()
+    TestT(const TestT &) : TestT()
     {
     }
     ~TestT()
@@ -49,14 +49,15 @@ using TestVec = Vector<TestT>;
 
 // Function to check exceptions safety.
 // Returns false for succeed check.
-template<class Callable>
-bool checkExceptSafety(Callable callable)
+template <class Callable> bool checkExceptSafety(Callable callable)
 {
     // std::cout << "Callable " << typeid(Callable).name() << ":" << std::endl;
-    try {
+    try
+    {
         callable();
     }
-    catch(const std::bad_alloc&) {
+    catch (const std::bad_alloc &)
+    {
         // std::cout << "Caught exception!" << std::endl;
         return !callable.isOk();
     }
@@ -68,8 +69,10 @@ bool checkExceptSafety(Callable callable)
 // Interface for all exception safety tests callables.
 struct IExceptSafetyTestCallable
 {
-    virtual ~IExceptSafetyTestCallable() {}
-    
+    virtual ~IExceptSafetyTestCallable()
+    {
+    }
+
     virtual void operator()() = 0;
     virtual bool isOk() const
     {
@@ -89,16 +92,20 @@ class CallInitializerListCtor final : public IExceptSafetyTestCallable
     }
 };
 
-class ExceptSafetyTestCallableWithCustomN: public IExceptSafetyTestCallable
+class ExceptSafetyTestCallableWithCustomN : public IExceptSafetyTestCallable
 {
   protected:
     const size_t N_;
-    ExceptSafetyTestCallableWithCustomN(size_t N) : N_{N} {}
+    ExceptSafetyTestCallableWithCustomN(size_t N) : N_{N}
+    {
+    }
 };
 
 struct CallCtorFromSize final : public ExceptSafetyTestCallableWithCustomN
 {
-    CallCtorFromSize(size_t N) : ExceptSafetyTestCallableWithCustomN{N} {}
+    CallCtorFromSize(size_t N) : ExceptSafetyTestCallableWithCustomN{N}
+    {
+    }
     void operator()() override
     {
         TestT::setN(N_);
@@ -108,7 +115,9 @@ struct CallCtorFromSize final : public ExceptSafetyTestCallableWithCustomN
 
 struct CallCtorFromSizeAndT final : public ExceptSafetyTestCallableWithCustomN
 {
-    CallCtorFromSizeAndT(size_t N) : ExceptSafetyTestCallableWithCustomN{N} {}
+    CallCtorFromSizeAndT(size_t N) : ExceptSafetyTestCallableWithCustomN{N}
+    {
+    }
     void operator()() override
     {
         TestT::setN(N_);
@@ -122,7 +131,9 @@ class CallPushNPop final : public ExceptSafetyTestCallableWithCustomN
     size_t sizeBeforeThrow_ = 0;
 
   public:
-    CallPushNPop(size_t N) : ExceptSafetyTestCallableWithCustomN{N} {}
+    CallPushNPop(size_t N) : ExceptSafetyTestCallableWithCustomN{N}
+    {
+    }
     void operator()() override
     {
         TestT::setN(N_);
@@ -151,15 +162,15 @@ class CallPushNPop final : public ExceptSafetyTestCallableWithCustomN
 
 TEST(VectorTests, ExceptsSafetyTests)
 {
-    ASSERT_FALSE (checkExceptSafety(CallInitializerListCtor()));
-    
+    ASSERT_FALSE(checkExceptSafety(CallInitializerListCtor()));
+
     for (auto N : {7, 188, 256, 993, 182948})
     {
         // std::cout << N << std::endl;
 
-        ASSERT_FALSE (checkExceptSafety(CallCtorFromSize(N)));
-        ASSERT_FALSE (checkExceptSafety(CallCtorFromSizeAndT(N)));
-        ASSERT_FALSE (checkExceptSafety(CallPushNPop(N)));
+        ASSERT_FALSE(checkExceptSafety(CallCtorFromSize(N)));
+        ASSERT_FALSE(checkExceptSafety(CallCtorFromSizeAndT(N)));
+        ASSERT_FALSE(checkExceptSafety(CallPushNPop(N)));
     }
 }
 

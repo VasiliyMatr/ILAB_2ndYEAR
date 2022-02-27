@@ -1,9 +1,9 @@
 
-#include <cstdlib>
-#include <utility>
 #include <algorithm>
+#include <cstdlib>
 #include <initializer_list>
 #include <memory>
+#include <utility>
 
 #ifndef CONTAINERS_HH_INCL
 #define CONTAINERS_HH_INCL
@@ -21,8 +21,8 @@ template <class T> class VectorStorage
 
     VectorStorage() = default;
 
-    VectorStorage(size_t allocSize) : allocated_(allocSize),
-        data_{static_cast<T *>(::operator new(sizeof(T) * allocSize))}
+    VectorStorage(size_t allocSize)
+        : allocated_(allocSize), data_{static_cast<T *>(::operator new(sizeof(T) * allocSize))}
     {
     }
 
@@ -55,9 +55,8 @@ template <class T> class VectorStorage
 // Dynamical array with elements access.
 template <class T> class Vector final : private VectorStorage<T>
 {
-    static_assert(std::is_nothrow_move_constructible<T>::value ||
-        std::is_copy_constructible<T>::value,
-        "T should be copy constructible or nothrow moveable.");
+    static_assert(std::is_nothrow_move_constructible<T>::value || std::is_copy_constructible<T>::value,
+                  "T should be copy constructible or nothrow moveable.");
 
     using VectorStorage<T>::allocated_;
     using VectorStorage<T>::size_;
@@ -70,18 +69,17 @@ template <class T> class Vector final : private VectorStorage<T>
 
   private:
     // Will be used in few places
-    class dummy final {};
+    class dummy final
+    {
+    };
 
-    using CopyArg =
-    std::conditional_t<std::is_copy_constructible_v<T>, const Vector &, dummy>;
+    using CopyArg = std::conditional_t<std::is_copy_constructible_v<T>, const Vector &, dummy>;
 
-    template<class Arg> using TCopyCtorEnabled =
-    std::enable_if_t<std::is_copy_constructible_v<Arg>, int>;
-    template<class Arg> using TDefaultCtorEnabled =
-    std::enable_if_t<std::is_default_constructible_v<Arg>, int>;
+    template <class Arg> using TCopyCtorEnabled = std::enable_if_t<std::is_copy_constructible_v<Arg>, int>;
+    template <class Arg> using TDefaultCtorEnabled = std::enable_if_t<std::is_default_constructible_v<Arg>, int>;
 
   public:
-    Vector(CopyArg sd) : VectorStorage<T> {sd.size_}
+    Vector(CopyArg sd) : VectorStorage<T>{sd.size_}
     {
         for (; size_ < sd.size_; ++size_)
             new (data_ + size_) T(sd.data_[size_]);
@@ -92,22 +90,19 @@ template <class T> class Vector final : private VectorStorage<T>
         return *this = std::move(copy);
     }
 
-    template<class Arg = T, TCopyCtorEnabled<Arg> = 0>
-    Vector(std::initializer_list<T> l) : VectorStorage<T>{l.size()}
+    template <class Arg = T, TCopyCtorEnabled<Arg> = 0> Vector(std::initializer_list<T> l) : VectorStorage<T>{l.size()}
     {
         static_assert(std::is_same_v<Arg, T>, "Arg should be default type (T).");
         for (auto it = l.begin(), end = l.end(); it != end; ++it, ++size_)
             new (data_ + size_) T(*it);
     }
-    template<class Arg = T, TCopyCtorEnabled<Arg> = 0>
-    Vector(size_t size, const T &toCopy) : VectorStorage<T>{size}
+    template <class Arg = T, TCopyCtorEnabled<Arg> = 0> Vector(size_t size, const T &toCopy) : VectorStorage<T>{size}
     {
         static_assert(std::is_same_v<Arg, T>, "Arg should be default type (T).");
         for (; size_ < size; ++size_)
             new (data_ + size_) T(toCopy);
     }
-    template<class Arg = T, TDefaultCtorEnabled<Arg> = 0>
-    Vector(size_t size) : VectorStorage<T>{size}
+    template <class Arg = T, TDefaultCtorEnabled<Arg> = 0> Vector(size_t size) : VectorStorage<T>{size}
     {
         static_assert(std::is_same_v<Arg, T>, "Arg should be default type (T).");
         for (; size_ < size; ++size_)
@@ -124,20 +119,16 @@ template <class T> class Vector final : private VectorStorage<T>
     }
 
   private:
-    template<class Arg> using ChooseCopy =
-    std::enable_if_t<!std::is_nothrow_move_constructible_v<Arg>, int>;
-    template<class Arg> using ChooseMove =
-    std::enable_if_t<std::is_nothrow_move_constructible_v<Arg>, int>;
+    template <class Arg> using ChooseCopy = std::enable_if_t<!std::is_nothrow_move_constructible_v<Arg>, int>;
+    template <class Arg> using ChooseMove = std::enable_if_t<std::is_nothrow_move_constructible_v<Arg>, int>;
 
     // Sub function for realloc.
-    template<class Arg = T, ChooseMove<Arg> = 0>
-    void moveOrCopyT(T *dest, T &src)
+    template <class Arg = T, ChooseMove<Arg> = 0> void moveOrCopyT(T *dest, T &src)
     {
         new (dest) T(std::move(src));
     }
     // Sub function for realloc.
-    template<class Arg = T, ChooseCopy<Arg> = 0>
-    void moveOrCopyT(T *dest, T &src)
+    template <class Arg = T, ChooseCopy<Arg> = 0> void moveOrCopyT(T *dest, T &src)
     {
         new (dest) T(src);
     }
@@ -149,7 +140,7 @@ template <class T> class Vector final : private VectorStorage<T>
     void realloc(size_t newAllocated)
     {
         size_t newSize = std::min(newAllocated, size_);
-        Vector newVector (newAllocated, dummy{});
+        Vector newVector(newAllocated, dummy{});
 
         for (; newVector.size_ < newSize; ++newVector.size_)
             moveOrCopyT(newVector.data_ + newVector.size_, data_[newVector.size_]);
@@ -158,13 +149,12 @@ template <class T> class Vector final : private VectorStorage<T>
     }
 
   public:
-    template<class Arg>
-    void push(Arg &&value)
+    template <class Arg> void push(Arg &&value)
     {
         if (size_ == allocated_)
             realloc(2 * allocated_ + 1);
 
-        new(data_ + size_) T{std::forward<Arg>(value)};
+        new (data_ + size_) T{std::forward<Arg>(value)};
         ++size_;
     }
     void pop()
@@ -197,11 +187,13 @@ template <class T> class Vector final : private VectorStorage<T>
 
         mutable T *ptr_;
 
-        iterator(T *ptr) noexcept : ptr_(ptr) {}
+        iterator(T *ptr) noexcept : ptr_(ptr)
+        {
+        }
 
       public:
-        iterator(const iterator&) = default;
-        iterator &operator=(const iterator&) = default;
+        iterator(const iterator &) = default;
+        iterator &operator=(const iterator &) = default;
 
         T &operator*() const noexcept
         {
@@ -231,7 +223,7 @@ template <class T> class Vector final : private VectorStorage<T>
             return copy;
         }
 
-        bool operator==(const iterator& second) const noexcept = default;
+        bool operator==(const iterator &second) const noexcept = default;
     };
 
     class const_iterator final
@@ -239,9 +231,11 @@ template <class T> class Vector final : private VectorStorage<T>
         iterator it_;
 
       public:
-        const_iterator(const iterator &it) noexcept : it_(it) {}
-        const_iterator(const const_iterator&) = default;
-        const_iterator &operator=(const const_iterator&) = default;
+        const_iterator(const iterator &it) noexcept : it_(it)
+        {
+        }
+        const_iterator(const const_iterator &) = default;
+        const_iterator &operator=(const const_iterator &) = default;
 
         const T &operator*() const noexcept
         {
@@ -267,7 +261,7 @@ template <class T> class Vector final : private VectorStorage<T>
             return it_--;
         }
 
-        bool operator==(const const_iterator& sd) const noexcept = default;
+        bool operator==(const const_iterator &sd) const noexcept = default;
     };
 
     iterator begin() noexcept

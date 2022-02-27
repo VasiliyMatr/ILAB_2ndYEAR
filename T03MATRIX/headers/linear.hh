@@ -1,9 +1,9 @@
 
-#include <type_traits>
-#include <stdexcept>
-#include <iostream>
-#include <unordered_map>
 #include <cmath>
+#include <iostream>
+#include <stdexcept>
+#include <type_traits>
+#include <unordered_map>
 
 #ifndef LINEAR_HH_INCL
 #define LINEAR_HH_INCL
@@ -16,31 +16,35 @@ namespace linear
 // Exceptions for linear namespace classes
 struct IMV_dim_misalign final : public std::invalid_argument
 {
-    static constexpr const char* DEF_WHAT_ =
-    "Tried to perform operation on IMathVector objects with different dimensionality";
+    static constexpr const char *DEF_WHAT_ =
+        "Tried to perform operation on IMathVector objects with different dimensionality";
 
-    IMV_dim_misalign(const char* whatArg = DEF_WHAT_) : invalid_argument{whatArg} {}
+    IMV_dim_misalign(const char *whatArg = DEF_WHAT_) : invalid_argument{whatArg}
+    {
+    }
 };
 
 struct IMV_out_of_range final : public std::out_of_range
 {
-    static constexpr const char* DEF_WHAT_ =
-    "Tried to access IMathVector component by out of range id";
+    static constexpr const char *DEF_WHAT_ = "Tried to access IMathVector component by out of range id";
 
-    IMV_out_of_range(const char* whatArg = DEF_WHAT_) : out_of_range{whatArg} {}
+    IMV_out_of_range(const char *whatArg = DEF_WHAT_) : out_of_range{whatArg}
+    {
+    }
 };
 
 // Interface for mathematical vector with fixed dimensionality.
 // Stores elements of type T. Objects of this class should be linear
 // over field of numbers of type N.
-template<class T, class N = T>
-struct IMathVector
+template <class T, class N = T> struct IMathVector
 {
-    virtual ~IMathVector() {}
+    virtual ~IMathVector()
+    {
+    }
 
     virtual size_t dim() const noexcept = 0;
 
-    bool dimsAreEqual(const IMathVector& second) const noexcept
+    bool dimsAreEqual(const IMathVector &second) const noexcept
     {
         return dim() == second.dim();
     }
@@ -61,7 +65,7 @@ struct IMathVector
         return *this;
     }
 
-    virtual IMathVector &operator+=(const IMathVector& second) &
+    virtual IMathVector &operator+=(const IMathVector &second) &
     {
         if (!dimsAreEqual(second))
             throw IMV_dim_misalign();
@@ -70,7 +74,7 @@ struct IMathVector
 
         return *this;
     }
-    virtual IMathVector &operator-=(const IMathVector& second) &
+    virtual IMathVector &operator-=(const IMathVector &second) &
     {
         if (!dimsAreEqual(second))
             throw IMV_dim_misalign();
@@ -80,14 +84,14 @@ struct IMathVector
         return *this;
     }
 
-    virtual IMathVector &operator*=(const N& num) &
+    virtual IMathVector &operator*=(const N &num) &
     {
         for (size_t i = 0, end = dim(); i < end; ++i)
             at(i) *= num;
 
         return *this;
     }
-    virtual IMathVector &operator/=(const N& num) &
+    virtual IMathVector &operator/=(const N &num) &
     {
         for (size_t i = 0, end = dim(); i < end; ++i)
             at(i) /= num;
@@ -112,10 +116,10 @@ template <class T, class N = T> class MathVector final : public IMathVector<T, N
 
   public:
     MathVector() = default;
-    MathVector(const MathVector&) = default;
-    MathVector(MathVector&&) = default;
-    MathVector& operator=(const MathVector&) = default;
-    MathVector& operator=(MathVector&&) = default;
+    MathVector(const MathVector &) = default;
+    MathVector(MathVector &&) = default;
+    MathVector &operator=(const MathVector &) = default;
+    MathVector &operator=(MathVector &&) = default;
 
     MathVector(size_t size) : data_(size)
     {
@@ -123,8 +127,7 @@ template <class T, class N = T> class MathVector final : public IMathVector<T, N
     MathVector(std::initializer_list<T> l) : data_(l)
     {
     }
-    template<class CopyT, class CopyN = CopyT>
-    MathVector<CopyT, CopyN> copy() const
+    template <class CopyT, class CopyN = CopyT> MathVector<CopyT, CopyN> copy() const
     {
         MathVector<CopyT, CopyN> toRet(data_.size());
         for (size_t i = 0, end = data_.size(); i < end; ++i)
@@ -168,10 +171,11 @@ template <class T> struct IMatrix : public IMathVector<T>
 template <class T, bool ENABLE_UNSIGNED_ = false> struct ISquareMatrix : public IMatrix<T>
 {
     static_assert(ENABLE_UNSIGNED_ || !std::is_unsigned_v<T>,
-        "SquareMatrix can't store unsigned values by default due to determinant calc issues." "\n"
-        "You can enable unsigned values by changing template bool parameter value, "
-        "but det function could return wrong values." "\n"
-    );
+                  "SquareMatrix can't store unsigned values by default due to determinant calc issues."
+                  "\n"
+                  "You can enable unsigned values by changing template bool parameter value, "
+                  "but det function could return wrong values."
+                  "\n");
 
   protected:
     virtual T constDetImpl() const = 0;
@@ -209,17 +213,15 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
     SquareMatrix(size_t size) : size_{size}, data_(size_, Line(size_))
     {
     }
-    SquareMatrix(std::initializer_list<T> l) :
-        size_(std::sqrt(l.size())), data_(size_, Line(size_))
+    SquareMatrix(std::initializer_list<T> l) : size_(std::sqrt(l.size())), data_(size_, Line(size_))
     {
         size_t i = 0;
         for (auto it = l.begin(), end = l.end(); it != end; ++it, ++i)
             at(i) = *it;
     }
-    template<class CopyT>
-    SquareMatrix<CopyT> copy() const
+    template <class CopyT> SquareMatrix<CopyT> copy() const
     {
-        SquareMatrix<CopyT> copy (size_);
+        SquareMatrix<CopyT> copy(size_);
         for (size_t i = 0, end = size_ * size_; i < end; ++i)
             copy.at(i) = at(i);
         return copy;
@@ -262,8 +264,7 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
     // Works properly only for floating point numbers.
     void lazyGauss();
 
-    template<class NumT = T, std::enable_if_t<std::is_arithmetic_v<NumT>, int> = 0>
-    bool isZero(T &value)
+    template <class NumT = T, std::enable_if_t<std::is_arithmetic_v<NumT>, int> = 0> bool isZero(T &value)
     {
         static const double FP_CMP_PREC_ = 1E-6;
         return std::abs(value) < FP_CMP_PREC_;
@@ -319,8 +320,7 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
 
 using fp_t = double;
 
-template<class T>
-T SquareMatrix<T>::constDetImpl() const
+template <class T> T SquareMatrix<T>::constDetImpl() const
 {
     SquareMatrix<fp_t> mat = copy<fp_t>();
     fp_t result = mat.det(true); // canModify = true
@@ -330,8 +330,7 @@ T SquareMatrix<T>::constDetImpl() const
     return result;
 }
 
-template<class T>
-T SquareMatrix<T>::detImpl()
+template <class T> T SquareMatrix<T>::detImpl()
 {
     if (!std::is_floating_point_v<T>)
     {
@@ -342,8 +341,7 @@ T SquareMatrix<T>::detImpl()
     return this->trace();
 }
 
-template<class T>
-void SquareMatrix<T>::lazyGauss()
+template <class T> void SquareMatrix<T>::lazyGauss()
 {
     size_t swapsCount = 0;
 

@@ -1,6 +1,6 @@
 
-#include "linear.hh"
 #include "linear-gen.hh"
+#include "linear.hh"
 #include <iostream>
 
 int main()

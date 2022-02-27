@@ -375,8 +375,7 @@ template <class T> void SquareMatrix<T>::lazyGauss()
 
 } // namespace linear
 
-template<class T>
-std::ostream &operator<<(std::ostream &os, const linear::IMatrix<T> &mat)
+template <class T> std::ostream &operator<<(std::ostream &os, const linear::IMatrix<T> &mat)
 {
     for (size_t i = 0, lines = mat.lineNum(); i < lines; ++i)
     {
@@ -388,8 +387,7 @@ std::ostream &operator<<(std::ostream &os, const linear::IMatrix<T> &mat)
     return os;
 }
 
-template<class T>
-std::istream &operator>>(std::istream &is, linear::IMatrix<T> &mat)
+template <class T> std::istream &operator>>(std::istream &is, linear::IMatrix<T> &mat)
 {
     for (size_t i = 0, dim = mat.dim(); i < dim; ++i)
         is >> mat.at(i);

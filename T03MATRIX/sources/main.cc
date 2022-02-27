@@ -1,5 +1,4 @@
 
-#include "linear-gen.hh"
 #include "linear.hh"
 #include <iostream>
 
@@ -7,11 +6,10 @@ int main()
 {
     size_t matSize = 0;
     std::cin >> matSize;
+    linear::SquareMatrix<int> mat(matSize);
+    std::cin >> mat;
 
-    auto mat = linear::genUpperTriangularMatirx<int>(std::vector<int>(matSize, 1));
-    linear::randomlyMAddSquareMatCols(linear::shuffleSquareMatCols(mat));
-
-    std::cout << mat.det() << std::endl;
+    std::cout << mat.det();
 
     return 0;
 }

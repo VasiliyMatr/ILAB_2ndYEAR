@@ -18,7 +18,7 @@ const double MAX_NUM_GEN_VAL_ = 5;
 
 // FP generated numbers abs value can't be less than this constant, except zero value.
 const double FP_GEN_ZERO_EQUALITY_BOUND_ = 1E-3;
-}; // namespace
+} // namespace
 
 template <class T> T genNum()
 {
@@ -28,8 +28,7 @@ template <class T> T genNum()
     fp_t value = std::rand() * MIN_NUM_GEN_VAL_ / RAND_MAX + std::rand() * MAX_NUM_GEN_VAL_ / RAND_MAX;
 
     if (std::abs(value) < FP_GEN_ZERO_EQUALITY_BOUND_)
-        ;
-    return 0;
+        return 0;
 
     return value;
 }

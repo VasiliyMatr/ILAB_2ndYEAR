@@ -264,6 +264,8 @@ template <class T> class SquareMatrix final : public ISquareMatrix<T>
     // Works properly only for floating point numbers.
     void lazyGauss();
 
+    // Zero comparsion function.
+    // There should be overload for not arithmetic types.
     template <class NumT = T, std::enable_if_t<std::is_arithmetic_v<NumT>, int> = 0> bool isZero(T &value)
     {
         static const double FP_CMP_PREC_ = 1E-6;
@@ -372,5 +374,27 @@ template <class T> void SquareMatrix<T>::lazyGauss()
 }
 
 } // namespace linear
+
+template<class T>
+std::ostream &operator<<(std::ostream &os, const linear::IMatrix<T> &mat)
+{
+    for (size_t i = 0, lines = mat.lineNum(); i < lines; ++i)
+    {
+        for (size_t j = 0, cols = mat.colNum(); j < cols; ++j)
+            os << mat.at(cols * i + j) << " ";
+        os << std::endl;
+    }
+
+    return os;
+}
+
+template<class T>
+std::istream &operator>>(std::istream &is, linear::IMatrix<T> &mat)
+{
+    for (size_t i = 0, dim = mat.dim(); i < dim; ++i)
+        is >> mat.at(i);
+
+    return is;
+}
 
 #endif

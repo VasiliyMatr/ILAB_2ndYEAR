@@ -15,24 +15,32 @@ target_link_libraries( ${TESTS_NAME} PRIVATE
     "pthread"
 )
 
+set( HEADERS_DIR "${CMAKE_SOURCE_DIR}/headers" )
+
 target_include_directories( ${TESTS_NAME} PRIVATE
-    "${CMAKE_SOURCE_DIR}/headers"
+    "${HEADERS_DIR}"
 )
 target_include_directories( ${EXEC_NAME} PRIVATE
-    "${CMAKE_SOURCE_DIR}/headers"
+    "${HEADERS_DIR}"
 )
 
+set( SRC_DIR "${CMAKE_SOURCE_DIR}/sources" )
+
 target_sources( ${TESTS_NAME} PRIVATE
-    "${CMAKE_SOURCE_DIR}/sources/tests-main.cc"
-    "${CMAKE_SOURCE_DIR}/sources/containers-utests/vector-tests.cc"
-    "${CMAKE_SOURCE_DIR}/sources/linear-utests/matrix-tests.cc"
+    "${SRC_DIR}/tests-main.cc"
+    "${SRC_DIR}/containers-utests/vector-tests.cc"
+    "${SRC_DIR}/linear-utests/matrix-tests.cc"
 )
 target_sources( ${EXEC_NAME} PRIVATE
-    "${CMAKE_SOURCE_DIR}/sources/main.cc"
+    "${SRC_DIR}/main.cc"
 )
 
 target_compile_features( ${TESTS_NAME} PRIVATE cxx_std_20 )
 target_compile_features( ${EXEC_NAME} PRIVATE cxx_std_20 )
 
-target_compile_options( ${EXEC_NAME} PRIVATE -O0 -g -fno-elide-constructors )
-target_compile_options( ${TESTS_NAME} PRIVATE -O0 -g -fno-elide-constructors )
+set( COMMON_FLAGS -Wall -Werror -Wextra -Wpedantic )
+set( DEBUG_FLAGS -O0 -g -fno-elide-constructors ${COMMON_FLAGS} )
+set( RELEASE_FLAGS -O2 ${COMMON_FLAGS} )
+
+target_compile_options( ${EXEC_NAME} PRIVATE ${RELEASE_FLAGS} )
+target_compile_options( ${TESTS_NAME} PRIVATE ${DEBUG_FLAGS} )

@@ -9,7 +9,7 @@ int main()
     linear::SquareMatrix<int> mat(matSize);
     std::cin >> mat;
 
-    std::cout << mat.det();
+    std::cout << mat.det() << std::endl;
 
     return 0;
 }

@@ -83,8 +83,6 @@ template <class T> SquareMatrix<T> &shuffleSquareMatCols(SquareMatrix<T> &toShuf
 template <class T> SquareMatrix<T> &randomlyMAddSquareMatCols(SquareMatrix<T> &toRandomize)
 {
     size_t matSize = toRandomize.lineNum();
-    std::vector<size_t> MAddIndxs(matSize * 2);
-    std::generate(MAddIndxs.begin(), MAddIndxs.end(), std::rand);
 
     for (size_t i = 0; i < matSize; ++i)
     {

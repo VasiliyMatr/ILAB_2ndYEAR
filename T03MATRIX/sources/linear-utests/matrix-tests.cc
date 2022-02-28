@@ -6,7 +6,7 @@
 namespace linear
 {
 
-TEST(DetTests, DetGenTest)
+TEST(MatrixTests, DetGenTest)
 {
     for (size_t i = 1; i < 50; ++i)
     {

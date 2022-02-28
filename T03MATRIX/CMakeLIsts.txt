@@ -30,6 +30,7 @@ target_sources( ${TESTS_NAME} PRIVATE
     "${SRC_DIR}/tests-main.cc"
     "${SRC_DIR}/containers-utests/vector-tests.cc"
     "${SRC_DIR}/linear-utests/matrix-tests.cc"
+    "${SRC_DIR}/linear-utests/mathvec-tests.cc"
 )
 target_sources( ${EXEC_NAME} PRIVATE
     "${SRC_DIR}/main.cc"

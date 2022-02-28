@@ -75,8 +75,8 @@ template <class T> class Vector final : private VectorStorage<T>
 
     using CopyArg = std::conditional_t<std::is_copy_constructible_v<T>, const Vector &, dummy>;
 
-    template <class Arg> using TCopyCtorEnabled = std::enable_if_t<std::is_copy_constructible_v<Arg>, int>;
-    template <class Arg> using TDefaultCtorEnabled = std::enable_if_t<std::is_default_constructible_v<Arg>, int>;
+    template <class Arg> using TCopyCtorEnabled = std::void_t<decltype(Arg(std::declval<Arg &>()))>;
+    template <class Arg> using TDefaultCtorEnabled = std::void_t<decltype(Arg())>;
 
   public:
     Vector(CopyArg sd) : VectorStorage<T>{sd.size_}
@@ -90,19 +90,21 @@ template <class T> class Vector final : private VectorStorage<T>
         return *this = std::move(copy);
     }
 
-    template <class Arg = T, TCopyCtorEnabled<Arg> = 0> Vector(std::initializer_list<T> l) : VectorStorage<T>{l.size()}
+    template <class Arg = T, class = TCopyCtorEnabled<Arg>>
+    Vector(std::initializer_list<T> l) : VectorStorage<T>{l.size()}
     {
         static_assert(std::is_same_v<Arg, T>, "Arg should be default type (T).");
         for (auto it = l.begin(), end = l.end(); it != end; ++it, ++size_)
             new (data_ + size_) T(*it);
     }
-    template <class Arg = T, TCopyCtorEnabled<Arg> = 0> Vector(size_t size, const T &toCopy) : VectorStorage<T>{size}
+    template <class Arg = T, class = TCopyCtorEnabled<Arg>>
+    Vector(size_t size, const T &toCopy) : VectorStorage<T>{size}
     {
         static_assert(std::is_same_v<Arg, T>, "Arg should be default type (T).");
         for (; size_ < size; ++size_)
             new (data_ + size_) T(toCopy);
     }
-    template <class Arg = T, TDefaultCtorEnabled<Arg> = 0> Vector(size_t size) : VectorStorage<T>{size}
+    template <class Arg = T, class = TDefaultCtorEnabled<Arg>> Vector(size_t size) : VectorStorage<T>{size}
     {
         static_assert(std::is_same_v<Arg, T>, "Arg should be default type (T).");
         for (; size_ < size; ++size_)

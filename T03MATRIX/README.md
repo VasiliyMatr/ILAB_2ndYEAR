@@ -2,7 +2,7 @@
 # __Task 03 Matrix__
 
 
-## __Task statement:__
+## __Task statement__
 
 ### 1. First level - in review
 

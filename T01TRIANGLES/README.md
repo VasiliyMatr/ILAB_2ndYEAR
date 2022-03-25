@@ -5,7 +5,7 @@ __Task 01 Triangles__
 
 ### 1. First level - done
 
-Implement two triangles cross algorithm. Implement N triangles cross algorithm with N log(N) complexity in general case.
+Implement two triangles cross algorithm. Implement N triangles cross algorithm with N log(N) complexity in the general case.
 
 ### 2. Second level - TODO
 
@@ -15,7 +15,7 @@ Implement triangles drawing with Vulkan API.
 
 ### 1. Geometrical primitives:
 
-Classes for basic 3D geometric primitives such as: point, vector, line, segment, plane are implemented.
+Classes for basic 3D geometric primitives such as point, vector, line, segment, plane are implemented.
 
 ### 2. Two triangles cross:
 
@@ -25,4 +25,4 @@ Triangle class is implemented. Two triangles cross algorithm is implemented.
 
 N triangles group cross algorithm is implemented.
 
-And there is also complexity optimization for big triangles groups - such groups are splitted into smaller geometrically separated groups to achieve N log(N) complexity in general case.
+And there is also complexity optimization for big triangles groups - such groups are split into smaller geometrically separated groups to achieve N log(N) complexity in the general case.

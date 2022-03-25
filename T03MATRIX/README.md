@@ -1,7 +1,6 @@
 
 # __Task 03 Matrix__
 
-
 ## __Task statement__
 
 ### 1. First level - in review
@@ -14,9 +13,9 @@ Implement N x N matrix determinant calculation algorithm. Template solution reco
 
 ### 1. std::vector analog:
 
-Exceptions safe template container which incapsulates dynamically allocated massive is implemented.
+Exceptions safe template container which encapsulates dynamically allocated massive is implemented.
 
-This container provides O(1) element access algo complexity, push amortized O(1) complexity and pop O(1) complexity. Iterators are also implemented.
+This container provides O(1) element access algorithm complexity, push amortized O(1) complexity, and pop O(1) complexity. Iterators are also implemented.
 
 ### 2. Linear classes hierarchy:
 

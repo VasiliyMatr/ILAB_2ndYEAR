@@ -1,10 +1,10 @@
 
+# __Task 00 Cache__
 
-## To build on linux:
-Run this in repo main directory:
-```
-    $ mkdir T00CACHE/build
-    $ cd T00CACHE/build
-    $ cmake ..
-    $ make
-```
+## __Task statement__
+
+It is a simple warm-up task. The task is to implement cache class and evaluate its efficiency.
+
+## __Implemented features__
+
+The task is done.

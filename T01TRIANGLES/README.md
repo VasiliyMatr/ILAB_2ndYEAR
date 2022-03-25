@@ -11,6 +11,8 @@ Implement two triangles cross algorithm. Implement N triangles cross algorithm w
 
 Implement triangles drawing with Vulkan API.
 
+---
+
 ## __Implemented features__
 
 ### 1. Geometrical primitives:
